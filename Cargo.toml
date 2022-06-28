@@ -1,0 +1,57 @@
+[package]
+name = "sub-codegen-api"
+version = "0.1.0"
+edition = "2021"
+authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
+license = "Apache-2.0"
+description = "Substrate client API codegen"
+keywords = ["blockchain", "substrate", "codegen"]
+repository = "https://github.com/PolymeshAssociation/sub-codegen-api"
+homepage = "https://github.com/PolymeshAssociation/sub-codegen-api"
+
+[patch.crates-io]
+frame-support = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+#frame-system = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-application-crypto = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-arithmetic = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-io = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-core = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-std = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-version = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-runtime = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+sp-runtime-interface = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
+
+[dependencies]
+anyhow = "1"
+log = "0.4"
+
+serde_json = { version = "1.0", features = ["preserve_order"] }
+serde = "1.0"
+
+hex = "0.4"
+indexmap = "1.8"
+
+# substrate
+sp-core = { version = "6.0", default-features = false }
+sp-version = { version = "5.0", default-features = false }
+sp-runtime = { version = "6.0", default-features = false }
+frame-support = { version = "4.0.0-dev", default-features = false }
+frame-metadata = { version = "15.0.0", default-features = false }
+codec = { version = "3", package = "parity-scale-codec", default-features = false }
+scale-info = { version = "2", default-features = false }
+
+[features]
+default = [ "std", "v12", "v13", "v14" ]
+
+v12 = ["frame-metadata/v12"]
+v13 = ["frame-metadata/v13"]
+v14 = ["frame-metadata/v14"]
+
+std = [
+	"frame-support/std",
+	"frame-metadata/std",
+	"sp-core/std",
+	"sp-version/std",
+	"sp-runtime/std",
+	"scale-info/std",
+]
