@@ -11,7 +11,15 @@ use codec::{Decode, Encode};
 
 use indexmap::map::IndexMap;
 
-use scale_info::TypeDefPrimitive;
+use scale_info::{TypeDefPrimitive, TypeParameter};
+
+#[derive(Clone, Debug, Default)]
+pub struct TypeForm;
+
+impl scale_info::form::Form for TypeForm {
+  type Type = TypeId;
+  type String = String;
+}
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Decode, Encode)]
 pub struct Path {
@@ -19,21 +27,25 @@ pub struct Path {
 }
 
 impl Path {
+  pub fn new(ident: &str, module_path: &str) -> Self {
+    let mut segments = module_path
+      .split("::")
+      .map(|s| s.into())
+      .collect::<Vec<_>>();
+    segments.push(ident.into());
+    Self { segments }
+  }
+
   pub fn is_empty(&self) -> bool {
     self.segments.is_empty()
   }
-}
 
-#[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
-pub struct TypeParameter {
-  pub name: String,
-  #[serde(rename = "type")]
-  pub ty: Option<TypeId>,
-}
+  pub fn ident(&self) -> Option<&str> {
+    self.segments.last().map(|s| s.as_str())
+  }
 
-impl TypeParameter {
-  pub fn new(name: String, ty: Option<TypeId>) -> Self {
-    Self { name, ty }
+  pub fn namespace(&self) -> &[String] {
+    self.segments.split_last().map(|(_, ns)| ns).unwrap_or(&[])
   }
 }
 
@@ -42,14 +54,23 @@ pub struct Type {
   #[serde(skip_serializing_if = "Path::is_empty", default)]
   pub path: Path,
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
-  pub type_params: Vec<TypeParameter>,
+  pub type_params: Vec<TypeParameter<TypeForm>>,
   #[serde(rename = "def")]
   pub type_def: TypeDef,
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub docs: Vec<String>,
 }
 
-impl Type {}
+impl Type {
+  pub fn new(name: &str, type_def: TypeDef) -> Self {
+    Self {
+      path: Path::new(name, ""),
+      type_def,
+      type_params: Default::default(),
+      docs: Default::default(),
+    }
+  }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
 pub struct Field {
@@ -64,9 +85,18 @@ pub struct Field {
 }
 
 impl Field {
-  pub fn new(name: Option<String>, ty: TypeId, type_name: Option<String>) -> Self {
+  pub fn new(ty: TypeId) -> Self {
     Self {
-      name,
+      name: None,
+      ty,
+      type_name: None,
+      docs: Vec::new(),
+    }
+  }
+
+  pub fn new_named(name: &str, ty: TypeId, type_name: Option<String>) -> Self {
+    Self {
+      name: Some(name.into()),
       ty,
       type_name,
       docs: Vec::new(),
@@ -85,9 +115,9 @@ pub struct Variant {
 }
 
 impl Variant {
-  pub fn new(name: String, fields: Vec<Field>, index: u8) -> Self {
+  pub fn new(name: &str, fields: Vec<Field>, index: u8) -> Self {
     Self {
-      name,
+      name: name.into(),
       fields,
       index,
       docs: Vec::new(),
@@ -104,6 +134,24 @@ pub struct TypeDefVariant {
 impl TypeDefVariant {
   pub fn new(variants: Vec<Variant>) -> Self {
     Self { variants }
+  }
+
+  pub fn new_option(ty: TypeId) -> Self {
+    Self {
+      variants: vec![
+        Variant::new("None", vec![], 0),
+        Variant::new("Some", vec![Field::new(ty)], 1),
+      ],
+    }
+  }
+
+  pub fn new_result(ok_ty: TypeId, err_ty: TypeId) -> Self {
+    Self {
+      variants: vec![
+        Variant::new("Ok", vec![Field::new(ok_ty)], 0),
+        Variant::new("Err", vec![Field::new(err_ty)], 1),
+      ],
+    }
   }
 }
 
@@ -128,6 +176,12 @@ pub struct TypeDefTuple {
 impl TypeDefTuple {
   pub fn new(fields: Vec<TypeId>) -> Self {
     Self { fields }
+  }
+
+  pub fn new_type(field: TypeId) -> Self {
+    Self {
+      fields: vec![field],
+    }
   }
 
   pub fn unit() -> Self {
@@ -181,8 +235,7 @@ pub type TypeId = u32;
 #[derive(Clone, Debug)]
 pub enum TypeMetaDef {
   Unresolved(String),
-  NewType(String, TypeId),
-  Resolved(TypeDef),
+  Resolved(Type),
 }
 
 #[derive(Clone)]
@@ -227,10 +280,7 @@ impl Ord for TypeRef {
 impl std::fmt::Debug for TypeRef {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
     let meta = self.def.read().unwrap();
-    match &*meta {
-      TypeMetaDef::NewType(name, _) => f.write_fmt(format_args!("NewType({})", name)),
-      _ => meta.fmt(f),
-    }
+    meta.fmt(f)
   }
 }
 
@@ -258,12 +308,58 @@ impl TypeDef {
   pub fn to_string(&mut self) -> String {
     format!("TypeDef: {:?}", self)
   }
+
+  pub fn new_type(ty: TypeId) -> Self {
+    Self::Tuple(TypeDefTuple::new_type(ty))
+  }
+}
+
+impl From<TypeDefComposite> for TypeDef {
+  fn from(def: TypeDefComposite) -> Self {
+    Self::Composite(def)
+  }
+}
+
+impl From<TypeDefVariant> for TypeDef {
+  fn from(def: TypeDefVariant) -> Self {
+    Self::Variant(def)
+  }
+}
+
+impl From<TypeDefSequence> for TypeDef {
+  fn from(def: TypeDefSequence) -> Self {
+    Self::Sequence(def)
+  }
+}
+
+impl From<TypeDefArray> for TypeDef {
+  fn from(def: TypeDefArray) -> Self {
+    Self::Array(def)
+  }
+}
+
+impl From<TypeDefTuple> for TypeDef {
+  fn from(def: TypeDefTuple) -> Self {
+    Self::Tuple(def)
+  }
+}
+
+impl From<TypeDefPrimitive> for TypeDef {
+  fn from(def: TypeDefPrimitive) -> Self {
+    Self::Primitive(def)
+  }
 }
 
 #[derive(Clone)]
 pub struct Types {
   next_id: u32,
   types: IndexMap<String, TypeRef>,
+}
+
+impl From<TypeDefCompact> for TypeDef {
+  fn from(def: TypeDefCompact) -> Self {
+    Self::Compact(def)
+  }
 }
 
 impl Types {
@@ -297,12 +393,15 @@ impl Types {
     for (name, val) in types.iter() {
       match val {
         Value::String(val) => {
+          log::trace!("Named type: name={name}, val={val}");
           self.parse_named_type(name, val)?;
         }
         Value::Object(map) => {
           if let Some(variants) = map.get("_enum") {
+            log::trace!("ENUM: name={name}, variants={variants}");
             self.parse_enum(name, variants)?;
           } else {
+            log::trace!("STRUCT: name={name}, fields={map:?}");
             self.parse_struct(name, map)?;
           }
         }
@@ -314,89 +413,94 @@ impl Types {
     Ok(())
   }
 
-  fn parse_enum(&mut self, _name: &str, _variants: &Value) -> Result<()> {
-    /*
-    match variants {
-      Value::Array(arr) => {
-        let variants = arr
-          .iter()
-          .try_fold(TypeDefVariant::new(), |mut variants, val| {
-            match val.as_str() {
-              Some(name) => {
-                variants.insert(name, None);
-                Ok(variants)
-              }
-              None => Err(anyhow!(
-                "Expected json string for enum {}: got {:?}",
-                name,
-                val
-              )),
-            }
-          })?;
-        self.insert_meta(name, TypeDef::Enum(variants));
+  fn parse_variant(&mut self, def: &str) -> Result<Vec<Field>> {
+    match self.parse(def)? {
+      Some(TypeDef::Tuple(tuple)) => Ok(tuple.fields.into_iter().map(|t| Field::new(t)).collect()),
+      Some(_) => {
+        let type_id = self.parse_type(def)?;
+        Ok(vec![Field::new(type_id)])
       }
-      Value::Object(obj) => {
-        let variants = obj.iter().try_fold(
-          TypeDefVariant::new(),
-          |mut variants, (var_name, val)| -> Result<_> {
-            match val.as_str() {
-              Some("") => {
-                variants.insert(var_name, None);
-                Ok(variants)
-              }
-              Some(var_def) => {
-                let type_meta = self.parse_type(var_def)?;
-                variants.insert(var_name, Some(type_meta));
-                Ok(variants)
-              }
-              None => Err(anyhow!("Expected json string for enum {}: got {:?}", name, val).into()),
-            }
-          },
-        )?;
-        self.insert_meta(name, TypeDef::Enum(variants));
+      None => {
+        let type_ref = self.resolve(def);
+        Ok(vec![Field::new(type_ref.id)])
       }
+    }
+  }
+
+  fn parse_enum(&mut self, name: &str, variants: &Value) -> Result<()> {
+    let mut index = 0;
+    let variants = match variants {
+      Value::Array(arr) => arr
+        .iter()
+        .map(|val| match val.as_str() {
+          Some(var_name) => {
+            let idx = index;
+            index += 1;
+            Ok(Variant::new(var_name, vec![], idx))
+          }
+          None => Err(anyhow!(
+            "Expected json string for enum {}: got {:?}",
+            name,
+            val
+          )),
+        })
+        .collect::<Result<Vec<Variant>>>()?,
+      Value::Object(obj) => obj
+        .iter()
+        .map(|(var_name, val)| -> Result<_> {
+          let idx = index;
+          index += 1;
+          match val.as_str() {
+            Some("") => Ok(Variant::new(var_name, vec![], idx)),
+            Some(var_def) => {
+              let fields = self.parse_variant(var_def)?;
+              Ok(Variant::new(var_name, fields, idx))
+            }
+            None => Err(anyhow!("Expected json string for enum {}: got {:?}", name, val).into()),
+          }
+        })
+        .collect::<Result<Vec<Variant>>>()?,
       _ => {
         return Err(anyhow!("Invalid json for `_enum`: {:?}", variants));
       }
-    }
-      */
+    };
+    self.insert_type(name, TypeDefVariant::new(variants).into());
     Ok(())
   }
 
-  fn parse_struct(&mut self, _name: &str, _def: &Map<String, Value>) -> Result<()> {
-    /*
-    let fields =
-      def
-        .iter()
-        .try_fold(IndexMap::new(), |mut map, (field_name, val)| -> Result<_> {
-          match val.as_str() {
-            Some(field_def) => {
-              let type_meta = self.parse_type(field_def)?;
-              map.insert(field_name.to_string(), type_meta);
-              Ok(map)
-            }
-            None => Err(anyhow!(
-              "Expected json string for struct {} field {}: got {:?}",
-              name,
+  fn parse_struct(&mut self, name: &str, def: &Map<String, Value>) -> Result<()> {
+    let fields = def
+      .iter()
+      .map(|(field_name, val)| -> Result<_> {
+        match val.as_str() {
+          Some(field_def) => {
+            let type_id = self.parse_type(field_def)?;
+            Ok(Field::new_named(
               field_name,
-              val
-            )),
+              type_id,
+              Some(field_def.to_string()),
+            ))
           }
-        })?;
-    self.insert_meta(name, TypeDef::Struct(fields));
-      */
+          None => Err(anyhow!(
+            "Expected json string for struct {} field {}: got {:?}",
+            name,
+            field_name,
+            val
+          )),
+        }
+      })
+      .collect::<Result<Vec<Field>>>()?;
+    self.insert_type(name, TypeDefComposite::new(fields).into());
     Ok(())
   }
 
   pub fn parse_named_type(&mut self, name: &str, def: &str) -> Result<TypeId> {
-    let type_ref = self.parse_type(def)?;
+    let type_id = self.parse_type(def)?;
 
-    let type_ref = self.new_type(TypeMetaDef::NewType(name.into(), type_ref));
-    Ok(self.insert(name, type_ref))
+    Ok(self.insert_type(name, TypeDef::new_type(type_id)))
   }
 
   pub fn parse_type(&mut self, name: &str) -> Result<TypeId> {
-    /*
     let name = name
       .trim()
       .replace("\r", "")
@@ -404,24 +508,48 @@ impl Types {
       .replace("T::", "");
     // Try to resolve the type.
     let type_ref = self.resolve(&name);
-    let mut type_meta = type_ref.0.write().unwrap();
+    let mut type_meta = type_ref.def.write().unwrap();
 
     // Check if type is unresolved.
     match &*type_meta {
-      TypeDef::Unresolved(def) => {
+      TypeMetaDef::Unresolved(def) => {
         // Try parsing it.
-        let new_meta = self.parse(def)?;
-        *type_meta = new_meta;
+        log::trace!("Parse Unresolved: name={name}, def={def}");
+        if let Some(type_def) = self.parse(def)? {
+          let ty = Type::new(&name, type_def);
+          let new_meta = TypeMetaDef::Resolved(ty);
+          *type_meta = new_meta;
+        }
       }
       _ => (),
     }
-    Ok(type_ref.clone())
-      */
-    Ok(self.resolve(name))
+    Ok(type_ref.id)
   }
 
-  /*
-  fn parse(&mut self, _def: &str) -> Result<TypeDef> {
+  fn is_primitive(def: &str) -> Option<TypeDefPrimitive> {
+    // Check for primitives.
+    match def {
+      "u8" => Some(TypeDefPrimitive::U8),
+      "u16" => Some(TypeDefPrimitive::U16),
+      "u32" => Some(TypeDefPrimitive::U32),
+      "u64" => Some(TypeDefPrimitive::U64),
+      "u128" => Some(TypeDefPrimitive::U128),
+      "u256" => Some(TypeDefPrimitive::U256),
+      "i8" => Some(TypeDefPrimitive::I8),
+      "i16" => Some(TypeDefPrimitive::I16),
+      "i32" => Some(TypeDefPrimitive::I32),
+      "i64" => Some(TypeDefPrimitive::I64),
+      "i128" => Some(TypeDefPrimitive::I128),
+      "i256" => Some(TypeDefPrimitive::I256),
+      "bool" => Some(TypeDefPrimitive::Bool),
+      "char" => Some(TypeDefPrimitive::Char),
+      "String" => Some(TypeDefPrimitive::Str),
+      "Text" => Some(TypeDefPrimitive::Str),
+      _ => None,
+    }
+  }
+
+  fn parse(&mut self, def: &str) -> Result<Option<TypeDef>> {
     match def.chars().last() {
       Some('>') => {
         // Handle: Vec<T>, Option<T>, Compact<T>
@@ -433,19 +561,19 @@ impl Types {
         match wrap {
           "Vec" => {
             let wrap_ref = self.parse_type(ty)?;
-            Ok(TypeDef::Vector(wrap_ref))
+            Ok(Some(TypeDefSequence::new(wrap_ref).into()))
           }
           "Option" => {
             let wrap_ref = self.parse_type(ty)?;
-            Ok(TypeDef::Option(wrap_ref))
+            Ok(Some(TypeDefVariant::new_option(wrap_ref).into()))
           }
           "Compact" => {
             let wrap_ref = self.parse_type(ty)?;
-            Ok(TypeDef::Compact(wrap_ref))
+            Ok(Some(TypeDefCompact::new(wrap_ref).into()))
           }
           "Box" => {
             let wrap_ref = self.parse_type(ty)?;
-            Ok(TypeDef::Box(wrap_ref))
+            Ok(Some(TypeDefTuple::new_type(wrap_ref).into()))
           }
           "Result" => {
             let (ok_ref, err_ref) = match ty.split_once(',') {
@@ -460,16 +588,12 @@ impl Types {
                 (ok_ref, err_ref)
               }
             };
-            Ok(TypeDef::Result(ok_ref, err_ref))
+            Ok(Some(TypeDefVariant::new_result(ok_ref, err_ref).into()))
           }
-          "PhantomData" | "sp_std::marker::PhantomData" => Ok(TypeDef::Unit),
-          generic => {
-            // Some generic type.
-            if self.types.contains_key(generic) {
-              Ok(TypeDef::NewType(generic.into(), self.resolve(generic)))
-            } else {
-              Ok(TypeDef::Unresolved(def.into()))
-            }
+          "PhantomData" | "sp_std::marker::PhantomData" => Ok(Some(TypeDefTuple::unit().into())),
+          _ => {
+            // Unresolved type.
+            Ok(None)
           }
         }
       }
@@ -499,12 +623,12 @@ impl Types {
             }
           })
           .try_fold(Vec::new(), |mut vec, val| -> Result<_> {
-            let type_ref = self.parse_type(&val)?;
-            vec.push(type_ref);
+            let type_id = self.parse_type(&val)?;
+            vec.push(type_id);
             Ok(vec)
           })?;
         // Handle tuples.
-        Ok(TypeDef::Tuple(defs))
+        Ok(Some(TypeDefTuple::new(defs).into()))
       }
       Some(']') => {
         let (slice_ty, slice_len) = def
@@ -517,12 +641,11 @@ impl Types {
           .ok_or_else(|| anyhow!("Failed to parse slice: {}", def))?;
         // Handle slices.
         let slice_ref = self.parse_type(slice_ty)?;
-        Ok(TypeDef::Slice(slice_len, slice_ref))
+        Ok(Some(TypeDefArray::new(slice_len as u32, slice_ref).into()))
       }
-      _ => Ok(TypeDef::Unresolved(def.into())),
+      _ => Ok(None),
     }
   }
-    */
 
   fn new_type(&mut self, meta: TypeMetaDef) -> TypeRef {
     let id = self.next_id;
@@ -530,19 +653,23 @@ impl Types {
     TypeRef::new(id, meta)
   }
 
-  pub fn resolve(&mut self, name: &str) -> TypeId {
+  pub fn resolve(&mut self, name: &str) -> TypeRef {
     if let Some(type_ref) = self.types.get(name) {
-      type_ref.id
+      type_ref.clone()
+    } else if let Some(prim) = Self::is_primitive(name) {
+      let type_ref = self.new_type(TypeMetaDef::Resolved(Type::new("", prim.into())));
+      self.types.insert(name.into(), type_ref.clone());
+      type_ref
     } else {
       let type_ref = self.new_type(TypeMetaDef::Unresolved(name.into()));
-      let id = type_ref.id;
-      self.types.insert(name.into(), type_ref);
-      id
+      self.types.insert(name.into(), type_ref.clone());
+      type_ref
     }
   }
 
-  pub fn insert_meta(&mut self, name: &str, type_def: TypeDef) -> TypeId {
-    let type_ref = self.new_type(TypeMetaDef::Resolved(type_def));
+  pub fn insert_type(&mut self, name: &str, type_def: TypeDef) -> TypeId {
+    let ty = Type::new(name, type_def);
+    let type_ref = self.new_type(TypeMetaDef::Resolved(ty));
     self.insert(name, type_ref)
   }
 
@@ -556,7 +683,8 @@ impl Types {
         // Already exists.  Check that it is a `TypeDef::Unresolved`.
         match &*old_meta {
           TypeMetaDef::Unresolved(_) => {
-            *old_meta = TypeMetaDef::NewType(name.into(), type_ref.id);
+            let ty = Type::new(name, TypeDef::new_type(type_ref.id));
+            *old_meta = TypeMetaDef::Resolved(ty);
           }
           _ => {
             eprintln!("REDEFINE TYPE: {}", name);
@@ -615,14 +743,14 @@ impl TypeLookup {
     t.parse_type(def)
   }
 
-  pub fn resolve(&self, name: &str) -> TypeId {
+  pub fn resolve(&self, name: &str) -> TypeRef {
     let mut t = self.types.write().unwrap();
     t.resolve(name)
   }
 
-  pub fn insert_meta(&self, name: &str, type_meta: TypeDef) -> TypeId {
+  pub fn insert_type(&self, name: &str, type_meta: TypeDef) -> TypeId {
     let mut t = self.types.write().unwrap();
-    t.insert_meta(name, type_meta)
+    t.insert_type(name, type_meta)
   }
 
   pub fn insert(&self, name: &str, type_def: TypeRef) -> TypeId {
