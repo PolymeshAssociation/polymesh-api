@@ -2119,6 +2119,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-version",
+ "thiserror",
 ]
 
 [[package]]

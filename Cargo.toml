@@ -22,10 +22,7 @@ sp-runtime = { git = "https://github.com/PolymeshAssociation/substrate", branch 
 sp-runtime-interface = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
 
 [dependencies]
-anyhow = "1"
 log = "0.4"
-dotenv = "0.15"
-env_logger = "0.9"
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
@@ -41,6 +38,13 @@ frame-support = { version = "4.0.0-dev", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "2", default-features = false }
+thiserror = "1.0.31"
+
+[dev-dependencies]
+anyhow = "1"
+log = "0.4"
+dotenv = "0.15"
+env_logger = "0.9"
 
 [features]
 default = [ "std", "v12", "v13", "v14" ]

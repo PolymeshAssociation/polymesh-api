@@ -2,8 +2,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::{Arc, RwLock};
 
-use anyhow::{anyhow, Result};
-
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
@@ -12,6 +10,14 @@ use codec::{Decode, Encode};
 use indexmap::map::IndexMap;
 
 use scale_info::{TypeDefPrimitive, TypeParameter};
+
+use crate::error::*;
+
+macro_rules! parse_error {
+  ($fmt:expr, $($arg:tt)*) => {
+    Error::SchemaParseFailed(format!($fmt, $($arg)*))
+  };
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct TypeForm;
@@ -438,7 +444,7 @@ impl Types {
             index += 1;
             Ok(Variant::new(var_name, vec![], idx))
           }
-          None => Err(anyhow!(
+          None => Err(parse_error!(
             "Expected json string for enum {}: got {:?}",
             name,
             val
@@ -456,12 +462,14 @@ impl Types {
               let fields = self.parse_variant(var_def)?;
               Ok(Variant::new(var_name, fields, idx))
             }
-            None => Err(anyhow!("Expected json string for enum {}: got {:?}", name, val).into()),
+            None => {
+              Err(parse_error!("Expected json string for enum {}: got {:?}", name, val).into())
+            }
           }
         })
         .collect::<Result<Vec<Variant>>>()?,
       _ => {
-        return Err(anyhow!("Invalid json for `_enum`: {:?}", variants));
+        return Err(parse_error!("Invalid json for `_enum`: {:?}", variants));
       }
     };
     self.insert_type(name, TypeDefVariant::new(variants).into());
@@ -481,7 +489,7 @@ impl Types {
               Some(field_def.to_string()),
             ))
           }
-          None => Err(anyhow!(
+          None => Err(parse_error!(
             "Expected json string for struct {} field {}: got {:?}",
             name,
             field_name,
@@ -557,7 +565,7 @@ impl Types {
           .strip_suffix('>')
           .and_then(|s| s.split_once('<'))
           .map(|(wrap, ty)| (wrap.trim(), ty.trim()))
-          .ok_or_else(|| anyhow!("Failed to parse Vec/Option/Compact: {}", def))?;
+          .ok_or_else(|| parse_error!("Failed to parse Vec/Option/Compact: {}", def))?;
         match wrap {
           "Vec" => {
             let wrap_ref = self.parse_type(ty)?;
@@ -638,7 +646,7 @@ impl Types {
             // parse slice length.
             len.trim().parse::<usize>().ok().map(|l| (ty.trim(), l))
           })
-          .ok_or_else(|| anyhow!("Failed to parse slice: {}", def))?;
+          .ok_or_else(|| parse_error!("Failed to parse slice: {}", def))?;
         // Handle slices.
         let slice_ref = self.parse_type(slice_ty)?;
         Ok(Some(TypeDefArray::new(slice_len as u32, slice_ref).into()))
