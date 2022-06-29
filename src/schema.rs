@@ -15,34 +15,18 @@ macro_rules! parse_error {
 }
 
 #[derive(Clone, Debug)]
-pub enum TypeMetaDef {
-  Unresolved(String),
-  Resolved(Type),
-}
-
-#[derive(Clone)]
 pub struct TypeRef {
   id: TypeId,
-  def: Arc<RwLock<TypeMetaDef>>,
+  ty: Option<Type>,
 }
 
 impl TypeRef {
-  pub fn new(id: TypeId, meta: TypeMetaDef) -> Self {
-    Self {
-      def: Arc::new(RwLock::new(meta)),
-      id,
-    }
+  pub fn new(id: TypeId, ty: Option<Type>) -> Self {
+    Self { id, ty }
   }
 
   pub fn to_string(&mut self) -> String {
-    format!("TypeRef[{}]: {:?}", self.id, self.def.read().unwrap())
-  }
-}
-
-impl std::fmt::Debug for TypeRef {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-    let meta = self.def.read().unwrap();
-    meta.fmt(f)
+    format!("TypeRef[{}]: {:?}", self.id, self.ty)
   }
 }
 
@@ -50,12 +34,6 @@ impl std::fmt::Debug for TypeRef {
 pub struct Types {
   next_id: u32,
   types: HashMap<String, TypeRef>,
-}
-
-impl From<TypeDefCompact> for TypeDef {
-  fn from(def: TypeDefCompact) -> Self {
-    Self::Compact(def)
-  }
 }
 
 impl Types {
@@ -198,25 +176,22 @@ impl Types {
     Ok(self.insert_type(name, TypeDef::new_type(type_id)))
   }
 
-  pub fn parse_type(&mut self, name: &str) -> Result<TypeId> {
-    let name = name
+  pub fn parse_type(&mut self, def: &str) -> Result<TypeId> {
+    let name = def
       .trim()
       .replace("\r", "")
       .replace("\n", "")
       .replace("T::", "");
     // Try to resolve the type.
     let type_ref = self.resolve(&name);
-    let mut type_meta = type_ref.def.write().unwrap();
-
     // Check if type is unresolved.
-    match &*type_meta {
-      TypeMetaDef::Unresolved(def) => {
+    match type_ref.ty {
+      None => {
         // Try parsing it.
         log::trace!("Parse Unresolved: name={name}, def={def}");
         if let Some(type_def) = self.parse(def)? {
-          let ty = Type::new(&name, type_def);
-          let new_meta = TypeMetaDef::Resolved(ty);
-          *type_meta = new_meta;
+          // Insert TypeDef for unresolved type.
+          self.insert_type(def, type_def);
         }
       }
       _ => (),
@@ -345,21 +320,21 @@ impl Types {
     }
   }
 
-  fn new_type(&mut self, meta: TypeMetaDef) -> TypeRef {
+  fn new_type(&mut self, ty: Option<Type>) -> TypeRef {
     let id = self.next_id;
     self.next_id += 1;
-    TypeRef::new(id, meta)
+    TypeRef::new(id, ty)
   }
 
   pub fn resolve(&mut self, name: &str) -> TypeRef {
     if let Some(type_ref) = self.types.get(name) {
       type_ref.clone()
     } else if let Some(prim) = Self::is_primitive(name) {
-      let type_ref = self.new_type(TypeMetaDef::Resolved(Type::new("", prim.into())));
+      let type_ref = self.new_type(Some(Type::new("", prim.into())));
       self.types.insert(name.into(), type_ref.clone());
       type_ref
     } else {
-      let type_ref = self.new_type(TypeMetaDef::Unresolved(name.into()));
+      let type_ref = self.new_type(None);
       self.types.insert(name.into(), type_ref.clone());
       type_ref
     }
@@ -367,7 +342,7 @@ impl Types {
 
   pub fn insert_type(&mut self, name: &str, type_def: TypeDef) -> TypeId {
     let ty = Type::new(name, type_def);
-    let type_ref = self.new_type(TypeMetaDef::Resolved(ty));
+    let type_ref = self.new_type(Some(ty));
     self.insert(name, type_ref)
   }
 
@@ -375,18 +350,14 @@ impl Types {
     use std::collections::hash_map::Entry;
     let entry = self.types.entry(name.into());
     match entry {
-      Entry::Occupied(entry) => {
-        let old_ref = entry.get();
-        let mut old_meta = old_ref.def.write().unwrap();
+      Entry::Occupied(mut entry) => {
+        let old_ref = entry.get_mut();
         // Already exists.  Check that it is a `TypeDef::Unresolved`.
-        match &*old_meta {
-          TypeMetaDef::Unresolved(_) => {
-            let ty = Type::new(name, TypeDef::new_type(type_ref.id));
-            *old_meta = TypeMetaDef::Resolved(ty);
-          }
-          _ => {
-            eprintln!("REDEFINE TYPE: {}", name);
-          }
+        if old_ref.ty.is_none() {
+          let ty = Type::new(name, TypeDef::new_type(type_ref.id));
+          old_ref.ty = Some(ty);
+        } else {
+          log::warn!("REDEFINE TYPE: {}", name);
         }
         old_ref.id
       }
@@ -408,12 +379,8 @@ impl Types {
   /// Dump unresolved types.
   pub fn dump_unresolved(&self) {
     for (key, type_ref) in self.types.iter() {
-      let meta = type_ref.def.read().unwrap();
-      match &*meta {
-        TypeMetaDef::Unresolved(def) => {
-          eprintln!("--------- Unresolved: {} => {}", key, def);
-        }
-        _ => (),
+      if type_ref.ty.is_none() {
+        eprintln!("--------- Unresolved: {}", key);
       }
     }
   }

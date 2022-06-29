@@ -288,3 +288,9 @@ impl From<TypeDefPrimitive> for TypeDef {
     Self::Primitive(def)
   }
 }
+
+impl From<TypeDefCompact> for TypeDef {
+  fn from(def: TypeDefCompact) -> Self {
+    Self::Compact(def)
+  }
+}
