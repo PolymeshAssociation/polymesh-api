@@ -1,7 +1,7 @@
 use anyhow::Result;
 
-use sub_codegen_api::schema::*;
-use sub_codegen_api::rpc::*;
+use sub_api::schema::*;
+use sub_api::rpc::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

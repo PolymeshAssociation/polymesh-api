@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use sub_codegen_api::schema::*;
+use sub_api::schema::*;
 
 fn main() -> Result<()> {
   dotenv::dotenv().ok();

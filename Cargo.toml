@@ -1,13 +1,13 @@
 [package]
-name = "sub-codegen-api"
+name = "sub-api"
 version = "0.1.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
-description = "Substrate client API codegen"
+description = "Substrate Rust client API"
 keywords = ["blockchain", "substrate", "codegen"]
-repository = "https://github.com/PolymeshAssociation/sub-codegen-api"
-homepage = "https://github.com/PolymeshAssociation/sub-codegen-api"
+repository = "https://github.com/PolymeshAssociation/sub-api"
+homepage = "https://github.com/PolymeshAssociation/sub-api"
 
 [patch.crates-io]
 frame-support = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
