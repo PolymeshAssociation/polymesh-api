@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::{Arc, RwLock};
@@ -6,8 +7,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use codec::{Decode, Encode};
-
-use indexmap::map::IndexMap;
 
 use scale_info::{TypeDefPrimitive, TypeParameter};
 
@@ -359,7 +358,7 @@ impl From<TypeDefPrimitive> for TypeDef {
 #[derive(Clone)]
 pub struct Types {
   next_id: u32,
-  types: IndexMap<String, TypeRef>,
+  types: HashMap<String, TypeRef>,
 }
 
 impl From<TypeDefCompact> for TypeDef {
@@ -372,7 +371,7 @@ impl Types {
   pub fn new() -> Self {
     Self {
       next_id: 0,
-      types: IndexMap::new(),
+      types: HashMap::new(),
     }
   }
 
@@ -682,7 +681,7 @@ impl Types {
   }
 
   pub fn insert(&mut self, name: &str, type_ref: TypeRef) -> TypeId {
-    use indexmap::map::Entry;
+    use std::collections::hash_map::Entry;
     let entry = self.types.entry(name.into());
     match entry {
       Entry::Occupied(entry) => {

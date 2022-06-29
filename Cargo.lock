@@ -2110,7 +2110,6 @@ dependencies = [
  "frame-metadata",
  "frame-support",
  "hex",
- "indexmap",
  "log",
  "parity-scale-codec",
  "scale-info",

@@ -28,7 +28,6 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
 
 hex = "0.4"
-indexmap = "1.8"
 
 # substrate
 sp-core = { version = "6.0", default-features = false }
