@@ -39,26 +39,6 @@ impl TypeRef {
   }
 }
 
-impl PartialEq for TypeRef {
-  fn eq(&self, other: &Self) -> bool {
-    self.id.eq(&other.id)
-  }
-}
-
-impl Eq for TypeRef {}
-
-impl PartialOrd for TypeRef {
-  fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-    Some(self.id.cmp(&other.id))
-  }
-}
-
-impl Ord for TypeRef {
-  fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-    self.id.cmp(&other.id)
-  }
-}
-
 impl std::fmt::Debug for TypeRef {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
     let meta = self.def.read().unwrap();
