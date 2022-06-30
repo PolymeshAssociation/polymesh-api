@@ -1,3 +1,5 @@
+use std::env;
+
 use anyhow::Result;
 
 use sub_api::schema::*;
@@ -8,13 +10,16 @@ async fn main() -> Result<()> {
   dotenv::dotenv().ok();
   env_logger::init();
 
-  let url = "ws://comp002:9944/";
+  let url = env::args().nth(1).expect("Missing ws url");
 
   let client = RpcClient::new(&url).await?;
 
   // Get block hash
   let gen_hash = client.get_block_hash(0).await?;
   println!("gen_hash = {gen_hash}");
+
+  let version = client.get_runtime_version(None).await?;
+  println!("{version:#?}");
 
   // Get current Metadata.
   let metadata = client.get_metadata(None).await?;

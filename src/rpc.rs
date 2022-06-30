@@ -9,6 +9,7 @@ use serde::de::DeserializeOwned;
 
 use codec::Decode;
 use frame_metadata::RuntimeMetadataPrefixed;
+use sp_version::RuntimeVersion;
 use sp_core::H256;
 
 use crate::error::*;
@@ -90,6 +91,11 @@ impl RpcClient {
   pub async fn get_block_hash(&self, block_number: u32) -> Result<BlockHash> {
     let params = rpc_params!(block_number);
     Ok(self.request("chain_getBlockHash", params).await?)
+  }
+
+  pub async fn get_runtime_version(&self, block: Option<BlockHash>) -> Result<RuntimeVersion> {
+    let params = rpc_params!(block);
+    Ok(self.request("state_getRuntimeVersion", params).await?)
   }
 
   pub async fn get_metadata(&self, block: Option<BlockHash>) -> Result<RuntimeMetadataPrefixed> {
