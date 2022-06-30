@@ -67,3 +67,8 @@ std = [
 	"sp-runtime/std",
 	"scale-info/std",
 ]
+
+[workspace]
+members = [
+	"codegen",
+]
