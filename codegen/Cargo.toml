@@ -27,10 +27,14 @@ serde = "1.0"
 sp-core = { version = "6.0", default-features = false }
 sp-version = { version = "5.0", default-features = false }
 sp-runtime = { version = "6.0", default-features = false }
+sp-api = { version = "4.0.0-dev", default-features = false }
+sp-session = { version = "4.0.0-dev", default-features = false }
+sp-arithmetic = { version = "5.0", default-features = false }
 frame-support = { version = "4.0.0-dev", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "2", default-features = false }
+indexmap = "1.9.1"
 
 [dev-dependencies]
 anyhow = "1"
@@ -53,7 +57,10 @@ std = [
 	"frame-support/std",
 	"frame-metadata/std",
 	"sp-core/std",
+	"sp-api/std",
 	"sp-version/std",
 	"sp-runtime/std",
+	"sp-session/std",
+	"sp-arithmetic/std",
 	"scale-info/std",
 ]

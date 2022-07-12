@@ -309,6 +309,7 @@ dependencies = [
  "frame-support",
  "heck",
  "hex",
+ "indexmap",
  "log",
  "parity-scale-codec",
  "proc-macro2",
@@ -317,8 +318,11 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "sp-api",
+ "sp-arithmetic",
  "sp-core",
  "sp-runtime",
+ "sp-session",
  "sp-version",
  "sub-api",
  "thiserror",
@@ -2340,6 +2344,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-api"
+version = "4.0.0-dev"
+source = "git+https://github.com/PolymeshAssociation/substrate?branch=polymesh-monthly-2022-05#0290f359003d1ce2c38fb805ff290140441d2386"
+dependencies = [
+ "hash-db",
+ "log",
+ "parity-scale-codec",
+ "sp-api-proc-macro",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-version",
+ "thiserror",
+]
+
+[[package]]
+name = "sp-api-proc-macro"
+version = "4.0.0-dev"
+source = "git+https://github.com/PolymeshAssociation/substrate?branch=polymesh-monthly-2022-05#0290f359003d1ce2c38fb805ff290140441d2386"
+dependencies = [
+ "blake2",
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "sp-application-crypto"
 version = "6.0.0"
 source = "git+https://github.com/PolymeshAssociation/substrate?branch=polymesh-monthly-2022-05#0290f359003d1ce2c38fb805ff290140441d2386"
@@ -2573,6 +2606,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "sp-session"
+version = "4.0.0-dev"
+source = "git+https://github.com/PolymeshAssociation/substrate?branch=polymesh-monthly-2022-05#0290f359003d1ce2c38fb805ff290140441d2386"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
 ]
 
 [[package]]

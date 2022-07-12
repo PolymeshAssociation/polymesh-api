@@ -1,8 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Result};
 
 use heck::ToSnakeCase;
+
+use indexmap::IndexMap;
 
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
@@ -41,6 +43,7 @@ impl ModuleCode {
       let sub_code = sub.gen();
       code.append_all(quote! {
         pub mod #ident {
+          use super::*;
           #sub_code
         }
       });
@@ -58,43 +61,79 @@ mod v14 {
   use frame_metadata::v14::RuntimeMetadataV14;
   use scale_info::{form::PortableForm, Field, Type, TypeDef, Variant};
 
+  #[derive(Default)]
   struct TypeParameters {
-    names: HashMap<u32, String>,
+    names: IndexMap<u32, String>,
+    used: HashSet<String>,
   }
 
   impl TypeParameters {
-    fn new(ty: &Type<PortableForm>) -> (TokenStream, Self) {
-      let mut names = HashMap::new();
+    fn new(ty: &Type<PortableForm>) -> Self {
+      let mut names = IndexMap::new();
 
       let ty_params = ty.type_params();
-      let code = if ty_params.len() > 0 {
-        let mut params = Vec::with_capacity(ty_params.len());
+      if ty_params.len() > 0 {
         for p in ty_params {
           if let Some(p_ty) = p.ty() {
             let name = p.name();
-            let ident = format_ident!("{name}");
             names.insert(p_ty.id(), name.into());
-            params.push(quote! { #ident })
           }
         }
-        quote! { <#(#params),*> }
-      } else {
-        TokenStream::new()
-      };
+      }
 
-      (code, Self { names })
+      Self {
+        names,
+        used: HashSet::default(),
+      }
     }
 
-    fn get_param(&self, id: u32) -> Option<TokenStream> {
+    fn get_param(&mut self, id: u32) -> Option<TokenStream> {
       self.names.get(&id).map(|name| {
+        self.used.insert(name.to_string());
         let name = format_ident!("{name}");
         quote! { #name }
       })
+    }
+
+    fn get_type_params(&self) -> TokenStream {
+      if self.names.len() > 0 {
+        let params = self.names.values().map(|name| {
+          let ident = format_ident!("{name}");
+          quote!(#ident)
+        });
+        quote!(<#(#params),*>)
+      } else {
+        TokenStream::new()
+      }
+    }
+
+    fn get_unused_params(&self) -> Option<TokenStream> {
+      if self.used.len() < self.names.len() {
+        let params = self
+          .names
+          .values()
+          .filter(|name| !self.used.contains(*name))
+          .map(|name| {
+            let ident = format_ident!("{name}");
+            quote!(#ident)
+          })
+          .collect::<Vec<_>>();
+        // Return a tuple type with the unused params.
+        if params.len() > 1 {
+          Some(quote! { core::marker::PhantomData<(#(#params),*)> })
+        } else {
+          Some(quote! { core::marker::PhantomData<#(#params),*> })
+        }
+      } else {
+        None
+      }
     }
   }
 
   struct Generator {
     md: RuntimeMetadataV14,
+    external_modules: HashSet<String>,
+    rename_types: HashMap<String, TokenStream>,
     call: TokenStream,
   }
 
@@ -102,32 +141,108 @@ mod v14 {
     fn new(md: RuntimeMetadataV14, runtime: &str) -> Self {
       let runtime_ident = format_ident!("{runtime}");
       let call = quote! { #runtime_ident::runtime::Call };
-      Self { md, call }
+      let external_modules = HashSet::from_iter(
+        [
+          "sp_arithmetic",
+          "sp_core",
+          "sp_session",
+          "sp_runtime",
+          "sp_version",
+          "frame_support",
+        ]
+        .iter()
+        .map(|t| t.to_string()),
+      );
+      let rename_types = HashMap::from_iter(
+        [
+          (
+            "sp_runtime::multiaddress::MultiAddress",
+            quote!(sp_runtime::MultiAddress),
+          ),
+          (
+            "sp_runtime::generic::era::Era",
+            quote!(sp_runtime::generic::Era),
+          ),
+          (
+            "sp_runtime::generic::header::Header",
+            quote!(sp_runtime::generic::Header),
+          ),
+          ("BTreeSet", quote!(Vec)),
+          ("BTreeMap", quote!(std::collections::BTreeMap)),
+          (
+            "frame_support::traits::tokens::misc::BalanceStatus",
+            quote!(frame_support::traits::BalanceStatus),
+          ),
+          (
+            "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
+            quote!(Vec),
+          ),
+        ]
+        .into_iter()
+        .map(|(name, code)| (name.to_string(), code)),
+      );
+      Self {
+        md,
+        external_modules,
+        rename_types,
+        call,
+      }
+    }
+
+    fn is_boxed(field: &Field<PortableForm>) -> bool {
+      if let Some(type_name) = field.type_name() {
+        type_name.contains("Box<")
+      } else {
+        false
+      }
     }
 
     fn type_name(&self, id: u32) -> Option<TokenStream> {
+      let mut scope = TypeParameters::default();
+      self.type_name_scoped(id, &mut scope)
+    }
+
+    fn type_name_scoped(&self, id: u32, scope: &mut TypeParameters) -> Option<TokenStream> {
+      if let Some(scope_type) = scope.get_param(id) {
+        return Some(scope_type);
+      }
       let ty = self.md.types.resolve(id)?;
-      let segments: Vec<_> = ty
-        .path()
-        .segments()
-        .iter()
-        .map(|s| format_ident!("{s}"))
-        .collect();
+      let segments = ty.path().segments();
+      let full_name = segments.join("::");
+      let type_ident = self
+        .rename_types
+        .get(&full_name)
+        .cloned()
+        .unwrap_or_else(|| {
+          let segment_idents: Vec<_> = segments.into_iter().map(|s| format_ident!("{s}")).collect();
+          quote! {
+            #(#segment_idents)::*
+          }
+        });
 
       match ty.type_def() {
         TypeDef::Sequence(ty) => {
-          return self.type_name(ty.type_param().id()).map(|elem_ty| {
-            quote! { Vec<#elem_ty> }
-          });
+          return self
+            .type_name_scoped(ty.type_param().id(), scope)
+            .map(|elem_ty| {
+              quote! { Vec<#elem_ty> }
+            });
         }
         TypeDef::Array(ty) => {
-          let len = ty.len();
-          return self.type_name(ty.type_param().id()).map(|elem_ty| {
-            quote! { [#elem_ty; #len] }
-          });
+          let len = ty.len() as usize;
+          return self
+            .type_name_scoped(ty.type_param().id(), scope)
+            .map(|elem_ty| {
+              quote! { [#elem_ty; #len] }
+            });
         }
-        TypeDef::Tuple(_ty) => {
-          return Some(quote! { () });
+        TypeDef::Tuple(ty) => {
+          let fields = ty
+            .fields()
+            .into_iter()
+            .filter_map(|field| self.type_name_scoped(field.id(), scope))
+            .collect::<Vec<_>>();
+          return Some(quote! { (#(#fields),*) });
         }
         TypeDef::Primitive(prim) => {
           use scale_info::TypeDefPrimitive::*;
@@ -154,9 +269,11 @@ mod v14 {
           return Some(quote! { #name });
         }
         TypeDef::Compact(ty) => {
-          return self.type_name(ty.type_param().id()).map(|ty| {
-            quote! { codec::Compact<#ty> }
-          });
+          return self
+            .type_name_scoped(ty.type_param().id(), scope)
+            .map(|ty| {
+              quote! { ::codec::Compact<#ty> }
+            });
         }
         _ => {}
       }
@@ -164,22 +281,16 @@ mod v14 {
       let type_params = ty
         .type_params()
         .iter()
-        .filter_map(|param| param.ty().map(|ty| self.type_name(ty.id())))
+        .filter_map(|param| param.ty().map(|ty| self.type_name_scoped(ty.id(), scope)))
         .collect::<Vec<_>>();
 
       if type_params.len() > 0 {
         Some(quote! {
-          #(#segments)::*<#(#type_params),*>
+          #type_ident<#(#type_params),*>
         })
       } else {
-        Some(quote! {
-          #(#segments)::*
-        })
+        Some(type_ident)
       }
-    }
-
-    fn type_name_scoped(&self, id: u32, scope: &TypeParameters) -> Option<TokenStream> {
-      scope.get_param(id).or_else(|| self.type_name(id))
     }
 
     fn gen_func(
@@ -205,20 +316,24 @@ mod v14 {
           .type_name(field.ty().id())
           .expect("Missing Extrinsic param type");
         fields.append_all(quote! {#name: #type_name,});
-        field_names.append_all(quote! {#name,});
+        if Self::is_boxed(field) {
+          field_names.append_all(quote! {#name: ::std::boxed::Box::new(#name),});
+        } else {
+          field_names.append_all(quote! {#name,});
+        }
       }
 
       let call_ty = &self.call;
       if md.fields().len() > 0 {
         quote! {
           pub fn #func_ident(&self, #fields) -> #call_ty {
-            #call_ty::#mod_call_ident(#mod_call::#func_ident { #field_names })
+            types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names })
           }
         }
       } else {
         quote! {
           pub fn #func_ident(&self, #fields) -> #call_ty {
-            #call_ty::#mod_call_ident(#mod_call::#func_ident)
+            types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident)
           }
         }
       }
@@ -257,7 +372,9 @@ mod v14 {
       }
 
       let code = quote! {
-        mod #mod_ident {
+        pub mod #mod_ident {
+          use super::*;
+
           #[derive(Clone, Default)]
           pub struct CallApi;
 
@@ -281,19 +398,22 @@ mod v14 {
     fn gen_struct_fields(
       &self,
       fields: &[Field<PortableForm>],
-      type_params: &TypeParameters,
-    ) -> Option<TokenStream> {
+      scope: &mut TypeParameters,
+    ) -> Option<(bool, TokenStream)> {
       let mut is_tuple = false;
       let mut named = Vec::new();
       let mut unnamed = Vec::new();
 
       // Check for unit type (i.e. empty field list).
       if fields.len() == 0 {
-        return Some(quote! {;});
+        return Some((true, quote! {}));
       }
 
       for field in fields {
-        let field_ty = self.type_name_scoped(field.ty().id(), &type_params)?;
+        let mut field_ty = self.type_name_scoped(field.ty().id(), scope)?;
+        if Self::is_boxed(field) {
+          field_ty = quote!(::std::boxed::Box<#field_ty>);
+        }
         unnamed.push(quote! { pub #field_ty });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
@@ -305,20 +425,21 @@ mod v14 {
       }
 
       if is_tuple {
-        Some(quote! { (#(#unnamed),*); })
+        Some((true, quote! { #(#unnamed),* }))
       } else {
-        Some(quote! {
-          {
+        Some((
+          false,
+          quote! {
             #(#named),*
-          }
-        })
+          },
+        ))
       }
     }
 
     fn gen_enum_fields(
       &self,
       fields: &[Field<PortableForm>],
-      type_params: &TypeParameters,
+      scope: &mut TypeParameters,
     ) -> Option<TokenStream> {
       let mut is_tuple = false;
       let mut named = Vec::new();
@@ -330,7 +451,10 @@ mod v14 {
       }
 
       for field in fields {
-        let field_ty = self.type_name_scoped(field.ty().id(), &type_params)?;
+        let mut field_ty = self.type_name_scoped(field.ty().id(), scope)?;
+        if Self::is_boxed(field) {
+          field_ty = quote!(::std::boxed::Box<#field_ty>);
+        }
         unnamed.push(quote! { #field_ty });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
@@ -355,16 +479,36 @@ mod v14 {
     fn gen_type(&self, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
       let ident = ty.path().ident()?;
       let ty_ident = format_ident!("{ident}");
-      let (params, type_params) = TypeParameters::new(ty);
+      let mut scope = TypeParameters::new(ty);
       Some((
         ident,
         match ty.type_def() {
           TypeDef::Composite(struct_ty) => {
-            let fields = self.gen_struct_fields(struct_ty.fields(), &type_params)?;
-            quote! {
-              #[derive(codec::Encode, codec::Decode)]
-              #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-              pub struct #ty_ident #params #fields
+            let (is_tuple, mut fields) = self.gen_struct_fields(struct_ty.fields(), &mut scope)?;
+            if let Some(unused_params) = scope.get_unused_params() {
+              if is_tuple {
+                fields.append_all(quote! {
+                  , #unused_params
+                });
+              } else {
+                fields.append_all(quote! {
+                  , _phantom_data: #unused_params
+                });
+              }
+            }
+            let params = scope.get_type_params();
+            if is_tuple {
+              quote! {
+                #[derive(::codec::Encode, ::codec::Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct #ty_ident #params (#fields);
+              }
+            } else {
+              quote! {
+                #[derive(::codec::Encode, ::codec::Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct #ty_ident #params { #fields }
+              }
             }
           }
           TypeDef::Variant(enum_ty) => {
@@ -372,15 +516,21 @@ mod v14 {
             for variant in enum_ty.variants() {
               let idx = variant.index();
               let name = format_ident!("{}", variant.name());
-              let fields = self.gen_enum_fields(variant.fields(), &type_params)?;
+              let fields = self.gen_enum_fields(variant.fields(), &mut scope)?;
               variants.append_all(quote! {
                 #[codec(index = #idx)]
                 #name #fields
               });
             }
+            if let Some(unused_params) = scope.get_unused_params() {
+              variants.append_all(quote! {
+                PhantomDataVariant(#unused_params)
+              });
+            }
+            let params = scope.get_type_params();
             quote! {
-              #[derive(codec::Encode, codec::Decode)]
-              #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+              #[derive(::codec::Encode, ::codec::Decode)]
+              #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
               pub enum #ty_ident #params {
                 #variants
               }
@@ -399,8 +549,15 @@ mod v14 {
 
       for ty in self.md.types.types() {
         let ty = ty.ty();
-        if let Some((ident, code)) = self.gen_type(ty) {
-          modules.add_type(ty.path().namespace(), ident, code);
+        // Only generate type code for types with namespaces.  Basic rust types like
+        // `Result` and `Option` have no namespace.
+        if let Some(ns_top) = ty.path().namespace().first() {
+          // Don't generate code for external types.
+          if !self.external_modules.contains(ns_top) {
+            if let Some((ident, code)) = self.gen_type(ty) {
+              modules.add_type(ty.path().namespace(), ident, code);
+            }
+          }
         }
       }
 
@@ -434,16 +591,19 @@ mod v14 {
       let types_code = self.generate_types();
 
       quote! {
+        #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod types {
           #types_code
         }
 
+        #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod api {
+          use super::types;
           use super::types::*;
           #( #modules )*
         }
 
-          /*
+        /*
         #[derive(Clone, Default)]
         pub struct Api {
           call: CallApi,
