@@ -14,7 +14,7 @@ use sp_core::H256;
 
 use crate::error::*;
 
-type BlockHash = H256;
+pub type BlockHash = H256;
 
 enum InnerRpcClient {
   Ws(WsClient),
