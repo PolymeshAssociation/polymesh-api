@@ -2,12 +2,14 @@ use std::env;
 
 use anyhow::Result;
 
+use sp_keyring::AccountKeyring;
+
 use sub_api::rpc::*;
 
 use codegen::*;
 
-mod polymesh_api;
-use polymesh_api::*;
+pub mod polymesh;
+use polymesh::Api;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -28,5 +30,9 @@ async fn main() -> Result<()> {
   println!("{}", rustfmt_wrapper::rustfmt(code).unwrap());
   //println!("{code}");
 
+  let dest = AccountKeyring::Bob.to_account_id().into();
+  let api = Api::new();
+  let call = api.call.balances.transfer(dest, 123_012_345.into());
+  println!("balances.transfer = {call:#?}");
   Ok(())
 }

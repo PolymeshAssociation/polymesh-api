@@ -1,0 +1,13 @@
+[package]
+name = "sub-api-macro"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+codegen = { path = "../codegen" }
+darling = "0.14.1"
+proc-macro-error = "1"
+syn = "=1.0.96"

@@ -9,7 +9,15 @@ use indexmap::IndexMap;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
+use codec::Decode;
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
+
+fn segments_ident(segments: &[String]) -> TokenStream {
+  let idents: Vec<_> = segments.into_iter().map(|s| format_ident!("{s}")).collect();
+  quote! {
+    #(#idents)::*
+  }
+}
 
 struct ModuleCode {
   name: String,
@@ -138,9 +146,11 @@ mod v14 {
   }
 
   impl Generator {
-    fn new(md: RuntimeMetadataV14, runtime: &str) -> Self {
-      let runtime_ident = format_ident!("{runtime}");
-      let call = quote! { #runtime_ident::runtime::Call };
+    fn new(md: RuntimeMetadataV14) -> Self {
+      // Detect the chain runtime path.
+      let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
+      let runtime_ident = segments_ident(runtime_ty.path().namespace());
+      let call = quote! { #runtime_ident::Call };
       let external_modules = HashSet::from_iter(
         [
           "sp_arithmetic",
@@ -213,12 +223,7 @@ mod v14 {
         .rename_types
         .get(&full_name)
         .cloned()
-        .unwrap_or_else(|| {
-          let segment_idents: Vec<_> = segments.into_iter().map(|s| format_ident!("{s}")).collect();
-          quote! {
-            #(#segment_idents)::*
-          }
-        });
+        .unwrap_or_else(|| segments_ident(segments));
 
       match ty.type_def() {
         TypeDef::Sequence(ty) => {
@@ -375,7 +380,7 @@ mod v14 {
         pub mod #mod_ident {
           use super::*;
 
-          #[derive(Clone, Default)]
+          #[derive(Clone, Debug, Default)]
           pub struct CallApi;
 
           impl CallApi {
@@ -383,7 +388,7 @@ mod v14 {
           }
 
           /*
-          #[derive(Clone, Default)]
+          #[derive(Clone, Debug, Default)]
           pub struct QueryApi;
 
           impl QueryApi {
@@ -499,12 +504,14 @@ mod v14 {
             let params = scope.get_type_params();
             if is_tuple {
               quote! {
+                #[derive(Clone, Debug)]
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params (#fields);
               }
             } else {
               quote! {
+                #[derive(Clone, Debug)]
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params { #fields }
@@ -529,6 +536,7 @@ mod v14 {
             }
             let params = scope.get_type_params();
             quote! {
+              #[derive(Clone, Debug)]
               #[derive(::codec::Encode, ::codec::Decode)]
               #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
               pub enum #ty_ident #params {
@@ -603,11 +611,10 @@ mod v14 {
           #( #modules )*
         }
 
-        /*
-        #[derive(Clone, Default)]
+        #[derive(Clone, Debug, Default)]
         pub struct Api {
-          call: CallApi,
-          query: QueryApi,
+          pub call: CallApi,
+          //pub query: QueryApi,
         }
 
         impl Api {
@@ -616,11 +623,12 @@ mod v14 {
           }
         }
 
-        #[derive(Clone, Default)]
+        #[derive(Clone, Debug, Default)]
         pub struct CallApi {
           #call_fields
         }
 
+        /*
         #[derive(Clone, Default)]
         pub struct QueryApi {
           #query_fields
@@ -631,7 +639,7 @@ mod v14 {
   }
 
   pub fn generate(md: RuntimeMetadataV14) -> TokenStream {
-    Generator::new(md, "polymesh_runtime_develop").generate()
+    Generator::new(md).generate()
   }
 }
 
@@ -643,4 +651,15 @@ pub fn generate(metadata: RuntimeMetadataPrefixed) -> Result<TokenStream> {
       return Err(anyhow!("Unsupported metadata version").into());
     }
   }
+}
+
+pub fn macro_codegen(mut buf: &[u8], mod_ident: TokenStream) -> Result<TokenStream> {
+  let metadata = RuntimeMetadataPrefixed::decode(&mut buf)?;
+
+  let code = generate(metadata)?;
+  Ok(quote! {
+    pub mod #mod_ident {
+        #code
+    }
+  })
 }

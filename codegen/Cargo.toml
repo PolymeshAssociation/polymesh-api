@@ -46,6 +46,8 @@ tokio = { version = "1.19", features = ["full"] }
 sub-api = { version = "0.1", path = "../" }
 rustfmt-wrapper = "0.2.0"
 
+sp-keyring = "6.0.0"
+
 [features]
 default = [ "std", "v12", "v13", "v14" ]
 
