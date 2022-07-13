@@ -1,10 +1,3432 @@
 #[allow(dead_code, unused_imports, non_camel_case_types)]
 pub mod types {
-    pub mod pallet_sto {
+    pub mod pallet_offences {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                Offence {
+                    kind: [u8; 16usize],
+                    timeslot: Vec<u8>,
+                },
+            }
+        }
+    }
+    pub mod pallet_protocol_fee {
         use super::*;
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct FundraiserName(pub Vec<u8>);
+        pub enum RawEvent<AccountId> {
+            #[codec(index = 0u8)]
+            FeeSet(polymesh_primitives::identity_id::IdentityId, u128),
+            #[codec(index = 1u8)]
+            CoefficientSet(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::PosRatio,
+            ),
+            #[codec(index = 2u8)]
+            FeeCharged(AccountId, u128),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            change_coefficient {
+                coefficient: polymesh_primitives::PosRatio,
+            },
+            #[codec(index = 1u8)]
+            change_base_fee {
+                op: polymesh_common_utilities::protocol_fee::ProtocolOp,
+                base_fee: u128,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            InsufficientAccountBalance,
+            #[codec(index = 1u8)]
+            UnHandledImbalances,
+            #[codec(index = 2u8)]
+            InsufficientSubsidyBalance,
+        }
+    }
+    pub mod primitive_types {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct H256(pub [u8; 32usize]);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct H512(pub [u8; 64usize]);
+    }
+    pub mod pallet_bridge {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            change_controller {
+                controller: sp_core::crypto::AccountId32,
+            },
+            #[codec(index = 1u8)]
+            change_admin { admin: sp_core::crypto::AccountId32 },
+            #[codec(index = 2u8)]
+            change_timelock { timelock: u32 },
+            #[codec(index = 3u8)]
+            freeze,
+            #[codec(index = 4u8)]
+            unfreeze,
+            #[codec(index = 5u8)]
+            change_bridge_limit { amount: u128, duration: u32 },
+            #[codec(index = 6u8)]
+            change_bridge_exempted {
+                exempted: Vec<(polymesh_primitives::identity_id::IdentityId, bool)>,
+            },
+            #[codec(index = 7u8)]
+            force_handle_bridge_tx {
+                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 8u8)]
+            batch_propose_bridge_tx {
+                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
+            },
+            #[codec(index = 9u8)]
+            propose_bridge_tx {
+                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 10u8)]
+            handle_bridge_tx {
+                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 11u8)]
+            freeze_txs {
+                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
+            },
+            #[codec(index = 12u8)]
+            unfreeze_txs {
+                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
+            },
+            #[codec(index = 13u8)]
+            handle_scheduled_bridge_tx {
+                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 14u8)]
+            add_freeze_admin {
+                freeze_admin: sp_core::crypto::AccountId32,
+            },
+            #[codec(index = 15u8)]
+            remove_freeze_admin {
+                freeze_admin: sp_core::crypto::AccountId32,
+            },
+            #[codec(index = 16u8)]
+            remove_txs {
+                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<AccountId, BlockNumber> {
+            #[codec(index = 0u8)]
+            ControllerChanged(polymesh_primitives::identity_id::IdentityId, AccountId),
+            #[codec(index = 1u8)]
+            AdminChanged(polymesh_primitives::identity_id::IdentityId, AccountId),
+            #[codec(index = 2u8)]
+            TimelockChanged(polymesh_primitives::identity_id::IdentityId, BlockNumber),
+            #[codec(index = 3u8)]
+            Bridged(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_bridge::BridgeTx<AccountId>,
+            ),
+            #[codec(index = 4u8)]
+            Frozen(polymesh_primitives::identity_id::IdentityId),
+            #[codec(index = 5u8)]
+            Unfrozen(polymesh_primitives::identity_id::IdentityId),
+            #[codec(index = 6u8)]
+            FrozenTx(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_bridge::BridgeTx<AccountId>,
+            ),
+            #[codec(index = 7u8)]
+            UnfrozenTx(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_bridge::BridgeTx<AccountId>,
+            ),
+            #[codec(index = 8u8)]
+            ExemptedUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::identity_id::IdentityId,
+                bool,
+            ),
+            #[codec(index = 9u8)]
+            BridgeLimitUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                u128,
+                BlockNumber,
+            ),
+            #[codec(index = 10u8)]
+            TxsHandled(Vec<(AccountId, BlockNumber, pallet_bridge::HandledTxStatus)>),
+            #[codec(index = 11u8)]
+            BridgeTxScheduled(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_bridge::BridgeTx<AccountId>,
+                BlockNumber,
+            ),
+            #[codec(index = 12u8)]
+            BridgeTxScheduleFailed(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_bridge::BridgeTx<AccountId>,
+                Vec<u8>,
+            ),
+            #[codec(index = 13u8)]
+            FreezeAdminAdded(polymesh_primitives::identity_id::IdentityId, AccountId),
+            #[codec(index = 14u8)]
+            FreezeAdminRemoved(polymesh_primitives::identity_id::IdentityId, AccountId),
+            #[codec(index = 15u8)]
+            TxRemoved(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_bridge::BridgeTx<AccountId>,
+            ),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum HandledTxStatus {
+            #[codec(index = 0u8)]
+            Success,
+            #[codec(index = 1u8)]
+            Error(Vec<u8>),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct BridgeTx<Account> {
+            pub nonce: u32,
+            pub recipient: Account,
+            pub amount: u128,
+            pub tx_hash: primitive_types::H256,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum BridgeTxStatus {
+            #[codec(index = 0u8)]
+            Absent,
+            #[codec(index = 1u8)]
+            Pending(u8),
+            #[codec(index = 2u8)]
+            Frozen,
+            #[codec(index = 3u8)]
+            Timelocked,
+            #[codec(index = 4u8)]
+            Handled,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct BridgeTxDetail<BlockNumber> {
+            pub amount: u128,
+            pub status: pallet_bridge::BridgeTxStatus,
+            pub execution_block: BlockNumber,
+            pub tx_hash: primitive_types::H256,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            ControllerNotSet,
+            #[codec(index = 1u8)]
+            BadCaller,
+            #[codec(index = 2u8)]
+            BadAdmin,
+            #[codec(index = 3u8)]
+            NoValidCdd,
+            #[codec(index = 4u8)]
+            ProposalAlreadyHandled,
+            #[codec(index = 5u8)]
+            Unauthorized,
+            #[codec(index = 6u8)]
+            Frozen,
+            #[codec(index = 7u8)]
+            NotFrozen,
+            #[codec(index = 8u8)]
+            FrozenTx,
+            #[codec(index = 9u8)]
+            BridgeLimitReached,
+            #[codec(index = 10u8)]
+            Overflow,
+            #[codec(index = 11u8)]
+            DivisionByZero,
+            #[codec(index = 12u8)]
+            TimelockedTx,
+        }
+    }
+    pub mod pallet_compliance_manager {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            Unauthorized,
+            #[codec(index = 1u8)]
+            DidNotExist,
+            #[codec(index = 2u8)]
+            InvalidComplianceRequirementId,
+            #[codec(index = 3u8)]
+            IncorrectOperationOnTrustedIssuer,
+            #[codec(index = 4u8)]
+            DuplicateComplianceRequirements,
+            #[codec(index = 5u8)]
+            ComplianceRequirementTooComplex,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            add_compliance_requirement {
+                ticker: polymesh_primitives::ticker::Ticker,
+                sender_conditions: Vec<polymesh_primitives::condition::Condition>,
+                receiver_conditions: Vec<polymesh_primitives::condition::Condition>,
+            },
+            #[codec(index = 1u8)]
+            remove_compliance_requirement {
+                ticker: polymesh_primitives::ticker::Ticker,
+                id: u32,
+            },
+            #[codec(index = 2u8)]
+            replace_asset_compliance {
+                ticker: polymesh_primitives::ticker::Ticker,
+                asset_compliance:
+                    Vec<polymesh_primitives::compliance_manager::ComplianceRequirement>,
+            },
+            #[codec(index = 3u8)]
+            reset_asset_compliance {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 4u8)]
+            pause_asset_compliance {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 5u8)]
+            resume_asset_compliance {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 6u8)]
+            add_default_trusted_claim_issuer {
+                ticker: polymesh_primitives::ticker::Ticker,
+                issuer: polymesh_primitives::condition::TrustedIssuer,
+            },
+            #[codec(index = 7u8)]
+            remove_default_trusted_claim_issuer {
+                ticker: polymesh_primitives::ticker::Ticker,
+                issuer: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 8u8)]
+            change_compliance_requirement {
+                ticker: polymesh_primitives::ticker::Ticker,
+                new_req: polymesh_primitives::compliance_manager::ComplianceRequirement,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Event {
+            #[codec(index = 0u8)]
+            ComplianceRequirementCreated(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                polymesh_primitives::compliance_manager::ComplianceRequirement,
+            ),
+            #[codec(index = 1u8)]
+            ComplianceRequirementRemoved(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                u32,
+            ),
+            #[codec(index = 2u8)]
+            AssetComplianceReplaced(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                Vec<polymesh_primitives::compliance_manager::ComplianceRequirement>,
+            ),
+            #[codec(index = 3u8)]
+            AssetComplianceReset(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+            ),
+            #[codec(index = 4u8)]
+            AssetComplianceResumed(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+            ),
+            #[codec(index = 5u8)]
+            AssetCompliancePaused(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+            ),
+            #[codec(index = 6u8)]
+            ComplianceRequirementChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                polymesh_primitives::compliance_manager::ComplianceRequirement,
+            ),
+            #[codec(index = 7u8)]
+            TrustedDefaultClaimIssuerAdded(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                polymesh_primitives::condition::TrustedIssuer,
+            ),
+            #[codec(index = 8u8)]
+            TrustedDefaultClaimIssuerRemoved(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                polymesh_primitives::identity_id::IdentityId,
+            ),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+    }
+    pub mod pallet_permissions {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct StoreCallMetadata();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            UnauthorizedCaller,
+        }
+    }
+    pub mod pallet_indices {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                claim { index: u32 },
+                #[codec(index = 1u8)]
+                transfer {
+                    new: sp_core::crypto::AccountId32,
+                    index: u32,
+                },
+                #[codec(index = 2u8)]
+                free { index: u32 },
+                #[codec(index = 3u8)]
+                force_transfer {
+                    new: sp_core::crypto::AccountId32,
+                    index: u32,
+                    freeze: bool,
+                },
+                #[codec(index = 4u8)]
+                freeze { index: u32 },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                NotAssigned,
+                #[codec(index = 1u8)]
+                NotOwner,
+                #[codec(index = 2u8)]
+                InUse,
+                #[codec(index = 3u8)]
+                NotTransfer,
+                #[codec(index = 4u8)]
+                Permanent,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                IndexAssigned {
+                    who: sp_core::crypto::AccountId32,
+                    index: u32,
+                },
+                #[codec(index = 1u8)]
+                IndexFreed { index: u32 },
+                #[codec(index = 2u8)]
+                IndexFrozen {
+                    index: u32,
+                    who: sp_core::crypto::AccountId32,
+                },
+            }
+        }
+    }
+    pub mod sp_npos_elections {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ElectionScore {
+            pub minimal_stake: u128,
+            pub sum_stake: u128,
+            pub sum_stake_squared: u128,
+        }
+    }
+    pub mod polymesh_runtime_develop {
+        use super::*;
+        pub mod runtime {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                System(frame_system::pallet::Call),
+                #[codec(index = 1u8)]
+                Babe(pallet_babe::pallet::Call),
+                #[codec(index = 2u8)]
+                Timestamp(pallet_timestamp::pallet::Call),
+                #[codec(index = 3u8)]
+                Indices(pallet_indices::pallet::Call),
+                #[codec(index = 4u8)]
+                Authorship(pallet_authorship::pallet::Call),
+                #[codec(index = 5u8)]
+                Balances(pallet_balances::Call),
+                #[codec(index = 7u8)]
+                Identity(pallet_identity::Call),
+                #[codec(index = 8u8)]
+                CddServiceProviders(pallet_group::Call),
+                #[codec(index = 9u8)]
+                PolymeshCommittee(pallet_committee::Call),
+                #[codec(index = 10u8)]
+                CommitteeMembership(pallet_group::Call),
+                #[codec(index = 11u8)]
+                TechnicalCommittee(pallet_committee::Call),
+                #[codec(index = 12u8)]
+                TechnicalCommitteeMembership(pallet_group::Call),
+                #[codec(index = 13u8)]
+                UpgradeCommittee(pallet_committee::Call),
+                #[codec(index = 14u8)]
+                UpgradeCommitteeMembership(pallet_group::Call),
+                #[codec(index = 15u8)]
+                MultiSig(pallet_multisig::Call),
+                #[codec(index = 16u8)]
+                Bridge(pallet_bridge::Call),
+                #[codec(index = 17u8)]
+                Staking(pallet_staking::Call),
+                #[codec(index = 19u8)]
+                Session(pallet_session::pallet::Call),
+                #[codec(index = 21u8)]
+                Grandpa(pallet_grandpa::pallet::Call),
+                #[codec(index = 23u8)]
+                ImOnline(pallet_im_online::pallet::Call),
+                #[codec(index = 25u8)]
+                Sudo(pallet_sudo::Call),
+                #[codec(index = 26u8)]
+                Asset(pallet_asset::Call),
+                #[codec(index = 27u8)]
+                CapitalDistribution(pallet_corporate_actions::distribution::Call),
+                #[codec(index = 28u8)]
+                Checkpoint(pallet_asset::checkpoint::Call),
+                #[codec(index = 29u8)]
+                ComplianceManager(pallet_compliance_manager::Call),
+                #[codec(index = 30u8)]
+                CorporateAction(pallet_corporate_actions::Call),
+                #[codec(index = 31u8)]
+                CorporateBallot(pallet_corporate_actions::ballot::Call),
+                #[codec(index = 33u8)]
+                Pips(pallet_pips::Call),
+                #[codec(index = 34u8)]
+                Portfolio(pallet_portfolio::Call),
+                #[codec(index = 35u8)]
+                ProtocolFee(pallet_protocol_fee::Call),
+                #[codec(index = 36u8)]
+                Scheduler(pallet_scheduler::pallet::Call),
+                #[codec(index = 37u8)]
+                Settlement(pallet_settlement::Call),
+                #[codec(index = 38u8)]
+                Statistics(pallet_statistics::Call),
+                #[codec(index = 39u8)]
+                Sto(pallet_sto::Call),
+                #[codec(index = 40u8)]
+                Treasury(pallet_treasury::Call),
+                #[codec(index = 41u8)]
+                Utility(pallet_utility::Call),
+                #[codec(index = 42u8)]
+                Base(pallet_base::Call),
+                #[codec(index = 43u8)]
+                ExternalAgents(pallet_external_agents::Call),
+                #[codec(index = 44u8)]
+                Relayer(pallet_relayer::Call),
+                #[codec(index = 45u8)]
+                Rewards(pallet_rewards::Call),
+                #[codec(index = 46u8)]
+                Contracts(pallet_contracts::pallet::Call),
+                #[codec(index = 47u8)]
+                PolymeshContracts(polymesh_contracts::Call),
+                #[codec(index = 48u8)]
+                Preimage(pallet_preimage::pallet::Call),
+                #[codec(index = 50u8)]
+                TestUtils(pallet_test_utils::Call),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum OriginCaller {
+                #[codec(index = 0u8)]
+                system(frame_support::dispatch::RawOrigin<sp_core::crypto::AccountId32>),
+                #[codec(index = 9u8)]
+                PolymeshCommittee(
+                    pallet_committee::RawOrigin<
+                        sp_core::crypto::AccountId32,
+                        pallet_committee::Instance1,
+                    >,
+                ),
+                #[codec(index = 11u8)]
+                TechnicalCommittee(
+                    pallet_committee::RawOrigin<
+                        sp_core::crypto::AccountId32,
+                        pallet_committee::Instance3,
+                    >,
+                ),
+                #[codec(index = 13u8)]
+                UpgradeCommittee(
+                    pallet_committee::RawOrigin<
+                        sp_core::crypto::AccountId32,
+                        pallet_committee::Instance4,
+                    >,
+                ),
+                #[codec(index = 4u8)]
+                Void(sp_core::Void),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Runtime();
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct SessionKeys {
+                pub grandpa: sp_finality_grandpa::app::Public,
+                pub babe: sp_consensus_babe::app::Public,
+                pub im_online: pallet_im_online::sr25519::app_sr25519::Public,
+                pub authority_discovery: sp_authority_discovery::app::Public,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                System(frame_system::pallet::Event),
+                #[codec(index = 3u8)]
+                Indices(pallet_indices::pallet::Event),
+                #[codec(index = 5u8)]
+                Balances(
+                    polymesh_common_utilities::traits::balances::RawEvent<
+                        sp_core::crypto::AccountId32,
+                    >,
+                ),
+                #[codec(index = 7u8)]
+                Identity(
+                    polymesh_common_utilities::traits::identity::RawEvent<
+                        sp_core::crypto::AccountId32,
+                        u64,
+                    >,
+                ),
+                #[codec(index = 8u8)]
+                CddServiceProviders(
+                    polymesh_common_utilities::traits::group::RawEvent<
+                        sp_core::crypto::AccountId32,
+                        polymesh_runtime_develop::runtime::Event,
+                        pallet_group::Instance2,
+                    >,
+                ),
+                #[codec(index = 9u8)]
+                PolymeshCommittee(
+                    pallet_committee::RawEvent<
+                        primitive_types::H256,
+                        u32,
+                        pallet_committee::Instance1,
+                    >,
+                ),
+                #[codec(index = 10u8)]
+                CommitteeMembership(
+                    polymesh_common_utilities::traits::group::RawEvent<
+                        sp_core::crypto::AccountId32,
+                        polymesh_runtime_develop::runtime::Event,
+                        pallet_group::Instance1,
+                    >,
+                ),
+                #[codec(index = 11u8)]
+                TechnicalCommittee(
+                    pallet_committee::RawEvent<
+                        primitive_types::H256,
+                        u32,
+                        pallet_committee::Instance3,
+                    >,
+                ),
+                #[codec(index = 12u8)]
+                TechnicalCommitteeMembership(
+                    polymesh_common_utilities::traits::group::RawEvent<
+                        sp_core::crypto::AccountId32,
+                        polymesh_runtime_develop::runtime::Event,
+                        pallet_group::Instance3,
+                    >,
+                ),
+                #[codec(index = 13u8)]
+                UpgradeCommittee(
+                    pallet_committee::RawEvent<
+                        primitive_types::H256,
+                        u32,
+                        pallet_committee::Instance4,
+                    >,
+                ),
+                #[codec(index = 14u8)]
+                UpgradeCommitteeMembership(
+                    polymesh_common_utilities::traits::group::RawEvent<
+                        sp_core::crypto::AccountId32,
+                        polymesh_runtime_develop::runtime::Event,
+                        pallet_group::Instance4,
+                    >,
+                ),
+                #[codec(index = 15u8)]
+                MultiSig(pallet_multisig::RawEvent<sp_core::crypto::AccountId32>),
+                #[codec(index = 16u8)]
+                Bridge(pallet_bridge::RawEvent<sp_core::crypto::AccountId32, u32>),
+                #[codec(index = 17u8)]
+                Staking(pallet_staking::RawEvent<u128, sp_core::crypto::AccountId32>),
+                #[codec(index = 18u8)]
+                Offences(pallet_offences::pallet::Event),
+                #[codec(index = 19u8)]
+                Session(pallet_session::pallet::Event),
+                #[codec(index = 21u8)]
+                Grandpa(pallet_grandpa::pallet::Event),
+                #[codec(index = 23u8)]
+                ImOnline(pallet_im_online::pallet::Event),
+                #[codec(index = 25u8)]
+                Sudo(pallet_sudo::RawEvent<sp_core::crypto::AccountId32>),
+                #[codec(index = 26u8)]
+                Asset(
+                    polymesh_common_utilities::traits::asset::RawEvent<
+                        u64,
+                        sp_core::crypto::AccountId32,
+                    >,
+                ),
+                #[codec(index = 27u8)]
+                CapitalDistribution(pallet_corporate_actions::distribution::Event),
+                #[codec(index = 28u8)]
+                Checkpoint(polymesh_common_utilities::traits::checkpoint::Event),
+                #[codec(index = 29u8)]
+                ComplianceManager(pallet_compliance_manager::Event),
+                #[codec(index = 30u8)]
+                CorporateAction(pallet_corporate_actions::Event),
+                #[codec(index = 31u8)]
+                CorporateBallot(pallet_corporate_actions::ballot::Event),
+                #[codec(index = 33u8)]
+                Pips(pallet_pips::RawEvent<sp_core::crypto::AccountId32, u32>),
+                #[codec(index = 34u8)]
+                Portfolio(polymesh_common_utilities::traits::portfolio::Event),
+                #[codec(index = 35u8)]
+                ProtocolFee(pallet_protocol_fee::RawEvent<sp_core::crypto::AccountId32>),
+                #[codec(index = 36u8)]
+                Scheduler(pallet_scheduler::pallet::Event),
+                #[codec(index = 37u8)]
+                Settlement(pallet_settlement::RawEvent<u64, u32, sp_core::crypto::AccountId32>),
+                #[codec(index = 38u8)]
+                Statistics(polymesh_common_utilities::traits::statistics::Event),
+                #[codec(index = 39u8)]
+                Sto(pallet_sto::RawEvent<u64>),
+                #[codec(index = 40u8)]
+                Treasury(pallet_treasury::RawEvent<u128, sp_core::crypto::AccountId32>),
+                #[codec(index = 41u8)]
+                Utility(pallet_utility::Event),
+                #[codec(index = 42u8)]
+                Base(polymesh_common_utilities::traits::base::Event),
+                #[codec(index = 43u8)]
+                ExternalAgents(polymesh_common_utilities::traits::external_agents::Event),
+                #[codec(index = 44u8)]
+                Relayer(
+                    polymesh_common_utilities::traits::relayer::RawEvent<
+                        sp_core::crypto::AccountId32,
+                    >,
+                ),
+                #[codec(index = 45u8)]
+                Rewards(pallet_rewards::RawEvent<sp_core::crypto::AccountId32>),
+                #[codec(index = 46u8)]
+                Contracts(pallet_contracts::pallet::Event),
+                #[codec(index = 47u8)]
+                PolymeshContracts(polymesh_contracts::Event),
+                #[codec(index = 48u8)]
+                Preimage(pallet_preimage::pallet::Event),
+                #[codec(index = 50u8)]
+                TestUtils(pallet_test_utils::RawEvent<sp_core::crypto::AccountId32>),
+            }
+        }
+    }
+    pub mod pallet_rewards {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<AccountId> {
+            #[codec(index = 0u8)]
+            ItnRewardClaimed(AccountId, u128),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            claim_itn_reward {
+                reward_address: sp_core::crypto::AccountId32,
+                itn_address: sp_core::crypto::AccountId32,
+                signature: sp_runtime::MultiSignature,
+            },
+            #[codec(index = 1u8)]
+            set_itn_reward_status {
+                itn_address: sp_core::crypto::AccountId32,
+                status: pallet_rewards::ItnRewardStatus,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum ItnRewardStatus {
+            #[codec(index = 0u8)]
+            Unclaimed(u128),
+            #[codec(index = 1u8)]
+            Claimed,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            UnknownItnAddress,
+            #[codec(index = 1u8)]
+            ItnRewardAlreadyClaimed,
+            #[codec(index = 2u8)]
+            InvalidSignature,
+            #[codec(index = 3u8)]
+            UnableToCovertBalance,
+        }
+    }
+    pub mod pallet_asset {
+        use super::*;
+        pub mod checkpoint {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Version(pub u8);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                NoSuchSchedule,
+                #[codec(index = 1u8)]
+                ScheduleNotRemovable,
+                #[codec(index = 2u8)]
+                FailedToComputeNextCheckpoint,
+                #[codec(index = 3u8)]
+                ScheduleDurationTooShort,
+                #[codec(index = 4u8)]
+                SchedulesTooComplex,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                create_checkpoint {
+                    ticker: polymesh_primitives::ticker::Ticker,
+                },
+                #[codec(index = 1u8)]
+                set_schedules_max_complexity { max_complexity: u64 },
+                #[codec(index = 2u8)]
+                create_schedule {
+                    ticker: polymesh_primitives::ticker::Ticker,
+                    schedule: pallet_asset::checkpoint::ScheduleSpec,
+                },
+                #[codec(index = 3u8)]
+                remove_schedule {
+                    ticker: polymesh_primitives::ticker::Ticker,
+                    id: polymesh_common_utilities::traits::checkpoint::ScheduleId,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct ScheduleSpec {
+                pub start: Option<u64>,
+                pub period: polymesh_primitives::calendar::CalendarPeriod,
+                pub remaining: u32,
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct SecurityToken {
+            pub total_supply: u128,
+            pub owner_did: polymesh_primitives::identity_id::IdentityId,
+            pub divisible: bool,
+            pub asset_type: polymesh_primitives::asset::AssetType,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ClassicTickerImport {
+            pub eth_owner: polymesh_primitives::ethereum::EthereumAddress,
+            pub ticker: polymesh_primitives::ticker::Ticker,
+            pub is_contract: bool,
+            pub is_created: bool,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct TickerRegistrationConfig<U> {
+            pub max_ticker_length: u8,
+            pub registration_length: Option<U>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ClassicTickerRegistration {
+            pub eth_owner: polymesh_primitives::ethereum::EthereumAddress,
+            pub is_created: bool,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct TickerRegistration<U> {
+            pub owner: polymesh_primitives::identity_id::IdentityId,
+            pub expiry: Option<U>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum AssetOwnershipRelation {
+            #[codec(index = 0u8)]
+            NotOwned,
+            #[codec(index = 1u8)]
+            TickerOwned,
+            #[codec(index = 2u8)]
+            AssetOwned,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            Unauthorized,
+            #[codec(index = 1u8)]
+            AssetAlreadyCreated,
+            #[codec(index = 2u8)]
+            TickerTooLong,
+            #[codec(index = 3u8)]
+            TickerNotAscii,
+            #[codec(index = 4u8)]
+            TickerAlreadyRegistered,
+            #[codec(index = 5u8)]
+            TotalSupplyAboveLimit,
+            #[codec(index = 6u8)]
+            NoSuchAsset,
+            #[codec(index = 7u8)]
+            AlreadyFrozen,
+            #[codec(index = 8u8)]
+            NotAnOwner,
+            #[codec(index = 9u8)]
+            BalanceOverflow,
+            #[codec(index = 10u8)]
+            TotalSupplyOverflow,
+            #[codec(index = 11u8)]
+            InvalidGranularity,
+            #[codec(index = 12u8)]
+            NotFrozen,
+            #[codec(index = 13u8)]
+            InvalidTransfer,
+            #[codec(index = 14u8)]
+            InsufficientBalance,
+            #[codec(index = 15u8)]
+            AssetAlreadyDivisible,
+            #[codec(index = 16u8)]
+            InvalidEthereumSignature,
+            #[codec(index = 17u8)]
+            NoSuchClassicTicker,
+            #[codec(index = 18u8)]
+            TickerRegistrationExpired,
+            #[codec(index = 19u8)]
+            SenderSameAsReceiver,
+            #[codec(index = 20u8)]
+            NoSuchDoc,
+            #[codec(index = 21u8)]
+            MaxLengthOfAssetNameExceeded,
+            #[codec(index = 22u8)]
+            FundingRoundNameMaxLengthExceeded,
+            #[codec(index = 23u8)]
+            InvalidAssetIdentifier,
+            #[codec(index = 24u8)]
+            InvestorUniquenessClaimNotAllowed,
+            #[codec(index = 25u8)]
+            InvalidCustomAssetTypeId,
+            #[codec(index = 26u8)]
+            AssetMetadataNameMaxLengthExceeded,
+            #[codec(index = 27u8)]
+            AssetMetadataValueMaxLengthExceeded,
+            #[codec(index = 28u8)]
+            AssetMetadataTypeDefMaxLengthExceeded,
+            #[codec(index = 29u8)]
+            AssetMetadataKeyIsMissing,
+            #[codec(index = 30u8)]
+            AssetMetadataValueIsLocked,
+            #[codec(index = 31u8)]
+            AssetMetadataLocalKeyAlreadyExists,
+            #[codec(index = 32u8)]
+            AssetMetadataGlobalKeyAlreadyExists,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            register_ticker {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 1u8)]
+            accept_ticker_transfer { auth_id: u64 },
+            #[codec(index = 2u8)]
+            accept_asset_ownership_transfer { auth_id: u64 },
+            #[codec(index = 3u8)]
+            create_asset {
+                name: polymesh_primitives::asset::AssetName,
+                ticker: polymesh_primitives::ticker::Ticker,
+                divisible: bool,
+                asset_type: polymesh_primitives::asset::AssetType,
+                identifiers: Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
+                funding_round: Option<polymesh_primitives::asset::FundingRoundName>,
+                disable_iu: bool,
+            },
+            #[codec(index = 4u8)]
+            freeze {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 5u8)]
+            unfreeze {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 6u8)]
+            rename_asset {
+                ticker: polymesh_primitives::ticker::Ticker,
+                name: polymesh_primitives::asset::AssetName,
+            },
+            #[codec(index = 7u8)]
+            issue {
+                ticker: polymesh_primitives::ticker::Ticker,
+                amount: u128,
+            },
+            #[codec(index = 8u8)]
+            redeem {
+                ticker: polymesh_primitives::ticker::Ticker,
+                value: u128,
+            },
+            #[codec(index = 9u8)]
+            make_divisible {
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 10u8)]
+            add_documents {
+                docs: Vec<polymesh_primitives::document::Document>,
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 11u8)]
+            remove_documents {
+                ids: Vec<polymesh_primitives::document::DocumentId>,
+                ticker: polymesh_primitives::ticker::Ticker,
+            },
+            #[codec(index = 12u8)]
+            set_funding_round {
+                ticker: polymesh_primitives::ticker::Ticker,
+                name: polymesh_primitives::asset::FundingRoundName,
+            },
+            #[codec(index = 13u8)]
+            update_identifiers {
+                ticker: polymesh_primitives::ticker::Ticker,
+                identifiers: Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
+            },
+            #[codec(index = 14u8)]
+            claim_classic_ticker {
+                ticker: polymesh_primitives::ticker::Ticker,
+                ethereum_signature: polymesh_primitives::ethereum::EcdsaSignature,
+            },
+            #[codec(index = 15u8)]
+            reserve_classic_ticker {
+                classic_ticker_import: pallet_asset::ClassicTickerImport,
+                contract_did: polymesh_primitives::identity_id::IdentityId,
+                config: pallet_asset::TickerRegistrationConfig<u64>,
+            },
+            #[codec(index = 16u8)]
+            controller_transfer {
+                ticker: polymesh_primitives::ticker::Ticker,
+                value: u128,
+                from_portfolio: polymesh_primitives::identity_id::PortfolioId,
+            },
+            #[codec(index = 17u8)]
+            register_custom_asset_type { ty: Vec<u8> },
+            #[codec(index = 18u8)]
+            create_asset_with_custom_type {
+                name: polymesh_primitives::asset::AssetName,
+                ticker: polymesh_primitives::ticker::Ticker,
+                divisible: bool,
+                custom_asset_type: Vec<u8>,
+                identifiers: Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
+                funding_round: Option<polymesh_primitives::asset::FundingRoundName>,
+                disable_iu: bool,
+            },
+            #[codec(index = 19u8)]
+            set_asset_metadata {
+                ticker: polymesh_primitives::ticker::Ticker,
+                key: polymesh_primitives::asset_metadata::AssetMetadataKey,
+                value: polymesh_primitives::asset_metadata::AssetMetadataValue,
+                detail: Option<polymesh_primitives::asset_metadata::AssetMetadataValueDetail<u64>>,
+            },
+            #[codec(index = 20u8)]
+            set_asset_metadata_details {
+                ticker: polymesh_primitives::ticker::Ticker,
+                key: polymesh_primitives::asset_metadata::AssetMetadataKey,
+                detail: polymesh_primitives::asset_metadata::AssetMetadataValueDetail<u64>,
+            },
+            #[codec(index = 21u8)]
+            register_and_set_local_asset_metadata {
+                ticker: polymesh_primitives::ticker::Ticker,
+                name: polymesh_primitives::asset_metadata::AssetMetadataName,
+                spec: polymesh_primitives::asset_metadata::AssetMetadataSpec,
+                value: polymesh_primitives::asset_metadata::AssetMetadataValue,
+                detail: Option<polymesh_primitives::asset_metadata::AssetMetadataValueDetail<u64>>,
+            },
+            #[codec(index = 22u8)]
+            register_asset_metadata_local_type {
+                ticker: polymesh_primitives::ticker::Ticker,
+                name: polymesh_primitives::asset_metadata::AssetMetadataName,
+                spec: polymesh_primitives::asset_metadata::AssetMetadataSpec,
+            },
+            #[codec(index = 23u8)]
+            register_asset_metadata_global_type {
+                name: polymesh_primitives::asset_metadata::AssetMetadataName,
+                spec: polymesh_primitives::asset_metadata::AssetMetadataSpec,
+            },
+        }
+    }
+    pub mod pallet_utility {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            batch {
+                calls: Vec<polymesh_runtime_develop::runtime::Call>,
+            },
+            #[codec(index = 1u8)]
+            batch_atomic {
+                calls: Vec<polymesh_runtime_develop::runtime::Call>,
+            },
+            #[codec(index = 2u8)]
+            batch_optimistic {
+                calls: Vec<polymesh_runtime_develop::runtime::Call>,
+            },
+            #[codec(index = 3u8)]
+            relay_tx {
+                target: sp_core::crypto::AccountId32,
+                signature: sp_runtime::MultiSignature,
+                call: pallet_utility::UniqueCall<polymesh_runtime_develop::runtime::Call>,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            InvalidSignature,
+            #[codec(index = 1u8)]
+            TargetCddMissing,
+            #[codec(index = 2u8)]
+            InvalidNonce,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Event {
+            #[codec(index = 0u8)]
+            BatchInterrupted(Vec<u32>, (u32, sp_runtime::DispatchError)),
+            #[codec(index = 1u8)]
+            BatchOptimisticFailed(Vec<u32>, Vec<(u32, sp_runtime::DispatchError)>),
+            #[codec(index = 2u8)]
+            BatchCompleted(Vec<u32>),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct UniqueCall<C> {
+            pub nonce: u64,
+            pub call: ::std::boxed::Box<C>,
+        }
+    }
+    pub mod pallet_timestamp {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                set {
+                    #[codec(compact)]
+                    now: u64,
+                },
+            }
+        }
+    }
+    pub mod polymesh_common_utilities {
+        use super::*;
+        pub mod protocol_fee {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum ProtocolOp {
+                #[codec(index = 0u8)]
+                AssetRegisterTicker,
+                #[codec(index = 1u8)]
+                AssetIssue,
+                #[codec(index = 2u8)]
+                AssetAddDocuments,
+                #[codec(index = 3u8)]
+                AssetCreateAsset,
+                #[codec(index = 4u8)]
+                CheckpointCreateSchedule,
+                #[codec(index = 5u8)]
+                ComplianceManagerAddComplianceRequirement,
+                #[codec(index = 6u8)]
+                IdentityCddRegisterDid,
+                #[codec(index = 7u8)]
+                IdentityAddClaim,
+                #[codec(index = 8u8)]
+                IdentityAddSecondaryKeysWithAuthorization,
+                #[codec(index = 9u8)]
+                PipsPropose,
+                #[codec(index = 10u8)]
+                ContractsPutCode,
+                #[codec(index = 11u8)]
+                CorporateBallotAttachBallot,
+                #[codec(index = 12u8)]
+                CapitalDistributionDistribute,
+            }
+        }
+        pub mod traits {
+            use super::*;
+            pub mod identity {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum RawEvent<AccountId, Moment> {
+                    #[codec(index = 0u8)]
+                    DidCreated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        AccountId,
+                        Vec<polymesh_primitives::secondary_key::SecondaryKey<AccountId>>,
+                    ),
+                    #[codec(index = 1u8)]
+                    SecondaryKeysAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        Vec<polymesh_primitives::secondary_key::SecondaryKey<AccountId>>,
+                    ),
+                    #[codec(index = 2u8)]
+                    SecondaryKeysRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        Vec<AccountId>,
+                    ),
+                    #[codec(index = 3u8)]
+                    SecondaryKeyLeftIdentity(
+                        polymesh_primitives::identity_id::IdentityId,
+                        AccountId,
+                    ),
+                    #[codec(index = 4u8)]
+                    SecondaryKeyPermissionsUpdated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        AccountId,
+                        polymesh_primitives::secondary_key::Permissions,
+                        polymesh_primitives::secondary_key::Permissions,
+                    ),
+                    #[codec(index = 5u8)]
+                    PrimaryKeyUpdated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        AccountId,
+                        AccountId,
+                    ),
+                    #[codec(index = 6u8)]
+                    ClaimAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_claim::IdentityClaim,
+                    ),
+                    #[codec(index = 7u8)]
+                    ClaimRevoked(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_claim::IdentityClaim,
+                    ),
+                    #[codec(index = 8u8)]
+                    AssetDidRegistered(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                    ),
+                    #[codec(index = 9u8)]
+                    AuthorizationAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        Option<AccountId>,
+                        Moment,
+                        polymesh_primitives::authorization::AuthorizationData<AccountId>,
+                        Option<Moment>,
+                    ),
+                    #[codec(index = 10u8)]
+                    AuthorizationRevoked(
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        Option<AccountId>,
+                        Moment,
+                    ),
+                    #[codec(index = 11u8)]
+                    AuthorizationRejected(
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        Option<AccountId>,
+                        Moment,
+                    ),
+                    #[codec(index = 12u8)]
+                    AuthorizationConsumed(
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        Option<AccountId>,
+                        Moment,
+                    ),
+                    #[codec(index = 13u8)]
+                    AuthorizationRetryLimitReached(
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        Option<AccountId>,
+                        Moment,
+                    ),
+                    #[codec(index = 14u8)]
+                    CddRequirementForPrimaryKeyUpdated(bool),
+                    #[codec(index = 15u8)]
+                    CddClaimsInvalidated(polymesh_primitives::identity_id::IdentityId, Moment),
+                    #[codec(index = 16u8)]
+                    SecondaryKeysFrozen(polymesh_primitives::identity_id::IdentityId),
+                    #[codec(index = 17u8)]
+                    SecondaryKeysUnfrozen(polymesh_primitives::identity_id::IdentityId),
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct SecondaryKeyWithAuth<AccountId> {
+                    pub secondary_key: polymesh_primitives::secondary_key::SecondaryKey<AccountId>,
+                    pub auth_signature: primitive_types::H512,
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct SecondaryKeyWithAuthV1<AccountId> {
+                    pub secondary_key:
+                        polymesh_primitives::secondary_key::v1::SecondaryKey<AccountId>,
+                    pub auth_signature: primitive_types::H512,
+                }
+            }
+            pub mod asset {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum RawEvent<Moment, AccountId> {
+                    #[codec(index = 0u8)]
+                    Transfer(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::PortfolioId,
+                        polymesh_primitives::identity_id::PortfolioId,
+                        u128,
+                    ),
+                    #[codec(index = 1u8)]
+                    Issued(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                        u128,
+                        polymesh_primitives::asset::FundingRoundName,
+                        u128,
+                    ),
+                    #[codec(index = 2u8)]
+                    Redeemed(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                        u128,
+                    ),
+                    #[codec(index = 3u8)]
+                    AssetCreated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        bool,
+                        polymesh_primitives::asset::AssetType,
+                        polymesh_primitives::identity_id::IdentityId,
+                        bool,
+                    ),
+                    #[codec(index = 4u8)]
+                    IdentifiersUpdated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
+                    ),
+                    #[codec(index = 5u8)]
+                    DivisibilityChanged(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        bool,
+                    ),
+                    #[codec(index = 6u8)]
+                    TransferWithData(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::IdentityId,
+                        u128,
+                        Vec<u8>,
+                    ),
+                    #[codec(index = 7u8)]
+                    IsIssuable(polymesh_primitives::ticker::Ticker, bool),
+                    #[codec(index = 8u8)]
+                    TickerRegistered(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        Option<Moment>,
+                    ),
+                    #[codec(index = 9u8)]
+                    TickerTransferred(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 10u8)]
+                    AssetOwnershipTransferred(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 11u8)]
+                    AssetFrozen(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                    ),
+                    #[codec(index = 12u8)]
+                    AssetUnfrozen(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                    ),
+                    #[codec(index = 13u8)]
+                    AssetRenamed(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::asset::AssetName,
+                    ),
+                    #[codec(index = 14u8)]
+                    FundingRoundSet(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::asset::FundingRoundName,
+                    ),
+                    #[codec(index = 15u8)]
+                    DocumentAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::document::DocumentId,
+                        polymesh_primitives::document::Document,
+                    ),
+                    #[codec(index = 16u8)]
+                    DocumentRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::document::DocumentId,
+                    ),
+                    #[codec(index = 17u8)]
+                    ExtensionRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        AccountId,
+                    ),
+                    #[codec(index = 18u8)]
+                    ClassicTickerClaimed(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::ethereum::EthereumAddress,
+                    ),
+                    #[codec(index = 19u8)]
+                    ControllerTransfer(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::PortfolioId,
+                        u128,
+                    ),
+                    #[codec(index = 20u8)]
+                    CustomAssetTypeExists(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::asset::CustomAssetTypeId,
+                        Vec<u8>,
+                    ),
+                    #[codec(index = 21u8)]
+                    CustomAssetTypeRegistered(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::asset::CustomAssetTypeId,
+                        Vec<u8>,
+                    ),
+                    #[codec(index = 22u8)]
+                    SetAssetMetadataValue(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::asset_metadata::AssetMetadataValue,
+                        Option<
+                            polymesh_primitives::asset_metadata::AssetMetadataValueDetail<Moment>,
+                        >,
+                    ),
+                    #[codec(index = 23u8)]
+                    SetAssetMetadataValueDetails(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::asset_metadata::AssetMetadataValueDetail<Moment>,
+                    ),
+                    #[codec(index = 24u8)]
+                    RegisterAssetMetadataLocalType(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::asset_metadata::AssetMetadataName,
+                        polymesh_primitives::asset_metadata::AssetMetadataLocalKey,
+                        polymesh_primitives::asset_metadata::AssetMetadataSpec,
+                    ),
+                    #[codec(index = 25u8)]
+                    RegisterAssetMetadataGlobalType(
+                        polymesh_primitives::asset_metadata::AssetMetadataName,
+                        polymesh_primitives::asset_metadata::AssetMetadataGlobalKey,
+                        polymesh_primitives::asset_metadata::AssetMetadataSpec,
+                    ),
+                }
+            }
+            pub mod relayer {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum RawEvent<AccountId> {
+                    #[codec(index = 0u8)]
+                    AuthorizedPayingKey(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        AccountId,
+                        AccountId,
+                        u128,
+                        u64,
+                    ),
+                    #[codec(index = 1u8)]
+                    AcceptedPayingKey(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        AccountId,
+                        AccountId,
+                    ),
+                    #[codec(index = 2u8)]
+                    RemovedPayingKey(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        AccountId,
+                        AccountId,
+                    ),
+                    #[codec(index = 3u8)]
+                    UpdatedPolyxLimit(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        AccountId,
+                        AccountId,
+                        u128,
+                        u128,
+                    ),
+                }
+            }
+            pub mod base {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum Event {
+                    #[codec(index = 0u8)]
+                    UnexpectedError(Option<sp_runtime::DispatchError>),
+                }
+            }
+            pub mod group {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum RawEvent<AccountId, Event, I> {
+                    #[codec(index = 0u8)]
+                    MemberAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 1u8)]
+                    MemberRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 2u8)]
+                    MemberRevoked(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 3u8)]
+                    MembersSwapped(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 4u8)]
+                    MembersReset(
+                        polymesh_primitives::identity_id::IdentityId,
+                        Vec<polymesh_primitives::identity_id::IdentityId>,
+                    ),
+                    #[codec(index = 5u8)]
+                    ActiveLimitChanged(polymesh_primitives::identity_id::IdentityId, u32, u32),
+                    #[codec(index = 6u8)]
+                    Dummy,
+                    PhantomDataVariant(core::marker::PhantomData<(AccountId, Event, I)>),
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct InactiveMember<Moment> {
+                    pub id: polymesh_primitives::identity_id::IdentityId,
+                    pub deactivated_at: Moment,
+                    pub expiry: Option<Moment>,
+                }
+            }
+            pub mod portfolio {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum Event {
+                    #[codec(index = 0u8)]
+                    PortfolioCreated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::PortfolioNumber,
+                        polymesh_primitives::identity_id::PortfolioName,
+                    ),
+                    #[codec(index = 1u8)]
+                    PortfolioDeleted(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::PortfolioNumber,
+                    ),
+                    #[codec(index = 2u8)]
+                    MovedBetweenPortfolios(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::PortfolioId,
+                        polymesh_primitives::identity_id::PortfolioId,
+                        polymesh_primitives::ticker::Ticker,
+                        u128,
+                        Option<polymesh_common_utilities::traits::balances::Memo>,
+                    ),
+                    #[codec(index = 3u8)]
+                    PortfolioRenamed(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::PortfolioNumber,
+                        polymesh_primitives::identity_id::PortfolioName,
+                    ),
+                    #[codec(index = 4u8)]
+                    UserPortfolios(
+                        polymesh_primitives::identity_id::IdentityId,
+                        Vec<(
+                            polymesh_primitives::identity_id::PortfolioNumber,
+                            polymesh_primitives::identity_id::PortfolioName,
+                        )>,
+                    ),
+                    #[codec(index = 5u8)]
+                    PortfolioCustodianChanged(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::identity_id::PortfolioId,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                }
+            }
+            pub mod external_agents {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum Event {
+                    #[codec(index = 0u8)]
+                    GroupCreated(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::agent::AGId,
+                        polymesh_primitives::subset::SubsetRestriction<
+                            polymesh_primitives::secondary_key::PalletPermissions,
+                        >,
+                    ),
+                    #[codec(index = 1u8)]
+                    GroupPermissionsUpdated(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::agent::AGId,
+                        polymesh_primitives::subset::SubsetRestriction<
+                            polymesh_primitives::secondary_key::PalletPermissions,
+                        >,
+                    ),
+                    #[codec(index = 2u8)]
+                    AgentAdded(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::agent::AgentGroup,
+                    ),
+                    #[codec(index = 3u8)]
+                    AgentRemoved(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                    ),
+                    #[codec(index = 4u8)]
+                    GroupChanged(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::agent::AgentGroup,
+                    ),
+                }
+            }
+            pub mod balances {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum Reasons {
+                    #[codec(index = 0u8)]
+                    Fee,
+                    #[codec(index = 1u8)]
+                    Misc,
+                    #[codec(index = 2u8)]
+                    All,
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum RawEvent<AccountId> {
+                    #[codec(index = 0u8)]
+                    Endowed(
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        AccountId,
+                        u128,
+                    ),
+                    #[codec(index = 1u8)]
+                    Transfer(
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        AccountId,
+                        Option<polymesh_primitives::identity_id::IdentityId>,
+                        AccountId,
+                        u128,
+                        Option<polymesh_common_utilities::traits::balances::Memo>,
+                    ),
+                    #[codec(index = 2u8)]
+                    BalanceSet(
+                        polymesh_primitives::identity_id::IdentityId,
+                        AccountId,
+                        u128,
+                        u128,
+                    ),
+                    #[codec(index = 3u8)]
+                    AccountBalanceBurned(
+                        polymesh_primitives::identity_id::IdentityId,
+                        AccountId,
+                        u128,
+                    ),
+                    #[codec(index = 4u8)]
+                    Reserved(AccountId, u128),
+                    #[codec(index = 5u8)]
+                    Unreserved(AccountId, u128),
+                    #[codec(index = 6u8)]
+                    ReserveRepatriated(
+                        AccountId,
+                        AccountId,
+                        u128,
+                        frame_support::traits::BalanceStatus,
+                    ),
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct AccountData {
+                    pub free: u128,
+                    pub reserved: u128,
+                    pub misc_frozen: u128,
+                    pub fee_frozen: u128,
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct Memo(pub [u8; 32usize]);
+            }
+            pub mod checkpoint {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum Event {
+                    #[codec(index = 0u8)]
+                    CheckpointCreated(
+                        Option<
+                            polymesh_primitives::event_only::EventOnly<
+                                polymesh_primitives::identity_id::IdentityId,
+                            >,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_primitives::calendar::CheckpointId,
+                        u128,
+                        u64,
+                    ),
+                    #[codec(index = 1u8)]
+                    MaximumSchedulesComplexityChanged(
+                        polymesh_primitives::identity_id::IdentityId,
+                        u64,
+                    ),
+                    #[codec(index = 2u8)]
+                    ScheduleCreated(
+                        polymesh_primitives::event_only::EventOnly<
+                            polymesh_primitives::identity_id::IdentityId,
+                        >,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_common_utilities::traits::checkpoint::StoredSchedule,
+                    ),
+                    #[codec(index = 3u8)]
+                    ScheduleRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::ticker::Ticker,
+                        polymesh_common_utilities::traits::checkpoint::StoredSchedule,
+                    ),
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct StoredSchedule {
+                    pub schedule: polymesh_primitives::calendar::CheckpointSchedule,
+                    pub id: polymesh_common_utilities::traits::checkpoint::ScheduleId,
+                    pub at: u64,
+                    pub remaining: u32,
+                }
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct ScheduleId(pub u64);
+            }
+            pub mod statistics {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum Event {
+                    #[codec(index = 0u8)]
+                    StatTypesAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::statistics::AssetScope,
+                        Vec<polymesh_primitives::statistics::StatType>,
+                    ),
+                    #[codec(index = 1u8)]
+                    StatTypesRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::statistics::AssetScope,
+                        Vec<polymesh_primitives::statistics::StatType>,
+                    ),
+                    #[codec(index = 2u8)]
+                    AssetStatsUpdated(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::statistics::AssetScope,
+                        polymesh_primitives::statistics::StatType,
+                        Vec<polymesh_primitives::statistics::StatUpdate>,
+                    ),
+                    #[codec(index = 3u8)]
+                    SetAssetTransferCompliance(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::statistics::AssetScope,
+                        Vec<polymesh_primitives::transfer_compliance::TransferCondition>,
+                    ),
+                    #[codec(index = 4u8)]
+                    TransferConditionExemptionsAdded(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::transfer_compliance::TransferConditionExemptKey,
+                        Vec<polymesh_primitives::identity_id::IdentityId>,
+                    ),
+                    #[codec(index = 5u8)]
+                    TransferConditionExemptionsRemoved(
+                        polymesh_primitives::identity_id::IdentityId,
+                        polymesh_primitives::transfer_compliance::TransferConditionExemptKey,
+                        Vec<polymesh_primitives::identity_id::IdentityId>,
+                    ),
+                }
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum MaybeBlock<BlockNumber> {
+            #[codec(index = 0u8)]
+            Some(BlockNumber),
+            #[codec(index = 1u8)]
+            None,
+        }
+    }
+    pub mod pallet_treasury {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            InsufficientBalance,
+            #[codec(index = 1u8)]
+            InvalidIdentity,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<Balance, AccountId> {
+            #[codec(index = 0u8)]
+            TreasuryDisbursement(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Balance,
+            ),
+            #[codec(index = 1u8)]
+            TreasuryDisbursementFailed(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Balance,
+            ),
+            #[codec(index = 2u8)]
+            TreasuryReimbursement(polymesh_primitives::identity_id::IdentityId, Balance),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            disbursement {
+                beneficiaries: Vec<polymesh_primitives::Beneficiary<u128>>,
+            },
+            #[codec(index = 1u8)]
+            reimbursement { amount: u128 },
+        }
+    }
+    pub mod sp_consensus_slots {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Slot(pub u64);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct EquivocationProof<Header, Id> {
+            pub offender: Id,
+            pub slot: sp_consensus_slots::Slot,
+            pub first_header: Header,
+            pub second_header: Header,
+        }
+    }
+    pub mod pallet_pips {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            set_prune_historical_pips { prune: bool },
+            #[codec(index = 1u8)]
+            set_min_proposal_deposit { deposit: u128 },
+            #[codec(index = 2u8)]
+            set_default_enactment_period { duration: u32 },
+            #[codec(index = 3u8)]
+            set_pending_pip_expiry {
+                expiry: polymesh_common_utilities::MaybeBlock<u32>,
+            },
+            #[codec(index = 4u8)]
+            set_max_pip_skip_count { max: u8 },
+            #[codec(index = 5u8)]
+            set_active_pip_limit { limit: u32 },
+            #[codec(index = 6u8)]
+            propose {
+                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+                deposit: u128,
+                url: Option<polymesh_primitives::Url>,
+                description: Option<pallet_pips::PipDescription>,
+            },
+            #[codec(index = 7u8)]
+            vote {
+                id: pallet_pips::PipId,
+                aye_or_nay: bool,
+                deposit: u128,
+            },
+            #[codec(index = 8u8)]
+            approve_committee_proposal { id: pallet_pips::PipId },
+            #[codec(index = 9u8)]
+            reject_proposal { id: pallet_pips::PipId },
+            #[codec(index = 10u8)]
+            prune_proposal { id: pallet_pips::PipId },
+            #[codec(index = 11u8)]
+            reschedule_execution {
+                id: pallet_pips::PipId,
+                until: Option<u32>,
+            },
+            #[codec(index = 12u8)]
+            clear_snapshot,
+            #[codec(index = 13u8)]
+            snapshot,
+            #[codec(index = 14u8)]
+            enact_snapshot_results {
+                results: Vec<(pallet_pips::PipId, pallet_pips::SnapshotResult)>,
+            },
+            #[codec(index = 15u8)]
+            execute_scheduled_pip { id: pallet_pips::PipId },
+            #[codec(index = 16u8)]
+            expire_scheduled_pip {
+                did: polymesh_primitives::identity_id::IdentityId,
+                id: pallet_pips::PipId,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<AccountId, BlockNumber> {
+            #[codec(index = 0u8)]
+            HistoricalPipsPruned(polymesh_primitives::identity_id::IdentityId, bool, bool),
+            #[codec(index = 1u8)]
+            ProposalCreated(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::Proposer<AccountId>,
+                pallet_pips::PipId,
+                u128,
+                Option<polymesh_primitives::Url>,
+                Option<pallet_pips::PipDescription>,
+                polymesh_common_utilities::MaybeBlock<BlockNumber>,
+                pallet_pips::ProposalData,
+            ),
+            #[codec(index = 2u8)]
+            ProposalStateUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                pallet_pips::ProposalState,
+            ),
+            #[codec(index = 3u8)]
+            Voted(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                pallet_pips::PipId,
+                bool,
+                u128,
+            ),
+            #[codec(index = 4u8)]
+            PipClosed(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                bool,
+            ),
+            #[codec(index = 5u8)]
+            ExecutionScheduled(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                BlockNumber,
+            ),
+            #[codec(index = 6u8)]
+            DefaultEnactmentPeriodChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                BlockNumber,
+            ),
+            #[codec(index = 7u8)]
+            MinimumProposalDepositChanged(polymesh_primitives::identity_id::IdentityId, u128, u128),
+            #[codec(index = 8u8)]
+            PendingPipExpiryChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_common_utilities::MaybeBlock<BlockNumber>,
+                polymesh_common_utilities::MaybeBlock<BlockNumber>,
+            ),
+            #[codec(index = 9u8)]
+            MaxPipSkipCountChanged(polymesh_primitives::identity_id::IdentityId, u8, u8),
+            #[codec(index = 10u8)]
+            ActivePipLimitChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                BlockNumber,
+            ),
+            #[codec(index = 11u8)]
+            ProposalRefund(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                u128,
+            ),
+            #[codec(index = 12u8)]
+            SnapshotCleared(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::SnapshotId,
+            ),
+            #[codec(index = 13u8)]
+            SnapshotTaken(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::SnapshotId,
+                Vec<pallet_pips::SnapshottedPip>,
+            ),
+            #[codec(index = 14u8)]
+            PipSkipped(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                u8,
+            ),
+            #[codec(index = 15u8)]
+            SnapshotResultsEnacted(
+                polymesh_primitives::identity_id::IdentityId,
+                Option<pallet_pips::SnapshotId>,
+                Vec<(pallet_pips::PipId, u8)>,
+                Vec<pallet_pips::PipId>,
+                Vec<pallet_pips::PipId>,
+            ),
+            #[codec(index = 16u8)]
+            ExecutionSchedulingFailed(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                BlockNumber,
+            ),
+            #[codec(index = 17u8)]
+            ExpiryScheduled(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                BlockNumber,
+            ),
+            #[codec(index = 18u8)]
+            ExpirySchedulingFailed(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_pips::PipId,
+                BlockNumber,
+            ),
+            #[codec(index = 19u8)]
+            ExecutionCancellingFailed(pallet_pips::PipId),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Committee {
+            #[codec(index = 0u8)]
+            Technical,
+            #[codec(index = 1u8)]
+            Upgrade,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct SnapshottedPip {
+            pub id: pallet_pips::PipId,
+            pub weight: (bool, u128),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct DepositInfo<AccountId> {
+            pub owner: AccountId,
+            pub amount: u128,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct PipsMetadata<BlockNumber> {
+            pub id: pallet_pips::PipId,
+            pub url: Option<polymesh_primitives::Url>,
+            pub description: Option<pallet_pips::PipDescription>,
+            pub created_at: BlockNumber,
+            pub transaction_version: BlockNumber,
+            pub expiry: polymesh_common_utilities::MaybeBlock<BlockNumber>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum ProposalState {
+            #[codec(index = 0u8)]
+            Pending,
+            #[codec(index = 1u8)]
+            Rejected,
+            #[codec(index = 2u8)]
+            Scheduled,
+            #[codec(index = 3u8)]
+            Failed,
+            #[codec(index = 4u8)]
+            Executed,
+            #[codec(index = 5u8)]
+            Expired,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct VotingResult {
+            pub ayes_count: u32,
+            pub ayes_stake: u128,
+            pub nays_count: u32,
+            pub nays_stake: u128,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct PipId(pub u32);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct SnapshotMetadata<BlockNumber, AccountId> {
+            pub created_at: BlockNumber,
+            pub made_by: AccountId,
+            pub id: pallet_pips::SnapshotId,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum SnapshotResult {
+            #[codec(index = 0u8)]
+            Approve,
+            #[codec(index = 1u8)]
+            Reject,
+            #[codec(index = 2u8)]
+            Skip,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum ProposalData {
+            #[codec(index = 0u8)]
+            Hash(primitive_types::H256),
+            #[codec(index = 1u8)]
+            Proposal(Vec<u8>),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct SnapshotId(pub u32);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            RescheduleNotByReleaseCoordinator,
+            #[codec(index = 1u8)]
+            NotFromCommunity,
+            #[codec(index = 2u8)]
+            NotByCommittee,
+            #[codec(index = 3u8)]
+            TooManyActivePips,
+            #[codec(index = 4u8)]
+            IncorrectDeposit,
+            #[codec(index = 5u8)]
+            InsufficientDeposit,
+            #[codec(index = 6u8)]
+            NoSuchProposal,
+            #[codec(index = 7u8)]
+            NotACommitteeMember,
+            #[codec(index = 8u8)]
+            InvalidFutureBlockNumber,
+            #[codec(index = 9u8)]
+            NumberOfVotesExceeded,
+            #[codec(index = 10u8)]
+            StakeAmountOfVotesExceeded,
+            #[codec(index = 11u8)]
+            MissingCurrentIdentity,
+            #[codec(index = 12u8)]
+            IncorrectProposalState,
+            #[codec(index = 13u8)]
+            CannotSkipPip,
+            #[codec(index = 14u8)]
+            SnapshotResultTooLarge,
+            #[codec(index = 15u8)]
+            SnapshotIdMismatch,
+            #[codec(index = 16u8)]
+            ScheduledProposalDoesntExist,
+            #[codec(index = 17u8)]
+            ProposalNotInScheduledState,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct PipDescription(pub Vec<u8>);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Pip<Proposal, AccountId> {
+            pub id: pallet_pips::PipId,
+            pub proposal: Proposal,
+            pub state: pallet_pips::ProposalState,
+            pub proposer: pallet_pips::Proposer<AccountId>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Proposer<AccountId> {
+            #[codec(index = 0u8)]
+            Community(AccountId),
+            #[codec(index = 1u8)]
+            Committee(pallet_pips::Committee),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Vote(pub bool, pub u128);
+    }
+    pub mod pallet_staking {
+        use super::*;
+        pub mod slashing {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct SlashingSpans {
+                pub span_index: u32,
+                pub last_start: u32,
+                pub last_nonzero_slash: u32,
+                pub prior: Vec<u32>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct SpanRecord<Balance> {
+                pub slashed: Balance,
+                pub paid_out: Balance,
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Exposure<AccountId, Balance> {
+            #[codec(compact)]
+            pub total: Balance,
+            #[codec(compact)]
+            pub own: Balance,
+            pub others: Vec<pallet_staking::IndividualExposure<AccountId, Balance>>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Releases {
+            #[codec(index = 0u8)]
+            V1_0_0Ancient,
+            #[codec(index = 1u8)]
+            V2_0_0,
+            #[codec(index = 2u8)]
+            V3_0_0,
+            #[codec(index = 3u8)]
+            V4_0_0,
+            #[codec(index = 4u8)]
+            V5_0_0,
+            #[codec(index = 5u8)]
+            V6_0_0,
+            #[codec(index = 6u8)]
+            V6_0_1,
+            #[codec(index = 7u8)]
+            V7_0_0,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            NotController,
+            #[codec(index = 1u8)]
+            NotStash,
+            #[codec(index = 2u8)]
+            AlreadyBonded,
+            #[codec(index = 3u8)]
+            AlreadyPaired,
+            #[codec(index = 4u8)]
+            EmptyTargets,
+            #[codec(index = 5u8)]
+            InvalidSlashIndex,
+            #[codec(index = 6u8)]
+            InsufficientValue,
+            #[codec(index = 7u8)]
+            NoMoreChunks,
+            #[codec(index = 8u8)]
+            NoUnlockChunk,
+            #[codec(index = 9u8)]
+            FundedTarget,
+            #[codec(index = 10u8)]
+            InvalidEraToReward,
+            #[codec(index = 11u8)]
+            NotSortedAndUnique,
+            #[codec(index = 12u8)]
+            AlreadyClaimed,
+            #[codec(index = 13u8)]
+            OffchainElectionEarlySubmission,
+            #[codec(index = 14u8)]
+            OffchainElectionWeakSubmission,
+            #[codec(index = 15u8)]
+            SnapshotUnavailable,
+            #[codec(index = 16u8)]
+            OffchainElectionBogusWinnerCount,
+            #[codec(index = 17u8)]
+            OffchainElectionBogusWinner,
+            #[codec(index = 18u8)]
+            OffchainElectionBogusCompact,
+            #[codec(index = 19u8)]
+            OffchainElectionBogusNominator,
+            #[codec(index = 20u8)]
+            OffchainElectionBogusNomination,
+            #[codec(index = 21u8)]
+            OffchainElectionSlashedNomination,
+            #[codec(index = 22u8)]
+            OffchainElectionBogusSelfVote,
+            #[codec(index = 23u8)]
+            OffchainElectionBogusEdge,
+            #[codec(index = 24u8)]
+            OffchainElectionBogusScore,
+            #[codec(index = 25u8)]
+            OffchainElectionBogusElectionSize,
+            #[codec(index = 26u8)]
+            CallNotAllowed,
+            #[codec(index = 27u8)]
+            IncorrectSlashingSpans,
+            #[codec(index = 28u8)]
+            AlreadyExists,
+            #[codec(index = 29u8)]
+            NotExists,
+            #[codec(index = 30u8)]
+            NoChange,
+            #[codec(index = 31u8)]
+            InvalidValidatorIdentity,
+            #[codec(index = 32u8)]
+            InvalidValidatorCommission,
+            #[codec(index = 33u8)]
+            StashIdentityDoesNotExist,
+            #[codec(index = 34u8)]
+            StashIdentityNotPermissioned,
+            #[codec(index = 35u8)]
+            StashIdentityNotCDDed,
+            #[codec(index = 36u8)]
+            HitIntendedValidatorCount,
+            #[codec(index = 37u8)]
+            IntendedCountIsExceedingConsensusLimit,
+            #[codec(index = 38u8)]
+            BondTooSmall,
+            #[codec(index = 39u8)]
+            BadState,
+            #[codec(index = 40u8)]
+            TooManyTargets,
+            #[codec(index = 41u8)]
+            BadTarget,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum ElectionCompute {
+            #[codec(index = 0u8)]
+            OnChain,
+            #[codec(index = 1u8)]
+            Signed,
+            #[codec(index = 2u8)]
+            Unsigned,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RewardDestination<AccountId> {
+            #[codec(index = 0u8)]
+            Staked,
+            #[codec(index = 1u8)]
+            Stash,
+            #[codec(index = 2u8)]
+            Controller,
+            #[codec(index = 3u8)]
+            Account(AccountId),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct IndividualExposure<AccountId, Balance> {
+            pub who: AccountId,
+            #[codec(compact)]
+            pub value: Balance,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct StakingLedger<AccountId, Balance> {
+            pub stash: AccountId,
+            #[codec(compact)]
+            pub total: Balance,
+            #[codec(compact)]
+            pub active: Balance,
+            pub unlocking: Vec<pallet_staking::UnlockChunk<Balance>>,
+            pub claimed_rewards: Vec<u32>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ElectionResult<AccountId, Balance> {
+            pub elected_stashes: Vec<AccountId>,
+            pub exposures: Vec<(AccountId, pallet_staking::Exposure<AccountId, Balance>)>,
+            pub compute: pallet_staking::ElectionCompute,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Nominations<AccountId> {
+            pub targets: Vec<AccountId>,
+            pub submitted_in: u32,
+            pub suppressed: bool,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct UnappliedSlash<AccountId, Balance> {
+            pub validator: AccountId,
+            pub own: Balance,
+            pub others: Vec<(AccountId, Balance)>,
+            pub reporters: Vec<AccountId>,
+            pub payout: Balance,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            bond {
+                controller: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                #[codec(compact)]
+                value: u128,
+                payee: pallet_staking::RewardDestination<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 1u8)]
+            bond_extra {
+                #[codec(compact)]
+                max_additional: u128,
+            },
+            #[codec(index = 2u8)]
+            unbond {
+                #[codec(compact)]
+                value: u128,
+            },
+            #[codec(index = 3u8)]
+            withdraw_unbonded { num_slashing_spans: u32 },
+            #[codec(index = 4u8)]
+            validate {
+                prefs: pallet_staking::ValidatorPrefs,
+            },
+            #[codec(index = 5u8)]
+            nominate {
+                targets: Vec<sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>>,
+            },
+            #[codec(index = 6u8)]
+            chill,
+            #[codec(index = 7u8)]
+            set_payee {
+                payee: pallet_staking::RewardDestination<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 8u8)]
+            set_controller {
+                controller: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+            },
+            #[codec(index = 9u8)]
+            set_validator_count {
+                #[codec(compact)]
+                new: u32,
+            },
+            #[codec(index = 10u8)]
+            increase_validator_count {
+                #[codec(compact)]
+                additional: u32,
+            },
+            #[codec(index = 11u8)]
+            scale_validator_count {
+                factor: sp_arithmetic::per_things::Percent,
+            },
+            #[codec(index = 12u8)]
+            add_permissioned_validator {
+                identity: polymesh_primitives::identity_id::IdentityId,
+                intended_count: Option<u32>,
+            },
+            #[codec(index = 13u8)]
+            remove_permissioned_validator {
+                identity: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 14u8)]
+            validate_cdd_expiry_nominators {
+                targets: Vec<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 15u8)]
+            set_commission_cap {
+                new_cap: sp_arithmetic::per_things::Perbill,
+            },
+            #[codec(index = 16u8)]
+            set_min_bond_threshold { new_value: u128 },
+            #[codec(index = 17u8)]
+            force_no_eras,
+            #[codec(index = 18u8)]
+            force_new_era,
+            #[codec(index = 19u8)]
+            set_invulnerables {
+                invulnerables: Vec<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 20u8)]
+            force_unstake {
+                stash: sp_core::crypto::AccountId32,
+                num_slashing_spans: u32,
+            },
+            #[codec(index = 21u8)]
+            force_new_era_always,
+            #[codec(index = 22u8)]
+            cancel_deferred_slash { era: u32, slash_indices: Vec<u32> },
+            #[codec(index = 23u8)]
+            payout_stakers {
+                validator_stash: sp_core::crypto::AccountId32,
+                era: u32,
+            },
+            #[codec(index = 24u8)]
+            rebond {
+                #[codec(compact)]
+                value: u128,
+            },
+            #[codec(index = 25u8)]
+            set_history_depth {
+                #[codec(compact)]
+                new_history_depth: u32,
+                #[codec(compact)]
+                _era_items_deleted: u32,
+            },
+            #[codec(index = 26u8)]
+            reap_stash {
+                stash: sp_core::crypto::AccountId32,
+                num_slashing_spans: u32,
+            },
+            #[codec(index = 27u8)]
+            submit_election_solution {
+                winners: Vec<u16>,
+                compact: pallet_staking::CompactAssignments,
+                score: sp_npos_elections::ElectionScore,
+                era: u32,
+                size: pallet_staking::ElectionSize,
+            },
+            #[codec(index = 28u8)]
+            submit_election_solution_unsigned {
+                winners: Vec<u16>,
+                compact: pallet_staking::CompactAssignments,
+                score: sp_npos_elections::ElectionScore,
+                era: u32,
+                size: pallet_staking::ElectionSize,
+            },
+            #[codec(index = 29u8)]
+            payout_stakers_by_system {
+                validator_stash: sp_core::crypto::AccountId32,
+                era: u32,
+            },
+            #[codec(index = 30u8)]
+            change_slashing_allowed_for {
+                slashing_switch: pallet_staking::SlashingSwitch,
+            },
+            #[codec(index = 31u8)]
+            update_permissioned_validator_intended_count {
+                identity: polymesh_primitives::identity_id::IdentityId,
+                new_intended_count: u32,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ElectionSize {
+            #[codec(compact)]
+            pub validators: u16,
+            #[codec(compact)]
+            pub nominators: u32,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ActiveEraInfo {
+            pub index: u32,
+            pub start: Option<u64>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct UnlockChunk<Balance> {
+            #[codec(compact)]
+            pub value: Balance,
+            #[codec(compact)]
+            pub era: u32,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<Balance, AccountId> {
+            #[codec(index = 0u8)]
+            EraPayout(u32, Balance, Balance),
+            #[codec(index = 1u8)]
+            Reward(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Balance,
+            ),
+            #[codec(index = 2u8)]
+            Slash(AccountId, Balance),
+            #[codec(index = 3u8)]
+            OldSlashingReportDiscarded(u32),
+            #[codec(index = 4u8)]
+            StakingElection(pallet_staking::ElectionCompute),
+            #[codec(index = 5u8)]
+            SolutionStored(pallet_staking::ElectionCompute),
+            #[codec(index = 6u8)]
+            Bonded(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Balance,
+            ),
+            #[codec(index = 7u8)]
+            Unbonded(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Balance,
+            ),
+            #[codec(index = 8u8)]
+            Nominated(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Vec<AccountId>,
+            ),
+            #[codec(index = 9u8)]
+            Withdrawn(AccountId, Balance),
+            #[codec(index = 10u8)]
+            PermissionedIdentityAdded(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::identity_id::IdentityId,
+            ),
+            #[codec(index = 11u8)]
+            PermissionedIdentityRemoved(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::identity_id::IdentityId,
+            ),
+            #[codec(index = 12u8)]
+            InvalidatedNominators(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                Vec<AccountId>,
+            ),
+            #[codec(index = 13u8)]
+            CommissionCapUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                sp_arithmetic::per_things::Perbill,
+                sp_arithmetic::per_things::Perbill,
+            ),
+            #[codec(index = 14u8)]
+            MinimumBondThresholdUpdated(
+                Option<polymesh_primitives::identity_id::IdentityId>,
+                Balance,
+            ),
+            #[codec(index = 15u8)]
+            RewardPaymentSchedulingInterrupted(AccountId, u32, sp_runtime::DispatchError),
+            #[codec(index = 16u8)]
+            SlashingAllowedForChanged(pallet_staking::SlashingSwitch),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct EraRewardPoints<AccountId> {
+            pub total: u32,
+            pub individual: std::collections::BTreeMap<AccountId, u32>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ValidatorPrefs {
+            #[codec(compact)]
+            pub commission: sp_arithmetic::per_things::Perbill,
+            pub blocked: bool,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct CompactAssignments {
+            pub votes1: Vec<(::codec::Compact<u32>, ::codec::Compact<u16>)>,
+            pub votes2: Vec<(
+                ::codec::Compact<u32>,
+                (
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ),
+                ::codec::Compact<u16>,
+            )>,
+            pub votes3: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 2usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes4: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 3usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes5: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 4usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes6: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 5usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes7: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 6usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes8: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 7usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes9: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 8usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes10: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 9usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes11: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 10usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes12: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 11usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes13: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 12usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes14: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 13usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes15: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 14usize],
+                ::codec::Compact<u16>,
+            )>,
+            pub votes16: Vec<(
+                ::codec::Compact<u32>,
+                [(
+                    ::codec::Compact<u16>,
+                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
+                ); 15usize],
+                ::codec::Compact<u16>,
+            )>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Forcing {
+            #[codec(index = 0u8)]
+            NotForcing,
+            #[codec(index = 1u8)]
+            ForceNew,
+            #[codec(index = 2u8)]
+            ForceNone,
+            #[codec(index = 3u8)]
+            ForceAlways,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum ElectionStatus<BlockNumber> {
+            #[codec(index = 0u8)]
+            Closed,
+            #[codec(index = 1u8)]
+            Open(BlockNumber),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct PermissionedIdentityPrefs {
+            pub intended_count: u32,
+            pub running_count: u32,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum SlashingSwitch {
+            #[codec(index = 0u8)]
+            Validator,
+            #[codec(index = 1u8)]
+            ValidatorAndNominator,
+            #[codec(index = 2u8)]
+            None,
+        }
+    }
+    pub mod pallet_identity {
+        use super::*;
+        pub mod types {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Claim2ndKey {
+                pub issuer: polymesh_primitives::identity_id::IdentityId,
+                pub scope: Option<polymesh_primitives::identity_claim::Scope>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Claim1stKey {
+                pub target: polymesh_primitives::identity_id::IdentityId,
+                pub claim_type: polymesh_primitives::identity_claim::ClaimType,
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            cdd_register_did {
+                target_account: sp_core::crypto::AccountId32,
+                secondary_keys: Vec<
+                    polymesh_primitives::secondary_key::SecondaryKey<sp_core::crypto::AccountId32>,
+                >,
+            },
+            #[codec(index = 1u8)]
+            invalidate_cdd_claims {
+                cdd: polymesh_primitives::identity_id::IdentityId,
+                disable_from: u64,
+                expiry: Option<u64>,
+            },
+            #[codec(index = 2u8)]
+            remove_secondary_keys_old {
+                keys_to_remove: Vec<
+                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                >,
+            },
+            #[codec(index = 3u8)]
+            accept_primary_key {
+                rotation_auth_id: u64,
+                optional_cdd_auth_id: Option<u64>,
+            },
+            #[codec(index = 4u8)]
+            change_cdd_requirement_for_mk_rotation { auth_required: bool },
+            #[codec(index = 5u8)]
+            join_identity_as_key { auth_id: u64 },
+            #[codec(index = 6u8)]
+            leave_identity_as_key,
+            #[codec(index = 7u8)]
+            add_claim {
+                target: polymesh_primitives::identity_id::IdentityId,
+                claim: polymesh_primitives::identity_claim::Claim,
+                expiry: Option<u64>,
+            },
+            #[codec(index = 8u8)]
+            revoke_claim {
+                target: polymesh_primitives::identity_id::IdentityId,
+                claim: polymesh_primitives::identity_claim::Claim,
+            },
+            #[codec(index = 9u8)]
+            set_permission_to_signer {
+                key: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                perms: polymesh_primitives::secondary_key::Permissions,
+            },
+            #[codec(index = 10u8)]
+            placeholder_legacy_set_permission_to_signer,
+            #[codec(index = 11u8)]
+            freeze_secondary_keys,
+            #[codec(index = 12u8)]
+            unfreeze_secondary_keys,
+            #[codec(index = 13u8)]
+            add_authorization {
+                target: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                data: polymesh_primitives::authorization::AuthorizationData<
+                    sp_core::crypto::AccountId32,
+                >,
+                expiry: Option<u64>,
+            },
+            #[codec(index = 14u8)]
+            remove_authorization {
+                target: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                auth_id: u64,
+                _auth_issuer_pays: bool,
+            },
+            #[codec(index = 15u8)]
+            add_secondary_keys_with_authorization_old {
+                additional_keys: Vec<
+                    polymesh_common_utilities::traits::identity::SecondaryKeyWithAuthV1<
+                        sp_core::crypto::AccountId32,
+                    >,
+                >,
+                expires_at: u64,
+            },
+            #[codec(index = 16u8)]
+            add_investor_uniqueness_claim {
+                target: polymesh_primitives::identity_id::IdentityId,
+                claim: polymesh_primitives::identity_claim::Claim,
+                proof: [u8; 64usize],
+                expiry: Option<u64>,
+            },
+            #[codec(index = 17u8)]
+            gc_add_cdd_claim {
+                target: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 18u8)]
+            gc_revoke_cdd_claim {
+                target: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 19u8)]
+            add_investor_uniqueness_claim_v2 {
+                target: polymesh_primitives::identity_id::IdentityId,
+                scope: polymesh_primitives::identity_claim::Scope,
+                claim: polymesh_primitives::identity_claim::Claim,
+                proof: confidential_identity::claim_proofs::ScopeClaimProof,
+                expiry: Option<u64>,
+            },
+            #[codec(index = 20u8)]
+            revoke_claim_by_index {
+                target: polymesh_primitives::identity_id::IdentityId,
+                claim_type: polymesh_primitives::identity_claim::ClaimType,
+                scope: Option<polymesh_primitives::identity_claim::Scope>,
+            },
+            #[codec(index = 21u8)]
+            rotate_primary_key_to_secondary {
+                auth_id: u64,
+                optional_cdd_auth_id: Option<u64>,
+            },
+            #[codec(index = 22u8)]
+            add_secondary_keys_with_authorization {
+                additional_keys: Vec<
+                    polymesh_common_utilities::traits::identity::SecondaryKeyWithAuth<
+                        sp_core::crypto::AccountId32,
+                    >,
+                >,
+                expires_at: u64,
+            },
+            #[codec(index = 23u8)]
+            set_secondary_key_permissions {
+                key: sp_core::crypto::AccountId32,
+                perms: polymesh_primitives::secondary_key::Permissions,
+            },
+            #[codec(index = 24u8)]
+            remove_secondary_keys {
+                keys_to_remove: Vec<sp_core::crypto::AccountId32>,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            AlreadyLinked,
+            #[codec(index = 1u8)]
+            MissingCurrentIdentity,
+            #[codec(index = 2u8)]
+            Unauthorized,
+            #[codec(index = 3u8)]
+            InvalidAccountKey,
+            #[codec(index = 4u8)]
+            UnAuthorizedCddProvider,
+            #[codec(index = 5u8)]
+            InvalidAuthorizationFromOwner,
+            #[codec(index = 6u8)]
+            InvalidAuthorizationFromCddProvider,
+            #[codec(index = 7u8)]
+            NotCddProviderAttestation,
+            #[codec(index = 8u8)]
+            AuthorizationsNotForSameDids,
+            #[codec(index = 9u8)]
+            DidMustAlreadyExist,
+            #[codec(index = 10u8)]
+            CurrentIdentityCannotBeForwarded,
+            #[codec(index = 11u8)]
+            AuthorizationExpired,
+            #[codec(index = 12u8)]
+            TargetHasNoCdd,
+            #[codec(index = 13u8)]
+            AuthorizationHasBeenRevoked,
+            #[codec(index = 14u8)]
+            InvalidAuthorizationSignature,
+            #[codec(index = 15u8)]
+            KeyNotAllowed,
+            #[codec(index = 16u8)]
+            NotPrimaryKey,
+            #[codec(index = 17u8)]
+            DidDoesNotExist,
+            #[codec(index = 18u8)]
+            DidAlreadyExists,
+            #[codec(index = 19u8)]
+            SecondaryKeysContainPrimaryKey,
+            #[codec(index = 20u8)]
+            FailedToChargeFee,
+            #[codec(index = 21u8)]
+            NotASigner,
+            #[codec(index = 22u8)]
+            CannotDecodeSignerAccountId,
+            #[codec(index = 23u8)]
+            MultiSigHasBalance,
+            #[codec(index = 24u8)]
+            ConfidentialScopeClaimNotAllowed,
+            #[codec(index = 25u8)]
+            InvalidScopeClaim,
+            #[codec(index = 26u8)]
+            ClaimVariantNotAllowed,
+            #[codec(index = 27u8)]
+            TargetHasNonZeroBalanceAtScopeId,
+            #[codec(index = 28u8)]
+            CDDIdNotUniqueForIdentity,
+            #[codec(index = 29u8)]
+            InvalidCDDId,
+            #[codec(index = 30u8)]
+            ClaimAndProofVersionsDoNotMatch,
+            #[codec(index = 31u8)]
+            AccountKeyIsBeingUsed,
+            #[codec(index = 32u8)]
+            CustomScopeTooLong,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+    }
+    pub mod pallet_grandpa {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                report_equivocation {
+                    equivocation_proof: ::std::boxed::Box<
+                        sp_finality_grandpa::EquivocationProof<primitive_types::H256, u32>,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[codec(index = 1u8)]
+                report_equivocation_unsigned {
+                    equivocation_proof: ::std::boxed::Box<
+                        sp_finality_grandpa::EquivocationProof<primitive_types::H256, u32>,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[codec(index = 2u8)]
+                note_stalled {
+                    delay: u32,
+                    best_finalized_block_number: u32,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                PauseFailed,
+                #[codec(index = 1u8)]
+                ResumeFailed,
+                #[codec(index = 2u8)]
+                ChangePending,
+                #[codec(index = 3u8)]
+                TooSoon,
+                #[codec(index = 4u8)]
+                InvalidKeyOwnershipProof,
+                #[codec(index = 5u8)]
+                InvalidEquivocationProof,
+                #[codec(index = 6u8)]
+                DuplicateOffenceReport,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                NewAuthorities {
+                    authority_set: Vec<(sp_finality_grandpa::app::Public, u64)>,
+                },
+                #[codec(index = 1u8)]
+                Paused,
+                #[codec(index = 2u8)]
+                Resumed,
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum StoredState<N> {
+            #[codec(index = 0u8)]
+            Live,
+            #[codec(index = 1u8)]
+            PendingPause { scheduled_at: N, delay: N },
+            #[codec(index = 2u8)]
+            Paused,
+            #[codec(index = 3u8)]
+            PendingResume { scheduled_at: N, delay: N },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct StoredPendingChange<N> {
+            pub scheduled_at: N,
+            pub delay: N,
+            pub next_authorities: Vec<(sp_finality_grandpa::app::Public, u64)>,
+            pub forced: Option<N>,
+        }
+    }
+    pub mod pallet_authorship {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                set_uncles {
+                    new_uncles:
+                        Vec<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                InvalidUncleParent,
+                #[codec(index = 1u8)]
+                UnclesAlreadySet,
+                #[codec(index = 2u8)]
+                TooManyUncles,
+                #[codec(index = 3u8)]
+                GenesisUncle,
+                #[codec(index = 4u8)]
+                TooHighUncle,
+                #[codec(index = 5u8)]
+                UncleAlreadyIncluded,
+                #[codec(index = 6u8)]
+                OldUncle,
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum UncleEntryItem<BlockNumber, Hash, Author> {
+            #[codec(index = 0u8)]
+            InclusionHeight(BlockNumber),
+            #[codec(index = 1u8)]
+            Uncle(Hash, Option<Author>),
+        }
+    }
+    pub mod polymesh_contracts {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            RuntimeCallNotFound,
+            #[codec(index = 1u8)]
+            DataLeftAfterDecoding,
+            #[codec(index = 2u8)]
+            InLenTooLarge,
+            #[codec(index = 3u8)]
+            InstantiatorWithNoIdentity,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Event {}
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            instantiate_with_code_perms {
+                endowment: u128,
+                gas_limit: u64,
+                storage_deposit_limit: Option<u128>,
+                code: Vec<u8>,
+                data: Vec<u8>,
+                salt: Vec<u8>,
+                perms: polymesh_primitives::secondary_key::Permissions,
+            },
+            #[codec(index = 1u8)]
+            instantiate_with_hash_perms {
+                endowment: u128,
+                gas_limit: u64,
+                storage_deposit_limit: Option<u128>,
+                code_hash: primitive_types::H256,
+                data: Vec<u8>,
+                salt: Vec<u8>,
+                perms: polymesh_primitives::secondary_key::Permissions,
+            },
+        }
+    }
+    pub mod confidential_identity {
+        use super::*;
+        pub mod claim_proofs {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct ZkProofData {
+                pub challenge_responses: [[u8; 32usize]; 2usize],
+                pub subtract_expressions_res: [u8; 32usize],
+                pub blinded_scope_did_hash: [u8; 32usize],
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct ScopeClaimProof {
+                pub proof_scope_id_wellformed: confidential_identity::sign::Signature,
+                pub proof_scope_id_cdd_id_match: confidential_identity::claim_proofs::ZkProofData,
+                pub scope_id: [u8; 32usize],
+            }
+        }
+        pub mod sign {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Signature {
+                pub r: [u8; 32usize],
+                pub s: [u8; 32usize],
+            }
+        }
+    }
+    pub mod pallet_scheduler {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                FailedToSchedule,
+                #[codec(index = 1u8)]
+                NotFound,
+                #[codec(index = 2u8)]
+                TargetBlockNumberInPast,
+                #[codec(index = 3u8)]
+                RescheduleNoChange,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                schedule {
+                    when: u32,
+                    maybe_periodic: Option<(u32, u32)>,
+                    priority: u8,
+                    call: ::std::boxed::Box<
+                        frame_support::traits::schedule::MaybeHashed<
+                            polymesh_runtime_develop::runtime::Call,
+                            primitive_types::H256,
+                        >,
+                    >,
+                },
+                #[codec(index = 1u8)]
+                cancel { when: u32, index: u32 },
+                #[codec(index = 2u8)]
+                schedule_named {
+                    id: Vec<u8>,
+                    when: u32,
+                    maybe_periodic: Option<(u32, u32)>,
+                    priority: u8,
+                    call: ::std::boxed::Box<
+                        frame_support::traits::schedule::MaybeHashed<
+                            polymesh_runtime_develop::runtime::Call,
+                            primitive_types::H256,
+                        >,
+                    >,
+                },
+                #[codec(index = 3u8)]
+                cancel_named { id: Vec<u8> },
+                #[codec(index = 4u8)]
+                schedule_after {
+                    after: u32,
+                    maybe_periodic: Option<(u32, u32)>,
+                    priority: u8,
+                    call: ::std::boxed::Box<
+                        frame_support::traits::schedule::MaybeHashed<
+                            polymesh_runtime_develop::runtime::Call,
+                            primitive_types::H256,
+                        >,
+                    >,
+                },
+                #[codec(index = 5u8)]
+                schedule_named_after {
+                    id: Vec<u8>,
+                    after: u32,
+                    maybe_periodic: Option<(u32, u32)>,
+                    priority: u8,
+                    call: ::std::boxed::Box<
+                        frame_support::traits::schedule::MaybeHashed<
+                            polymesh_runtime_develop::runtime::Call,
+                            primitive_types::H256,
+                        >,
+                    >,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                Scheduled { when: u32, index: u32 },
+                #[codec(index = 1u8)]
+                Canceled { when: u32, index: u32 },
+                #[codec(index = 2u8)]
+                Dispatched {
+                    task: (u32, u32),
+                    id: Option<Vec<u8>>,
+                    result: Result<(), sp_runtime::DispatchError>,
+                },
+                #[codec(index = 3u8)]
+                CallLookupFailed {
+                    task: (u32, u32),
+                    id: Option<Vec<u8>>,
+                    error: frame_support::traits::schedule::LookupError,
+                },
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ScheduledV3<Call, BlockNumber, PalletsOrigin, AccountId> {
+            pub maybe_id: Option<Vec<u8>>,
+            pub priority: u8,
+            pub call: Call,
+            pub maybe_periodic: Option<(BlockNumber, BlockNumber)>,
+            pub origin: PalletsOrigin,
+            _phantom_data: core::marker::PhantomData<AccountId>,
+        }
+    }
+    pub mod pallet_portfolio {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            create_portfolio {
+                name: polymesh_primitives::identity_id::PortfolioName,
+            },
+            #[codec(index = 1u8)]
+            delete_portfolio {
+                num: polymesh_primitives::identity_id::PortfolioNumber,
+            },
+            #[codec(index = 2u8)]
+            move_portfolio_funds {
+                from: polymesh_primitives::identity_id::PortfolioId,
+                to: polymesh_primitives::identity_id::PortfolioId,
+                items: Vec<pallet_portfolio::MovePortfolioItem>,
+            },
+            #[codec(index = 3u8)]
+            rename_portfolio {
+                num: polymesh_primitives::identity_id::PortfolioNumber,
+                to_name: polymesh_primitives::identity_id::PortfolioName,
+            },
+            #[codec(index = 4u8)]
+            quit_portfolio_custody {
+                pid: polymesh_primitives::identity_id::PortfolioId,
+            },
+            #[codec(index = 5u8)]
+            accept_portfolio_custody { auth_id: u64 },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct MovePortfolioItem {
+            pub ticker: polymesh_primitives::ticker::Ticker,
+            pub amount: u128,
+            pub memo: Option<polymesh_common_utilities::traits::balances::Memo>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            PortfolioDoesNotExist,
+            #[codec(index = 1u8)]
+            InsufficientPortfolioBalance,
+            #[codec(index = 2u8)]
+            DestinationIsSamePortfolio,
+            #[codec(index = 3u8)]
+            PortfolioNameAlreadyInUse,
+            #[codec(index = 4u8)]
+            SecondaryKeyNotAuthorizedForPortfolio,
+            #[codec(index = 5u8)]
+            UnauthorizedCustodian,
+            #[codec(index = 6u8)]
+            InsufficientTokensLocked,
+            #[codec(index = 7u8)]
+            PortfolioNotEmpty,
+            #[codec(index = 8u8)]
+            DifferentIdentityPortfolios,
+        }
+    }
+    pub mod pallet_sto {
+        use super::*;
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum RawEvent<Moment> {
@@ -53,15 +3475,9 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum FundraiserStatus {
-            #[codec(index = 0u8)]
-            Live,
-            #[codec(index = 1u8)]
-            Frozen,
-            #[codec(index = 2u8)]
-            Closed,
-            #[codec(index = 3u8)]
-            ClosedEarly,
+        pub struct PriceTier {
+            pub total: u128,
+            pub price: u128,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -90,6 +3506,31 @@ pub mod types {
             MaxPriceExceeded,
             #[codec(index = 11u8)]
             InvestmentAmountTooLow,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct FundraiserId(pub u64);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum FundraiserStatus {
+            #[codec(index = 0u8)]
+            Live,
+            #[codec(index = 1u8)]
+            Frozen,
+            #[codec(index = 2u8)]
+            Closed,
+            #[codec(index = 3u8)]
+            ClosedEarly,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct FundraiserName(pub Vec<u8>);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct FundraiserTier {
+            pub total: u128,
+            pub price: u128,
+            pub remaining: u128,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -160,79 +3601,944 @@ pub mod types {
             pub status: pallet_sto::FundraiserStatus,
             pub minimum_investment: u128,
         }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct PriceTier {
-            pub total: u128,
-            pub price: u128,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct FundraiserTier {
-            pub total: u128,
-            pub price: u128,
-            pub remaining: u128,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct FundraiserId(pub u64);
     }
-    pub mod pallet_balances {
+    pub mod pallet_sudo {
         use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            RequireSudo,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<AccountId> {
+            #[codec(index = 0u8)]
+            Sudid(Result<(), sp_runtime::DispatchError>),
+            #[codec(index = 1u8)]
+            KeyChanged(AccountId),
+            #[codec(index = 2u8)]
+            SudoAsDone(Result<(), sp_runtime::DispatchError>),
+        }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum Call {
             #[codec(index = 0u8)]
-            transfer {
-                dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
+            sudo {
+                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
             },
             #[codec(index = 1u8)]
-            transfer_with_memo {
-                dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
-                memo: Option<polymesh_common_utilities::traits::balances::Memo>,
+            sudo_unchecked_weight {
+                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+                _weight: u64,
             },
             #[codec(index = 2u8)]
-            deposit_block_reward_reserve_balance { value: ::codec::Compact<u128> },
+            set_key {
+                new: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+            },
             #[codec(index = 3u8)]
-            set_balance {
+            sudo_as {
                 who: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                new_free: ::codec::Compact<u128>,
-                new_reserved: ::codec::Compact<u128>,
+                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+            },
+        }
+    }
+    pub mod frame_system {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                fill_block {
+                    ratio: sp_arithmetic::per_things::Perbill,
+                },
+                #[codec(index = 1u8)]
+                remark { remark: Vec<u8> },
+                #[codec(index = 2u8)]
+                set_heap_pages { pages: u64 },
+                #[codec(index = 3u8)]
+                set_code { code: Vec<u8> },
+                #[codec(index = 4u8)]
+                set_code_without_checks { code: Vec<u8> },
+                #[codec(index = 5u8)]
+                set_storage { items: Vec<(Vec<u8>, Vec<u8>)> },
+                #[codec(index = 6u8)]
+                kill_storage { keys: Vec<Vec<u8>> },
+                #[codec(index = 7u8)]
+                kill_prefix { prefix: Vec<u8>, subkeys: u32 },
+                #[codec(index = 8u8)]
+                remark_with_event { remark: Vec<u8> },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                ExtrinsicSuccess {
+                    dispatch_info: frame_support::weights::DispatchInfo,
+                },
+                #[codec(index = 1u8)]
+                ExtrinsicFailed {
+                    dispatch_error: sp_runtime::DispatchError,
+                    dispatch_info: frame_support::weights::DispatchInfo,
+                },
+                #[codec(index = 2u8)]
+                CodeUpdated,
+                #[codec(index = 3u8)]
+                NewAccount {
+                    account: sp_core::crypto::AccountId32,
+                },
+                #[codec(index = 4u8)]
+                KilledAccount {
+                    account: sp_core::crypto::AccountId32,
+                },
+                #[codec(index = 5u8)]
+                Remarked {
+                    sender: sp_core::crypto::AccountId32,
+                    hash: primitive_types::H256,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                InvalidSpecName,
+                #[codec(index = 1u8)]
+                SpecVersionNeedsToIncrease,
+                #[codec(index = 2u8)]
+                FailedToExtractRuntimeVersion,
+                #[codec(index = 3u8)]
+                NonDefaultComposite,
+                #[codec(index = 4u8)]
+                NonZeroRefCount,
+                #[codec(index = 5u8)]
+                CallFiltered,
+            }
+        }
+        pub mod limits {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct WeightsPerClass {
+                pub base_extrinsic: u64,
+                pub max_extrinsic: Option<u64>,
+                pub max_total: Option<u64>,
+                pub reserved: Option<u64>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct BlockWeights {
+                pub base_block: u64,
+                pub max_block: u64,
+                pub per_class:
+                    frame_support::weights::PerDispatchClass<frame_system::limits::WeightsPerClass>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct BlockLength {
+                pub max: frame_support::weights::PerDispatchClass<u32>,
+            }
+        }
+        pub mod extensions {
+            use super::*;
+            pub mod check_weight {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckWeight();
+            }
+            pub mod check_tx_version {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckTxVersion();
+            }
+            pub mod check_nonce {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckNonce(#[codec(compact)] pub u32);
+            }
+            pub mod check_spec_version {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckSpecVersion();
+            }
+            pub mod check_genesis {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckGenesis();
+            }
+            pub mod check_mortality {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckMortality(pub sp_runtime::generic::Era);
+            }
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct AccountInfo<Index, AccountData> {
+            pub nonce: Index,
+            pub consumers: Index,
+            pub providers: Index,
+            pub sufficients: Index,
+            pub data: AccountData,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Phase {
+            #[codec(index = 0u8)]
+            ApplyExtrinsic(u32),
+            #[codec(index = 1u8)]
+            Finalization,
+            #[codec(index = 2u8)]
+            Initialization,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct LastRuntimeUpgradeInfo {
+            #[codec(compact)]
+            pub spec_version: u32,
+            pub spec_name: String,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct EventRecord<E, T> {
+            pub phase: frame_system::Phase,
+            pub event: E,
+            pub topics: Vec<T>,
+        }
+    }
+    pub mod pallet_external_agents {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            NoSuchAG,
+            #[codec(index = 1u8)]
+            UnauthorizedAgent,
+            #[codec(index = 2u8)]
+            AlreadyAnAgent,
+            #[codec(index = 3u8)]
+            NotAnAgent,
+            #[codec(index = 4u8)]
+            RemovingLastFullAgent,
+            #[codec(index = 5u8)]
+            SecondaryKeyNotAuthorizedForAsset,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            create_group {
+                ticker: polymesh_primitives::ticker::Ticker,
+                perms: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::secondary_key::PalletPermissions,
+                >,
+            },
+            #[codec(index = 1u8)]
+            set_group_permissions {
+                ticker: polymesh_primitives::ticker::Ticker,
+                id: polymesh_primitives::agent::AGId,
+                perms: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::secondary_key::PalletPermissions,
+                >,
+            },
+            #[codec(index = 2u8)]
+            remove_agent {
+                ticker: polymesh_primitives::ticker::Ticker,
+                agent: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 3u8)]
+            abdicate {
+                ticker: polymesh_primitives::ticker::Ticker,
             },
             #[codec(index = 4u8)]
-            force_transfer {
-                source: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
+            change_group {
+                ticker: polymesh_primitives::ticker::Ticker,
+                agent: polymesh_primitives::identity_id::IdentityId,
+                group: polymesh_primitives::agent::AgentGroup,
             },
             #[codec(index = 5u8)]
-            burn_account_balance { amount: u128 },
+            accept_become_agent { auth_id: u64 },
+            #[codec(index = 6u8)]
+            create_group_and_add_auth {
+                ticker: polymesh_primitives::ticker::Ticker,
+                perms: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::secondary_key::PalletPermissions,
+                >,
+                target: polymesh_primitives::identity_id::IdentityId,
+                expiry: Option<u64>,
+            },
+            #[codec(index = 7u8)]
+            create_and_change_custom_group {
+                ticker: polymesh_primitives::ticker::Ticker,
+                perms: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::secondary_key::PalletPermissions,
+                >,
+                agent: polymesh_primitives::identity_id::IdentityId,
+            },
+        }
+    }
+    pub mod pallet_test_utils {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<AccountId> {
+            #[codec(index = 0u8)]
+            MockInvestorUIDCreated(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::cdd_id::InvestorUid,
+            ),
+            #[codec(index = 1u8)]
+            DidStatus(polymesh_primitives::identity_id::IdentityId, AccountId),
+            #[codec(index = 2u8)]
+            CddStatus(
+                Option<polymesh_primitives::identity_id::IdentityId>,
+                AccountId,
+                bool,
+            ),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            register_did {
+                uid: polymesh_primitives::cdd_id::InvestorUid,
+                secondary_keys: Vec<
+                    polymesh_primitives::secondary_key::SecondaryKey<sp_core::crypto::AccountId32>,
+                >,
+            },
+            #[codec(index = 1u8)]
+            mock_cdd_register_did {
+                target_account: sp_core::crypto::AccountId32,
+            },
+            #[codec(index = 2u8)]
+            get_my_did,
+            #[codec(index = 3u8)]
+            get_cdd_of { of: sp_core::crypto::AccountId32 },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {}
+    }
+    pub mod polymesh_extensions {
+        use super::*;
+        pub mod check_weight {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct CheckWeight(pub frame_system::extensions::check_weight::CheckWeight);
+        }
+    }
+    pub mod sp_staking {
+        use super::*;
+        pub mod offence {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct OffenceDetails<Reporter, Offender> {
+                pub offender: Offender,
+                pub reporters: Vec<Reporter>,
+            }
+        }
+    }
+    pub mod pallet_group {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance2();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance3();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance1();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance4();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            set_active_members_limit { limit: u32 },
+            #[codec(index = 1u8)]
+            disable_member {
+                who: polymesh_primitives::identity_id::IdentityId,
+                expiry: Option<u64>,
+                at: Option<u64>,
+            },
+            #[codec(index = 2u8)]
+            add_member {
+                who: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 3u8)]
+            remove_member {
+                who: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 4u8)]
+            swap_member {
+                remove: polymesh_primitives::identity_id::IdentityId,
+                add: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 5u8)]
+            reset_members {
+                members: Vec<polymesh_primitives::identity_id::IdentityId>,
+            },
+            #[codec(index = 6u8)]
+            abdicate_membership,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum Error {
             #[codec(index = 0u8)]
-            LiquidityRestrictions,
+            OnlyPrimaryKeyAllowed,
             #[codec(index = 1u8)]
-            Overflow,
+            DuplicateMember,
             #[codec(index = 2u8)]
-            InsufficientBalance,
+            NoSuchMember,
             #[codec(index = 3u8)]
-            ExistentialDeposit,
+            LastMemberCannotQuit,
             #[codec(index = 4u8)]
-            ReceiverCddMissing,
+            MissingCurrentIdentity,
+            #[codec(index = 5u8)]
+            ActiveMembersLimitExceeded,
+            #[codec(index = 6u8)]
+            ActiveMembersLimitOverflow,
+        }
+    }
+    pub mod pallet_committee {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance1();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Version(pub u8);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance4();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct PolymeshVotes<BlockNumber> {
+            pub index: BlockNumber,
+            pub ayes: Vec<polymesh_primitives::identity_id::IdentityId>,
+            pub nays: Vec<polymesh_primitives::identity_id::IdentityId>,
+            pub expiry: polymesh_common_utilities::MaybeBlock<BlockNumber>,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct BalanceLock<Balance> {
-            pub id: [u8; 8usize],
-            pub amount: Balance,
-            pub reasons: polymesh_common_utilities::traits::balances::Reasons,
+        pub enum Error {
+            #[codec(index = 0u8)]
+            DuplicateVote,
+            #[codec(index = 1u8)]
+            NotAMember,
+            #[codec(index = 2u8)]
+            NoSuchProposal,
+            #[codec(index = 3u8)]
+            ProposalExpired,
+            #[codec(index = 4u8)]
+            DuplicateProposal,
+            #[codec(index = 5u8)]
+            MismatchedVotingIndex,
+            #[codec(index = 6u8)]
+            InvalidProportion,
+            #[codec(index = 7u8)]
+            FirstVoteReject,
+            #[codec(index = 8u8)]
+            ProposalsLimitReached,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Instance3();
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            set_vote_threshold { n: u32, d: u32 },
+            #[codec(index = 1u8)]
+            set_release_coordinator {
+                id: polymesh_primitives::identity_id::IdentityId,
+            },
+            #[codec(index = 2u8)]
+            set_expires_after {
+                expiry: polymesh_common_utilities::MaybeBlock<u32>,
+            },
+            #[codec(index = 3u8)]
+            vote_or_propose {
+                approve: bool,
+                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+            },
+            #[codec(index = 4u8)]
+            vote {
+                proposal: primitive_types::H256,
+                index: u32,
+                approve: bool,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawOrigin<AccountId, I> {
+            #[codec(index = 0u8)]
+            Endorsed,
+            PhantomDataVariant(core::marker::PhantomData<(AccountId, I)>),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<Hash, BlockNumber, I> {
+            #[codec(index = 0u8)]
+            Proposed(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                Hash,
+            ),
+            #[codec(index = 1u8)]
+            Voted(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                Hash,
+                bool,
+                BlockNumber,
+                BlockNumber,
+                BlockNumber,
+            ),
+            #[codec(index = 2u8)]
+            VoteRetracted(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                Hash,
+                bool,
+            ),
+            #[codec(index = 3u8)]
+            FinalVotes(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                Hash,
+                Vec<polymesh_primitives::identity_id::IdentityId>,
+                Vec<polymesh_primitives::identity_id::IdentityId>,
+            ),
+            #[codec(index = 4u8)]
+            Approved(
+                polymesh_primitives::identity_id::IdentityId,
+                Hash,
+                BlockNumber,
+                BlockNumber,
+                BlockNumber,
+            ),
+            #[codec(index = 5u8)]
+            Rejected(
+                polymesh_primitives::identity_id::IdentityId,
+                Hash,
+                BlockNumber,
+                BlockNumber,
+                BlockNumber,
+            ),
+            #[codec(index = 6u8)]
+            Executed(
+                polymesh_primitives::identity_id::IdentityId,
+                Hash,
+                Result<(), sp_runtime::DispatchError>,
+            ),
+            #[codec(index = 7u8)]
+            ReleaseCoordinatorUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                Option<polymesh_primitives::identity_id::IdentityId>,
+            ),
+            #[codec(index = 8u8)]
+            ExpiresAfterUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_common_utilities::MaybeBlock<BlockNumber>,
+            ),
+            #[codec(index = 9u8)]
+            VoteThresholdUpdated(
+                polymesh_primitives::identity_id::IdentityId,
+                BlockNumber,
+                BlockNumber,
+            ),
+            PhantomDataVariant(core::marker::PhantomData<I>),
         }
     }
-    pub mod pallet_grandpa {
+    pub mod pallet_babe {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                report_equivocation {
+                    equivocation_proof: ::std::boxed::Box<
+                        sp_consensus_slots::EquivocationProof<
+                            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
+                            sp_consensus_babe::app::Public,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[codec(index = 1u8)]
+                report_equivocation_unsigned {
+                    equivocation_proof: ::std::boxed::Box<
+                        sp_consensus_slots::EquivocationProof<
+                            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
+                            sp_consensus_babe::app::Public,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[codec(index = 2u8)]
+                plan_config_change {
+                    config: sp_consensus_babe::digests::NextConfigDescriptor,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                InvalidEquivocationProof,
+                #[codec(index = 1u8)]
+                InvalidKeyOwnershipProof,
+                #[codec(index = 2u8)]
+                DuplicateOffenceReport,
+            }
+        }
+    }
+    pub mod pallet_contracts {
+        use super::*;
+        pub mod storage {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct RawContractInfo<CodeHash, Balance> {
+                pub trie_id: Vec<u8>,
+                pub code_hash: CodeHash,
+                pub storage_deposit: Balance,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct DeletedContract {
+                pub trie_id: Vec<u8>,
+            }
+        }
+        pub mod pallet {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                call {
+                    dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                    #[codec(compact)]
+                    value: u128,
+                    #[codec(compact)]
+                    gas_limit: u64,
+                    storage_deposit_limit: Option<::codec::Compact<u128>>,
+                    data: Vec<u8>,
+                },
+                #[codec(index = 1u8)]
+                instantiate_with_code {
+                    #[codec(compact)]
+                    value: u128,
+                    #[codec(compact)]
+                    gas_limit: u64,
+                    storage_deposit_limit: Option<::codec::Compact<u128>>,
+                    code: Vec<u8>,
+                    data: Vec<u8>,
+                    salt: Vec<u8>,
+                },
+                #[codec(index = 2u8)]
+                instantiate {
+                    #[codec(compact)]
+                    value: u128,
+                    #[codec(compact)]
+                    gas_limit: u64,
+                    storage_deposit_limit: Option<::codec::Compact<u128>>,
+                    code_hash: primitive_types::H256,
+                    data: Vec<u8>,
+                    salt: Vec<u8>,
+                },
+                #[codec(index = 3u8)]
+                upload_code {
+                    code: Vec<u8>,
+                    storage_deposit_limit: Option<::codec::Compact<u128>>,
+                },
+                #[codec(index = 4u8)]
+                remove_code { code_hash: primitive_types::H256 },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Event {
+                #[codec(index = 0u8)]
+                Instantiated {
+                    deployer: sp_core::crypto::AccountId32,
+                    contract: sp_core::crypto::AccountId32,
+                },
+                #[codec(index = 1u8)]
+                Terminated {
+                    contract: sp_core::crypto::AccountId32,
+                    beneficiary: sp_core::crypto::AccountId32,
+                },
+                #[codec(index = 2u8)]
+                CodeStored { code_hash: primitive_types::H256 },
+                #[codec(index = 3u8)]
+                ContractEmitted {
+                    contract: sp_core::crypto::AccountId32,
+                    data: Vec<u8>,
+                },
+                #[codec(index = 4u8)]
+                CodeRemoved { code_hash: primitive_types::H256 },
+                #[codec(index = 5u8)]
+                ContractCodeUpdated {
+                    contract: sp_core::crypto::AccountId32,
+                    new_code_hash: primitive_types::H256,
+                    old_code_hash: primitive_types::H256,
+                },
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                InvalidScheduleVersion,
+                #[codec(index = 1u8)]
+                InvalidCallFlags,
+                #[codec(index = 2u8)]
+                OutOfGas,
+                #[codec(index = 3u8)]
+                OutputBufferTooSmall,
+                #[codec(index = 4u8)]
+                TransferFailed,
+                #[codec(index = 5u8)]
+                MaxCallDepthReached,
+                #[codec(index = 6u8)]
+                ContractNotFound,
+                #[codec(index = 7u8)]
+                CodeTooLarge,
+                #[codec(index = 8u8)]
+                CodeNotFound,
+                #[codec(index = 9u8)]
+                OutOfBounds,
+                #[codec(index = 10u8)]
+                DecodingFailed,
+                #[codec(index = 11u8)]
+                ContractTrapped,
+                #[codec(index = 12u8)]
+                ValueTooLarge,
+                #[codec(index = 13u8)]
+                TerminatedWhileReentrant,
+                #[codec(index = 14u8)]
+                InputForwarded,
+                #[codec(index = 15u8)]
+                RandomSubjectTooLong,
+                #[codec(index = 16u8)]
+                TooManyTopics,
+                #[codec(index = 17u8)]
+                DuplicateTopics,
+                #[codec(index = 18u8)]
+                NoChainExtension,
+                #[codec(index = 19u8)]
+                DeletionQueueFull,
+                #[codec(index = 20u8)]
+                DuplicateContract,
+                #[codec(index = 21u8)]
+                TerminatedInConstructor,
+                #[codec(index = 22u8)]
+                DebugMessageInvalidUTF8,
+                #[codec(index = 23u8)]
+                ReentranceDenied,
+                #[codec(index = 24u8)]
+                StorageDepositNotEnoughFunds,
+                #[codec(index = 25u8)]
+                StorageDepositLimitExhausted,
+                #[codec(index = 26u8)]
+                CodeInUse,
+                #[codec(index = 27u8)]
+                ContractReverted,
+                #[codec(index = 28u8)]
+                CodeRejected,
+            }
+        }
+        pub mod wasm {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct PrefabWasmModule {
+                #[codec(compact)]
+                pub instruction_weights_version: u32,
+                #[codec(compact)]
+                pub initial: u32,
+                #[codec(compact)]
+                pub maximum: u32,
+                pub code: Vec<u8>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct OwnerInfo {
+                pub owner: sp_core::crypto::AccountId32,
+                #[codec(compact)]
+                pub deposit: u128,
+                #[codec(compact)]
+                pub refcount: u64,
+            }
+        }
+        pub mod schedule {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct InstructionWeights {
+                pub version: u32,
+                pub i64const: u32,
+                pub i64load: u32,
+                pub i64store: u32,
+                pub select: u32,
+                pub r#if: u32,
+                pub br: u32,
+                pub br_if: u32,
+                pub br_table: u32,
+                pub br_table_per_entry: u32,
+                pub call: u32,
+                pub call_indirect: u32,
+                pub call_indirect_per_param: u32,
+                pub local_get: u32,
+                pub local_set: u32,
+                pub local_tee: u32,
+                pub global_get: u32,
+                pub global_set: u32,
+                pub memory_current: u32,
+                pub memory_grow: u32,
+                pub i64clz: u32,
+                pub i64ctz: u32,
+                pub i64popcnt: u32,
+                pub i64eqz: u32,
+                pub i64extendsi32: u32,
+                pub i64extendui32: u32,
+                pub i32wrapi64: u32,
+                pub i64eq: u32,
+                pub i64ne: u32,
+                pub i64lts: u32,
+                pub i64ltu: u32,
+                pub i64gts: u32,
+                pub i64gtu: u32,
+                pub i64les: u32,
+                pub i64leu: u32,
+                pub i64ges: u32,
+                pub i64geu: u32,
+                pub i64add: u32,
+                pub i64sub: u32,
+                pub i64mul: u32,
+                pub i64divs: u32,
+                pub i64divu: u32,
+                pub i64rems: u32,
+                pub i64remu: u32,
+                pub i64and: u32,
+                pub i64or: u32,
+                pub i64xor: u32,
+                pub i64shl: u32,
+                pub i64shrs: u32,
+                pub i64shru: u32,
+                pub i64rotl: u32,
+                pub i64rotr: u32,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Limits {
+                pub event_topics: u32,
+                pub stack_height: Option<u32>,
+                pub globals: u32,
+                pub parameters: u32,
+                pub memory_pages: u32,
+                pub table_size: u32,
+                pub br_table_size: u32,
+                pub subject_len: u32,
+                pub call_depth: u32,
+                pub payload_len: u32,
+                pub code_len: u32,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Schedule {
+                pub limits: pallet_contracts::schedule::Limits,
+                pub instruction_weights: pallet_contracts::schedule::InstructionWeights,
+                pub host_fn_weights: pallet_contracts::schedule::HostFnWeights,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct HostFnWeights {
+                pub caller: u64,
+                pub is_contract: u64,
+                pub code_hash: u64,
+                pub own_code_hash: u64,
+                pub caller_is_origin: u64,
+                pub address: u64,
+                pub gas_left: u64,
+                pub balance: u64,
+                pub value_transferred: u64,
+                pub minimum_balance: u64,
+                pub block_number: u64,
+                pub now: u64,
+                pub weight_to_fee: u64,
+                pub gas: u64,
+                pub input: u64,
+                pub input_per_byte: u64,
+                pub r#return: u64,
+                pub return_per_byte: u64,
+                pub terminate: u64,
+                pub random: u64,
+                pub deposit_event: u64,
+                pub deposit_event_per_topic: u64,
+                pub deposit_event_per_byte: u64,
+                pub debug_message: u64,
+                pub set_storage: u64,
+                pub set_storage_per_new_byte: u64,
+                pub set_storage_per_old_byte: u64,
+                pub set_code_hash: u64,
+                pub clear_storage: u64,
+                pub clear_storage_per_byte: u64,
+                pub contains_storage: u64,
+                pub contains_storage_per_byte: u64,
+                pub get_storage: u64,
+                pub get_storage_per_byte: u64,
+                pub take_storage: u64,
+                pub take_storage_per_byte: u64,
+                pub transfer: u64,
+                pub call: u64,
+                pub delegate_call: u64,
+                pub call_transfer_surcharge: u64,
+                pub call_per_cloned_byte: u64,
+                pub instantiate: u64,
+                pub instantiate_transfer_surcharge: u64,
+                pub instantiate_per_salt_byte: u64,
+                pub hash_sha2_256: u64,
+                pub hash_sha2_256_per_byte: u64,
+                pub hash_keccak_256: u64,
+                pub hash_keccak_256_per_byte: u64,
+                pub hash_blake2_256: u64,
+                pub hash_blake2_256_per_byte: u64,
+                pub hash_blake2_128: u64,
+                pub hash_blake2_128_per_byte: u64,
+                pub ecdsa_recover: u64,
+                pub ecdsa_to_eth_address: u64,
+            }
+        }
+    }
+    pub mod pallet_base {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {}
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            TooLong,
+            #[codec(index = 1u8)]
+            CounterOverflow,
+        }
+    }
+    pub mod pallet_preimage {
         use super::*;
         pub mod pallet {
             use super::*;
@@ -240,88 +4546,52 @@ pub mod types {
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Event {
                 #[codec(index = 0u8)]
-                NewAuthorities {
-                    authority_set: Vec<(sp_finality_grandpa::app::Public, u64)>,
-                },
+                Noted { hash: primitive_types::H256 },
                 #[codec(index = 1u8)]
-                Paused,
+                Requested { hash: primitive_types::H256 },
                 #[codec(index = 2u8)]
-                Resumed,
+                Cleared { hash: primitive_types::H256 },
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Call {
                 #[codec(index = 0u8)]
-                report_equivocation {
-                    equivocation_proof: ::std::boxed::Box<
-                        sp_finality_grandpa::EquivocationProof<primitive_types::H256, u32>,
-                    >,
-                    key_owner_proof: sp_session::MembershipProof,
-                },
+                note_preimage { bytes: Vec<u8> },
                 #[codec(index = 1u8)]
-                report_equivocation_unsigned {
-                    equivocation_proof: ::std::boxed::Box<
-                        sp_finality_grandpa::EquivocationProof<primitive_types::H256, u32>,
-                    >,
-                    key_owner_proof: sp_session::MembershipProof,
-                },
+                unnote_preimage { hash: primitive_types::H256 },
                 #[codec(index = 2u8)]
-                note_stalled {
-                    delay: u32,
-                    best_finalized_block_number: u32,
-                },
+                request_preimage { hash: primitive_types::H256 },
+                #[codec(index = 3u8)]
+                unrequest_preimage { hash: primitive_types::H256 },
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Error {
                 #[codec(index = 0u8)]
-                PauseFailed,
+                TooLarge,
                 #[codec(index = 1u8)]
-                ResumeFailed,
+                AlreadyNoted,
                 #[codec(index = 2u8)]
-                ChangePending,
+                NotAuthorized,
                 #[codec(index = 3u8)]
-                TooSoon,
+                NotNoted,
                 #[codec(index = 4u8)]
-                InvalidKeyOwnershipProof,
+                Requested,
                 #[codec(index = 5u8)]
-                InvalidEquivocationProof,
-                #[codec(index = 6u8)]
-                DuplicateOffenceReport,
+                NotRequested,
             }
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct StoredPendingChange<N> {
-            pub scheduled_at: N,
-            pub delay: N,
-            pub next_authorities: Vec<(sp_finality_grandpa::app::Public, u64)>,
-            pub forced: Option<N>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum StoredState<N> {
+        pub enum RequestStatus<AccountId, Balance> {
             #[codec(index = 0u8)]
-            Live,
+            Unrequested(Option<(AccountId, Balance)>),
             #[codec(index = 1u8)]
-            PendingPause { scheduled_at: N, delay: N },
-            #[codec(index = 2u8)]
-            Paused,
-            #[codec(index = 3u8)]
-            PendingResume { scheduled_at: N, delay: N },
+            Requested(u32),
         }
     }
     pub mod pallet_settlement {
         use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Venue {
-            pub creator: polymesh_primitives::identity_id::IdentityId,
-            pub venue_type: pallet_settlement::VenueType,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct LegId(pub u64);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct VenueDetails(pub Vec<u8>);
@@ -330,7 +4600,26 @@ pub mod types {
         pub struct Version(pub u8);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct VenueId(pub u64);
+        pub enum InstructionStatus {
+            #[codec(index = 0u8)]
+            Unknown,
+            #[codec(index = 1u8)]
+            Pending,
+            #[codec(index = 2u8)]
+            Failed,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum VenueType {
+            #[codec(index = 0u8)]
+            Other,
+            #[codec(index = 1u8)]
+            Distribution,
+            #[codec(index = 2u8)]
+            Sto,
+            #[codec(index = 3u8)]
+            Exchange,
+        }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum AffirmationStatus {
@@ -343,15 +4632,82 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Leg {
-            pub from: polymesh_primitives::identity_id::PortfolioId,
-            pub to: polymesh_primitives::identity_id::PortfolioId,
-            pub asset: polymesh_primitives::ticker::Ticker,
-            pub amount: u128,
+        pub struct VenueId(pub u64);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct InstructionId(pub u64);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum LegStatus<AccountId> {
+            #[codec(index = 0u8)]
+            PendingTokenLock,
+            #[codec(index = 1u8)]
+            ExecutionPending,
+            #[codec(index = 2u8)]
+            ExecutionToBeSkipped(AccountId, u64),
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ReceiptMetadata(pub Vec<u8>);
+        pub enum SettlementType<BlockNumber> {
+            #[codec(index = 0u8)]
+            SettleOnAffirmation,
+            #[codec(index = 1u8)]
+            SettleOnBlock(BlockNumber),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            InvalidVenue,
+            #[codec(index = 1u8)]
+            Unauthorized,
+            #[codec(index = 2u8)]
+            NoPendingAffirm,
+            #[codec(index = 3u8)]
+            InstructionNotAffirmed,
+            #[codec(index = 4u8)]
+            InstructionNotPending,
+            #[codec(index = 5u8)]
+            InstructionNotFailed,
+            #[codec(index = 6u8)]
+            LegNotPending,
+            #[codec(index = 7u8)]
+            UnauthorizedSigner,
+            #[codec(index = 8u8)]
+            ReceiptAlreadyClaimed,
+            #[codec(index = 9u8)]
+            ReceiptNotClaimed,
+            #[codec(index = 10u8)]
+            UnauthorizedVenue,
+            #[codec(index = 11u8)]
+            FailedToLockTokens,
+            #[codec(index = 12u8)]
+            InstructionFailed,
+            #[codec(index = 13u8)]
+            InstructionDatesInvalid,
+            #[codec(index = 14u8)]
+            InstructionSettleBlockPassed,
+            #[codec(index = 15u8)]
+            InvalidSignature,
+            #[codec(index = 16u8)]
+            SameSenderReceiver,
+            #[codec(index = 17u8)]
+            PortfolioMismatch,
+            #[codec(index = 18u8)]
+            SettleOnPastBlock,
+            #[codec(index = 19u8)]
+            NoPortfolioProvided,
+            #[codec(index = 20u8)]
+            UnexpectedAffirmationStatus,
+            #[codec(index = 21u8)]
+            FailedToSchedule,
+            #[codec(index = 22u8)]
+            LegCountTooSmall,
+            #[codec(index = 23u8)]
+            UnknownInstruction,
+            #[codec(index = 24u8)]
+            InstructionHasTooManyLegs,
+        }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum Call {
@@ -460,7 +4816,13 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct InstructionId(pub u64);
+        pub struct Venue {
+            pub creator: polymesh_primitives::identity_id::IdentityId,
+            pub venue_type: pallet_settlement::VenueType,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct LegId(pub u64);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct ReceiptDetails<AccountId, OffChainSignature> {
@@ -469,36 +4831,6 @@ pub mod types {
             pub signer: AccountId,
             pub signature: OffChainSignature,
             pub metadata: pallet_settlement::ReceiptMetadata,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum VenueType {
-            #[codec(index = 0u8)]
-            Other,
-            #[codec(index = 1u8)]
-            Distribution,
-            #[codec(index = 2u8)]
-            Sto,
-            #[codec(index = 3u8)]
-            Exchange,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum SettlementType<BlockNumber> {
-            #[codec(index = 0u8)]
-            SettleOnAffirmation,
-            #[codec(index = 1u8)]
-            SettleOnBlock(BlockNumber),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum InstructionStatus {
-            #[codec(index = 0u8)]
-            Unknown,
-            #[codec(index = 1u8)]
-            Pending,
-            #[codec(index = 2u8)]
-            Failed,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -623,60 +4955,6 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            InvalidVenue,
-            #[codec(index = 1u8)]
-            Unauthorized,
-            #[codec(index = 2u8)]
-            NoPendingAffirm,
-            #[codec(index = 3u8)]
-            InstructionNotAffirmed,
-            #[codec(index = 4u8)]
-            InstructionNotPending,
-            #[codec(index = 5u8)]
-            InstructionNotFailed,
-            #[codec(index = 6u8)]
-            LegNotPending,
-            #[codec(index = 7u8)]
-            UnauthorizedSigner,
-            #[codec(index = 8u8)]
-            ReceiptAlreadyClaimed,
-            #[codec(index = 9u8)]
-            ReceiptNotClaimed,
-            #[codec(index = 10u8)]
-            UnauthorizedVenue,
-            #[codec(index = 11u8)]
-            FailedToLockTokens,
-            #[codec(index = 12u8)]
-            InstructionFailed,
-            #[codec(index = 13u8)]
-            InstructionDatesInvalid,
-            #[codec(index = 14u8)]
-            InstructionSettleBlockPassed,
-            #[codec(index = 15u8)]
-            InvalidSignature,
-            #[codec(index = 16u8)]
-            SameSenderReceiver,
-            #[codec(index = 17u8)]
-            PortfolioMismatch,
-            #[codec(index = 18u8)]
-            SettleOnPastBlock,
-            #[codec(index = 19u8)]
-            NoPortfolioProvided,
-            #[codec(index = 20u8)]
-            UnexpectedAffirmationStatus,
-            #[codec(index = 21u8)]
-            FailedToSchedule,
-            #[codec(index = 22u8)]
-            LegCountTooSmall,
-            #[codec(index = 23u8)]
-            UnknownInstruction,
-            #[codec(index = 24u8)]
-            InstructionHasTooManyLegs,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct Instruction<Moment, BlockNumber> {
             pub instruction_id: pallet_settlement::InstructionId,
             pub venue_id: pallet_settlement::VenueId,
@@ -688,561 +4966,511 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum LegStatus<AccountId> {
-            #[codec(index = 0u8)]
-            PendingTokenLock,
-            #[codec(index = 1u8)]
-            ExecutionPending,
-            #[codec(index = 2u8)]
-            ExecutionToBeSkipped(AccountId, u64),
-        }
-    }
-    pub mod pallet_external_agents {
-        use super::*;
+        pub struct ReceiptMetadata(pub Vec<u8>);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            create_group {
-                ticker: polymesh_primitives::ticker::Ticker,
-                perms: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::secondary_key::PalletPermissions,
-                >,
-            },
-            #[codec(index = 1u8)]
-            set_group_permissions {
-                ticker: polymesh_primitives::ticker::Ticker,
-                id: polymesh_primitives::agent::AGId,
-                perms: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::secondary_key::PalletPermissions,
-                >,
-            },
-            #[codec(index = 2u8)]
-            remove_agent {
-                ticker: polymesh_primitives::ticker::Ticker,
-                agent: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 3u8)]
-            abdicate {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 4u8)]
-            change_group {
-                ticker: polymesh_primitives::ticker::Ticker,
-                agent: polymesh_primitives::identity_id::IdentityId,
-                group: polymesh_primitives::agent::AgentGroup,
-            },
-            #[codec(index = 5u8)]
-            accept_become_agent { auth_id: u64 },
-            #[codec(index = 6u8)]
-            create_group_and_add_auth {
-                ticker: polymesh_primitives::ticker::Ticker,
-                perms: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::secondary_key::PalletPermissions,
-                >,
-                target: polymesh_primitives::identity_id::IdentityId,
-                expiry: Option<u64>,
-            },
-            #[codec(index = 7u8)]
-            create_and_change_custom_group {
-                ticker: polymesh_primitives::ticker::Ticker,
-                perms: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::secondary_key::PalletPermissions,
-                >,
-                agent: polymesh_primitives::identity_id::IdentityId,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            NoSuchAG,
-            #[codec(index = 1u8)]
-            UnauthorizedAgent,
-            #[codec(index = 2u8)]
-            AlreadyAnAgent,
-            #[codec(index = 3u8)]
-            NotAnAgent,
-            #[codec(index = 4u8)]
-            RemovingLastFullAgent,
-            #[codec(index = 5u8)]
-            SecondaryKeyNotAuthorizedForAsset,
-        }
-    }
-    pub mod pallet_pips {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum ProposalState {
-            #[codec(index = 0u8)]
-            Pending,
-            #[codec(index = 1u8)]
-            Rejected,
-            #[codec(index = 2u8)]
-            Scheduled,
-            #[codec(index = 3u8)]
-            Failed,
-            #[codec(index = 4u8)]
-            Executed,
-            #[codec(index = 5u8)]
-            Expired,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct SnapshotMetadata<BlockNumber, AccountId> {
-            pub created_at: BlockNumber,
-            pub made_by: AccountId,
-            pub id: pallet_pips::SnapshotId,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            set_prune_historical_pips { prune: bool },
-            #[codec(index = 1u8)]
-            set_min_proposal_deposit { deposit: u128 },
-            #[codec(index = 2u8)]
-            set_default_enactment_period { duration: u32 },
-            #[codec(index = 3u8)]
-            set_pending_pip_expiry {
-                expiry: polymesh_common_utilities::MaybeBlock<u32>,
-            },
-            #[codec(index = 4u8)]
-            set_max_pip_skip_count { max: u8 },
-            #[codec(index = 5u8)]
-            set_active_pip_limit { limit: u32 },
-            #[codec(index = 6u8)]
-            propose {
-                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-                deposit: u128,
-                url: Option<polymesh_primitives::Url>,
-                description: Option<pallet_pips::PipDescription>,
-            },
-            #[codec(index = 7u8)]
-            vote {
-                id: pallet_pips::PipId,
-                aye_or_nay: bool,
-                deposit: u128,
-            },
-            #[codec(index = 8u8)]
-            approve_committee_proposal { id: pallet_pips::PipId },
-            #[codec(index = 9u8)]
-            reject_proposal { id: pallet_pips::PipId },
-            #[codec(index = 10u8)]
-            prune_proposal { id: pallet_pips::PipId },
-            #[codec(index = 11u8)]
-            reschedule_execution {
-                id: pallet_pips::PipId,
-                until: Option<u32>,
-            },
-            #[codec(index = 12u8)]
-            clear_snapshot,
-            #[codec(index = 13u8)]
-            snapshot,
-            #[codec(index = 14u8)]
-            enact_snapshot_results {
-                results: Vec<(pallet_pips::PipId, pallet_pips::SnapshotResult)>,
-            },
-            #[codec(index = 15u8)]
-            execute_scheduled_pip { id: pallet_pips::PipId },
-            #[codec(index = 16u8)]
-            expire_scheduled_pip {
-                did: polymesh_primitives::identity_id::IdentityId,
-                id: pallet_pips::PipId,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct SnapshotId(pub u32);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct PipDescription(pub Vec<u8>);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct VotingResult {
-            pub ayes_count: u32,
-            pub ayes_stake: u128,
-            pub nays_count: u32,
-            pub nays_stake: u128,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct DepositInfo<AccountId> {
-            pub owner: AccountId,
+        pub struct Leg {
+            pub from: polymesh_primitives::identity_id::PortfolioId,
+            pub to: polymesh_primitives::identity_id::PortfolioId,
+            pub asset: polymesh_primitives::ticker::Ticker,
             pub amount: u128,
         }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            RescheduleNotByReleaseCoordinator,
-            #[codec(index = 1u8)]
-            NotFromCommunity,
-            #[codec(index = 2u8)]
-            NotByCommittee,
-            #[codec(index = 3u8)]
-            TooManyActivePips,
-            #[codec(index = 4u8)]
-            IncorrectDeposit,
-            #[codec(index = 5u8)]
-            InsufficientDeposit,
-            #[codec(index = 6u8)]
-            NoSuchProposal,
-            #[codec(index = 7u8)]
-            NotACommitteeMember,
-            #[codec(index = 8u8)]
-            InvalidFutureBlockNumber,
-            #[codec(index = 9u8)]
-            NumberOfVotesExceeded,
-            #[codec(index = 10u8)]
-            StakeAmountOfVotesExceeded,
-            #[codec(index = 11u8)]
-            MissingCurrentIdentity,
-            #[codec(index = 12u8)]
-            IncorrectProposalState,
-            #[codec(index = 13u8)]
-            CannotSkipPip,
-            #[codec(index = 14u8)]
-            SnapshotResultTooLarge,
-            #[codec(index = 15u8)]
-            SnapshotIdMismatch,
-            #[codec(index = 16u8)]
-            ScheduledProposalDoesntExist,
-            #[codec(index = 17u8)]
-            ProposalNotInScheduledState,
+    }
+    pub mod sp_consensus_babe {
+        use super::*;
+        pub mod digests {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum NextConfigDescriptor {
+                #[codec(index = 1u8)]
+                V1 {
+                    c: (u64, u64),
+                    allowed_slots: sp_consensus_babe::AllowedSlots,
+                },
+            }
+        }
+        pub mod app {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Public(pub sp_core::sr25519::Public);
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Committee {
-            #[codec(index = 0u8)]
-            Technical,
-            #[codec(index = 1u8)]
-            Upgrade,
+        pub struct BabeEpochConfiguration {
+            pub c: (u64, u64),
+            pub allowed_slots: sp_consensus_babe::AllowedSlots,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId, BlockNumber> {
+        pub enum AllowedSlots {
             #[codec(index = 0u8)]
-            HistoricalPipsPruned(polymesh_primitives::identity_id::IdentityId, bool, bool),
+            PrimarySlots,
             #[codec(index = 1u8)]
-            ProposalCreated(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::Proposer<AccountId>,
-                pallet_pips::PipId,
-                u128,
-                Option<polymesh_primitives::Url>,
-                Option<pallet_pips::PipDescription>,
-                polymesh_common_utilities::MaybeBlock<BlockNumber>,
-                pallet_pips::ProposalData,
-            ),
+            PrimaryAndSecondaryPlainSlots,
             #[codec(index = 2u8)]
-            ProposalStateUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                pallet_pips::ProposalState,
-            ),
-            #[codec(index = 3u8)]
-            Voted(
+            PrimaryAndSecondaryVRFSlots,
+        }
+    }
+    pub mod pallet_multisig {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RawEvent<AccountId> {
+            #[codec(index = 0u8)]
+            MultiSigCreated(
                 polymesh_primitives::identity_id::IdentityId,
                 AccountId,
-                pallet_pips::PipId,
+                AccountId,
+                Vec<polymesh_primitives::secondary_key::Signatory<AccountId>>,
+                u64,
+            ),
+            #[codec(index = 1u8)]
+            ProposalAdded(polymesh_primitives::identity_id::IdentityId, AccountId, u64),
+            #[codec(index = 2u8)]
+            ProposalExecuted(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                u64,
                 bool,
-                u128,
+            ),
+            #[codec(index = 3u8)]
+            MultiSigSignerAdded(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                polymesh_primitives::secondary_key::Signatory<AccountId>,
             ),
             #[codec(index = 4u8)]
-            PipClosed(
+            MultiSigSignerAuthorized(
                 polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                bool,
+                AccountId,
+                polymesh_primitives::secondary_key::Signatory<AccountId>,
             ),
             #[codec(index = 5u8)]
-            ExecutionScheduled(
+            MultiSigSignerRemoved(
                 polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                BlockNumber,
+                AccountId,
+                polymesh_primitives::secondary_key::Signatory<AccountId>,
             ),
             #[codec(index = 6u8)]
-            DefaultEnactmentPeriodChanged(
+            MultiSigSignaturesRequiredChanged(
                 polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                BlockNumber,
+                AccountId,
+                u64,
             ),
             #[codec(index = 7u8)]
-            MinimumProposalDepositChanged(polymesh_primitives::identity_id::IdentityId, u128, u128),
-            #[codec(index = 8u8)]
-            PendingPipExpiryChanged(
+            ProposalApproved(
                 polymesh_primitives::identity_id::IdentityId,
-                polymesh_common_utilities::MaybeBlock<BlockNumber>,
-                polymesh_common_utilities::MaybeBlock<BlockNumber>,
+                AccountId,
+                polymesh_primitives::secondary_key::Signatory<AccountId>,
+                u64,
+            ),
+            #[codec(index = 8u8)]
+            ProposalRejectionVote(
+                polymesh_primitives::identity_id::IdentityId,
+                AccountId,
+                polymesh_primitives::secondary_key::Signatory<AccountId>,
+                u64,
             ),
             #[codec(index = 9u8)]
-            MaxPipSkipCountChanged(polymesh_primitives::identity_id::IdentityId, u8, u8),
+            ProposalRejected(polymesh_primitives::identity_id::IdentityId, AccountId, u64),
             #[codec(index = 10u8)]
-            ActivePipLimitChanged(
-                polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                BlockNumber,
-            ),
+            ProposalExecutionFailed(sp_runtime::DispatchError),
             #[codec(index = 11u8)]
-            ProposalRefund(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                u128,
-            ),
-            #[codec(index = 12u8)]
-            SnapshotCleared(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::SnapshotId,
-            ),
-            #[codec(index = 13u8)]
-            SnapshotTaken(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::SnapshotId,
-                Vec<pallet_pips::SnapshottedPip>,
-            ),
-            #[codec(index = 14u8)]
-            PipSkipped(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                u8,
-            ),
-            #[codec(index = 15u8)]
-            SnapshotResultsEnacted(
-                polymesh_primitives::identity_id::IdentityId,
-                Option<pallet_pips::SnapshotId>,
-                Vec<(pallet_pips::PipId, u8)>,
-                Vec<pallet_pips::PipId>,
-                Vec<pallet_pips::PipId>,
-            ),
-            #[codec(index = 16u8)]
-            ExecutionSchedulingFailed(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                BlockNumber,
-            ),
-            #[codec(index = 17u8)]
-            ExpiryScheduled(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                BlockNumber,
-            ),
-            #[codec(index = 18u8)]
-            ExpirySchedulingFailed(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_pips::PipId,
-                BlockNumber,
-            ),
-            #[codec(index = 19u8)]
-            ExecutionCancellingFailed(pallet_pips::PipId),
+            SchedulingFailed(sp_runtime::DispatchError),
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Proposer<AccountId> {
+        pub enum ProposalStatus {
             #[codec(index = 0u8)]
-            Community(AccountId),
+            Invalid,
             #[codec(index = 1u8)]
-            Committee(pallet_pips::Committee),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum ProposalData {
-            #[codec(index = 0u8)]
-            Hash(primitive_types::H256),
-            #[codec(index = 1u8)]
-            Proposal(Vec<u8>),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct PipId(pub u32);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Vote(pub bool, pub u128);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct PipsMetadata<BlockNumber> {
-            pub id: pallet_pips::PipId,
-            pub url: Option<polymesh_primitives::Url>,
-            pub description: Option<pallet_pips::PipDescription>,
-            pub created_at: BlockNumber,
-            pub transaction_version: BlockNumber,
-            pub expiry: polymesh_common_utilities::MaybeBlock<BlockNumber>,
+            ActiveOrExpired,
+            #[codec(index = 2u8)]
+            ExecutionSuccessful,
+            #[codec(index = 3u8)]
+            ExecutionFailed,
+            #[codec(index = 4u8)]
+            Rejected,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct Version(pub u8);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Pip<Proposal, AccountId> {
-            pub id: pallet_pips::PipId,
-            pub proposal: Proposal,
-            pub state: pallet_pips::ProposalState,
-            pub proposer: pallet_pips::Proposer<AccountId>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct SnapshottedPip {
-            pub id: pallet_pips::PipId,
-            pub weight: (bool, u128),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum SnapshotResult {
+        pub enum Error {
             #[codec(index = 0u8)]
-            Approve,
+            CddMissing,
             #[codec(index = 1u8)]
-            Reject,
+            ProposalMissing,
             #[codec(index = 2u8)]
-            Skip,
-        }
-    }
-    pub mod pallet_utility {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Event {
-            #[codec(index = 0u8)]
-            BatchInterrupted(Vec<u32>, (u32, sp_runtime::DispatchError)),
-            #[codec(index = 1u8)]
-            BatchOptimisticFailed(Vec<u32>, Vec<(u32, sp_runtime::DispatchError)>),
-            #[codec(index = 2u8)]
-            BatchCompleted(Vec<u32>),
+            DecodingError,
+            #[codec(index = 3u8)]
+            NoSigners,
+            #[codec(index = 4u8)]
+            RequiredSignaturesOutOfBounds,
+            #[codec(index = 5u8)]
+            NotASigner,
+            #[codec(index = 6u8)]
+            NoSuchMultisig,
+            #[codec(index = 7u8)]
+            NotEnoughSigners,
+            #[codec(index = 8u8)]
+            NonceOverflow,
+            #[codec(index = 9u8)]
+            AlreadyVoted,
+            #[codec(index = 10u8)]
+            AlreadyASigner,
+            #[codec(index = 11u8)]
+            FailedToChargeFee,
+            #[codec(index = 12u8)]
+            IdentityNotCreator,
+            #[codec(index = 13u8)]
+            ChangeNotAllowed,
+            #[codec(index = 14u8)]
+            SignerAlreadyLinkedToMultisig,
+            #[codec(index = 15u8)]
+            SignerAlreadyLinkedToIdentity,
+            #[codec(index = 16u8)]
+            MultisigNotAllowedToLinkToItself,
+            #[codec(index = 17u8)]
+            MissingCurrentIdentity,
+            #[codec(index = 18u8)]
+            NotPrimaryKey,
+            #[codec(index = 19u8)]
+            ProposalAlreadyRejected,
+            #[codec(index = 20u8)]
+            ProposalExpired,
+            #[codec(index = 21u8)]
+            ProposalAlreadyExecuted,
+            #[codec(index = 22u8)]
+            MultisigMissingIdentity,
+            #[codec(index = 23u8)]
+            FailedToSchedule,
+            #[codec(index = 24u8)]
+            TooManySigners,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum Call {
             #[codec(index = 0u8)]
-            batch {
-                calls: Vec<polymesh_runtime_develop::runtime::Call>,
+            create_multisig {
+                signers: Vec<
+                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                >,
+                sigs_required: u64,
             },
             #[codec(index = 1u8)]
-            batch_atomic {
-                calls: Vec<polymesh_runtime_develop::runtime::Call>,
+            create_or_approve_proposal_as_identity {
+                multisig: sp_core::crypto::AccountId32,
+                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+                expiry: Option<u64>,
+                auto_close: bool,
             },
             #[codec(index = 2u8)]
-            batch_optimistic {
-                calls: Vec<polymesh_runtime_develop::runtime::Call>,
+            create_or_approve_proposal_as_key {
+                multisig: sp_core::crypto::AccountId32,
+                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+                expiry: Option<u64>,
+                auto_close: bool,
             },
             #[codec(index = 3u8)]
-            relay_tx {
-                target: sp_core::crypto::AccountId32,
-                signature: sp_runtime::MultiSignature,
-                call: pallet_utility::UniqueCall<polymesh_runtime_develop::runtime::Call>,
+            create_proposal_as_identity {
+                multisig: sp_core::crypto::AccountId32,
+                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+                expiry: Option<u64>,
+                auto_close: bool,
+            },
+            #[codec(index = 4u8)]
+            create_proposal_as_key {
+                multisig: sp_core::crypto::AccountId32,
+                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
+                expiry: Option<u64>,
+                auto_close: bool,
+            },
+            #[codec(index = 5u8)]
+            approve_as_identity {
+                multisig: sp_core::crypto::AccountId32,
+                proposal_id: u64,
+            },
+            #[codec(index = 6u8)]
+            approve_as_key {
+                multisig: sp_core::crypto::AccountId32,
+                proposal_id: u64,
+            },
+            #[codec(index = 7u8)]
+            reject_as_identity {
+                multisig: sp_core::crypto::AccountId32,
+                proposal_id: u64,
+            },
+            #[codec(index = 8u8)]
+            reject_as_key {
+                multisig: sp_core::crypto::AccountId32,
+                proposal_id: u64,
+            },
+            #[codec(index = 9u8)]
+            accept_multisig_signer_as_identity { auth_id: u64 },
+            #[codec(index = 10u8)]
+            accept_multisig_signer_as_key { auth_id: u64 },
+            #[codec(index = 11u8)]
+            add_multisig_signer {
+                signer: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 12u8)]
+            remove_multisig_signer {
+                signer: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+            },
+            #[codec(index = 13u8)]
+            add_multisig_signers_via_creator {
+                multisig: sp_core::crypto::AccountId32,
+                signers: Vec<
+                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                >,
+            },
+            #[codec(index = 14u8)]
+            remove_multisig_signers_via_creator {
+                multisig: sp_core::crypto::AccountId32,
+                signers: Vec<
+                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
+                >,
+            },
+            #[codec(index = 15u8)]
+            change_sigs_required { sigs_required: u64 },
+            #[codec(index = 16u8)]
+            make_multisig_secondary {
+                multisig: sp_core::crypto::AccountId32,
+            },
+            #[codec(index = 17u8)]
+            make_multisig_primary {
+                multisig: sp_core::crypto::AccountId32,
+                optional_cdd_auth_id: Option<u64>,
+            },
+            #[codec(index = 18u8)]
+            execute_scheduled_proposal {
+                multisig: sp_core::crypto::AccountId32,
+                proposal_id: u64,
+                multisig_did: polymesh_primitives::identity_id::IdentityId,
+                _proposal_weight: u64,
             },
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct UniqueCall<C> {
-            pub nonce: u64,
-            pub call: ::std::boxed::Box<C>,
+        pub struct ProposalDetails<T> {
+            pub approvals: T,
+            pub rejections: T,
+            pub status: pallet_multisig::ProposalStatus,
+            pub expiry: Option<T>,
+            pub auto_close: bool,
+        }
+    }
+    pub mod sp_authority_discovery {
+        use super::*;
+        pub mod app {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Public(pub sp_core::sr25519::Public);
+        }
+    }
+    pub mod pallet_balances {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            LiquidityRestrictions,
+            #[codec(index = 1u8)]
+            Overflow,
+            #[codec(index = 2u8)]
+            InsufficientBalance,
+            #[codec(index = 3u8)]
+            ExistentialDeposit,
+            #[codec(index = 4u8)]
+            ReceiverCddMissing,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct BalanceLock<Balance> {
+            pub id: [u8; 8usize],
+            pub amount: Balance,
+            pub reasons: polymesh_common_utilities::traits::balances::Reasons,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            transfer {
+                dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                #[codec(compact)]
+                value: u128,
+            },
+            #[codec(index = 1u8)]
+            transfer_with_memo {
+                dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                #[codec(compact)]
+                value: u128,
+                memo: Option<polymesh_common_utilities::traits::balances::Memo>,
+            },
+            #[codec(index = 2u8)]
+            deposit_block_reward_reserve_balance {
+                #[codec(compact)]
+                value: u128,
+            },
+            #[codec(index = 3u8)]
+            set_balance {
+                who: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                #[codec(compact)]
+                new_free: u128,
+                #[codec(compact)]
+                new_reserved: u128,
+            },
+            #[codec(index = 4u8)]
+            force_transfer {
+                source: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
+                #[codec(compact)]
+                value: u128,
+            },
+            #[codec(index = 5u8)]
+            burn_account_balance { amount: u128 },
+        }
+    }
+    pub mod pallet_transaction_payment {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Releases {
+            #[codec(index = 0u8)]
+            V1Ancient,
+            #[codec(index = 1u8)]
+            V2,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ChargeTransactionPayment(#[codec(compact)] pub u128);
+    }
+    pub mod finality_grandpa {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Equivocation<Id, V, S> {
+            pub round_number: u64,
+            pub identity: Id,
+            pub first: (V, S),
+            pub second: (V, S),
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Prevote<H, N> {
+            pub target_hash: H,
+            pub target_number: N,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Precommit<H, N> {
+            pub target_hash: H,
+            pub target_number: N,
+        }
+    }
+    pub mod sp_finality_grandpa {
+        use super::*;
+        pub mod app {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Signature(pub sp_core::ed25519::Signature);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Public(pub sp_core::ed25519::Public);
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct EquivocationProof<H, N> {
+            pub set_id: u64,
+            pub equivocation: sp_finality_grandpa::Equivocation<H, N>,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Equivocation<H, N> {
+            #[codec(index = 0u8)]
+            Prevote(
+                finality_grandpa::Equivocation<
+                    sp_finality_grandpa::app::Public,
+                    finality_grandpa::Prevote<H, N>,
+                    sp_finality_grandpa::app::Signature,
+                >,
+            ),
+            #[codec(index = 1u8)]
+            Precommit(
+                finality_grandpa::Equivocation<
+                    sp_finality_grandpa::app::Public,
+                    finality_grandpa::Precommit<H, N>,
+                    sp_finality_grandpa::app::Signature,
+                >,
+            ),
+        }
+    }
+    pub mod pallet_relayer {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct Subsidy<Acc> {
+            pub paying_key: Acc,
+            pub remaining: u128,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            set_paying_key {
+                user_key: sp_core::crypto::AccountId32,
+                polyx_limit: u128,
+            },
+            #[codec(index = 1u8)]
+            accept_paying_key { auth_id: u64 },
+            #[codec(index = 2u8)]
+            remove_paying_key {
+                user_key: sp_core::crypto::AccountId32,
+                paying_key: sp_core::crypto::AccountId32,
+            },
+            #[codec(index = 3u8)]
+            update_polyx_limit {
+                user_key: sp_core::crypto::AccountId32,
+                polyx_limit: u128,
+            },
+            #[codec(index = 4u8)]
+            increase_polyx_limit {
+                user_key: sp_core::crypto::AccountId32,
+                amount: u128,
+            },
+            #[codec(index = 5u8)]
+            decrease_polyx_limit {
+                user_key: sp_core::crypto::AccountId32,
+                amount: u128,
+            },
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum Error {
             #[codec(index = 0u8)]
-            InvalidSignature,
+            UserKeyCddMissing,
             #[codec(index = 1u8)]
-            TargetCddMissing,
+            PayingKeyCddMissing,
             #[codec(index = 2u8)]
-            InvalidNonce,
+            NoPayingKey,
+            #[codec(index = 3u8)]
+            NotPayingKey,
+            #[codec(index = 4u8)]
+            NotAuthorizedForPayingKey,
+            #[codec(index = 5u8)]
+            NotAuthorizedForUserKey,
+            #[codec(index = 6u8)]
+            Overflow,
         }
     }
     pub mod polymesh_primitives {
         use super::*;
-        pub mod compliance_manager {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct ComplianceRequirement {
-                pub sender_conditions: Vec<polymesh_primitives::condition::Condition>,
-                pub receiver_conditions: Vec<polymesh_primitives::condition::Condition>,
-                pub id: u32,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetCompliance {
-                pub paused: bool,
-                pub requirements:
-                    Vec<polymesh_primitives::compliance_manager::ComplianceRequirement>,
-            }
-        }
-        pub mod authorization {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Authorization<AccountId, Moment> {
-                pub authorization_data:
-                    polymesh_primitives::authorization::AuthorizationData<AccountId>,
-                pub authorized_by: polymesh_primitives::identity_id::IdentityId,
-                pub expiry: Option<Moment>,
-                pub auth_id: Moment,
-                pub count: u32,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum AuthorizationData<AccountId> {
-                #[codec(index = 0u8)]
-                AttestPrimaryKeyRotation(polymesh_primitives::identity_id::IdentityId),
-                #[codec(index = 1u8)]
-                RotatePrimaryKey,
-                #[codec(index = 2u8)]
-                TransferTicker(polymesh_primitives::ticker::Ticker),
-                #[codec(index = 3u8)]
-                AddMultiSigSigner(AccountId),
-                #[codec(index = 4u8)]
-                TransferAssetOwnership(polymesh_primitives::ticker::Ticker),
-                #[codec(index = 5u8)]
-                JoinIdentity(polymesh_primitives::secondary_key::Permissions),
-                #[codec(index = 6u8)]
-                PortfolioCustody(polymesh_primitives::identity_id::PortfolioId),
-                #[codec(index = 7u8)]
-                BecomeAgent(
-                    polymesh_primitives::ticker::Ticker,
-                    polymesh_primitives::agent::AgentGroup,
-                ),
-                #[codec(index = 8u8)]
-                AddRelayerPayingKey(AccountId, AccountId, u128),
-                #[codec(index = 9u8)]
-                RotatePrimaryKeyToSecondary(polymesh_primitives::secondary_key::Permissions),
-            }
-        }
-        pub mod event_only {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct EventOnly<T>(pub T);
-        }
-        pub mod document {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct DocumentId(pub u32);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct DocumentName(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct DocumentType(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct DocumentUri(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Document {
-                pub uri: polymesh_primitives::document::DocumentUri,
-                pub content_hash: polymesh_primitives::document_hash::DocumentHash,
-                pub name: polymesh_primitives::document::DocumentName,
-                pub doc_type: Option<polymesh_primitives::document::DocumentType>,
-                pub filing_date: Option<u64>,
-            }
-        }
-        pub mod identity {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct DidRecord<AccountId> {
-                pub primary_key: Option<AccountId>,
-            }
-        }
         pub mod asset_identifier {
             use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
@@ -1260,354 +5488,6 @@ pub mod types {
                 FIGI([u8; 12usize]),
             }
         }
-        pub mod condition {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct TrustedIssuer {
-                pub issuer: polymesh_primitives::identity_id::IdentityId,
-                pub trusted_for: polymesh_primitives::condition::TrustedFor,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Condition {
-                pub condition_type: polymesh_primitives::condition::ConditionType,
-                pub issuers: Vec<polymesh_primitives::condition::TrustedIssuer>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum TargetIdentity {
-                #[codec(index = 0u8)]
-                ExternalAgent,
-                #[codec(index = 1u8)]
-                Specific(polymesh_primitives::identity_id::IdentityId),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum ConditionType {
-                #[codec(index = 0u8)]
-                IsPresent(polymesh_primitives::identity_claim::Claim),
-                #[codec(index = 1u8)]
-                IsAbsent(polymesh_primitives::identity_claim::Claim),
-                #[codec(index = 2u8)]
-                IsAnyOf(Vec<polymesh_primitives::identity_claim::Claim>),
-                #[codec(index = 3u8)]
-                IsNoneOf(Vec<polymesh_primitives::identity_claim::Claim>),
-                #[codec(index = 4u8)]
-                IsIdentity(polymesh_primitives::condition::TargetIdentity),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum TrustedFor {
-                #[codec(index = 0u8)]
-                Any,
-                #[codec(index = 1u8)]
-                Specific(Vec<polymesh_primitives::identity_claim::ClaimType>),
-            }
-        }
-        pub mod ticker {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Ticker(pub [u8; 12usize]);
-        }
-        pub mod ethereum {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct EcdsaSignature(pub [u8; 65usize]);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct EthereumAddress(pub [u8; 20usize]);
-        }
-        pub mod document_hash {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum DocumentHash {
-                #[codec(index = 0u8)]
-                None,
-                #[codec(index = 1u8)]
-                H512([u8; 64usize]),
-                #[codec(index = 2u8)]
-                H384([u8; 48usize]),
-                #[codec(index = 3u8)]
-                H320([u8; 40usize]),
-                #[codec(index = 4u8)]
-                H256([u8; 32usize]),
-                #[codec(index = 5u8)]
-                H224([u8; 28usize]),
-                #[codec(index = 6u8)]
-                H192([u8; 24usize]),
-                #[codec(index = 7u8)]
-                H160([u8; 20usize]),
-                #[codec(index = 8u8)]
-                H128([u8; 16usize]),
-            }
-        }
-        pub mod subset {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum SubsetRestriction<A> {
-                #[codec(index = 0u8)]
-                Whole,
-                #[codec(index = 1u8)]
-                These(Vec<A>),
-                #[codec(index = 2u8)]
-                Except(Vec<A>),
-            }
-        }
-        pub mod statistics {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Stat2ndKey {
-                #[codec(index = 0u8)]
-                NoClaimStat,
-                #[codec(index = 1u8)]
-                Claim(polymesh_primitives::statistics::StatClaim),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct HashablePermill(pub sp_arithmetic::per_things::Permill);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct StatUpdate {
-                pub key2: polymesh_primitives::statistics::Stat2ndKey,
-                pub value: Option<u128>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum StatClaim {
-                #[codec(index = 0u8)]
-                Accredited(bool),
-                #[codec(index = 1u8)]
-                Affiliate(bool),
-                #[codec(index = 2u8)]
-                Jurisdiction(Option<polymesh_primitives::jurisdiction::CountryCode>),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum AssetScope {
-                #[codec(index = 0u8)]
-                Ticker(polymesh_primitives::ticker::Ticker),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum StatOpType {
-                #[codec(index = 0u8)]
-                Count,
-                #[codec(index = 1u8)]
-                Balance,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Stat1stKey {
-                pub asset: polymesh_primitives::statistics::AssetScope,
-                pub stat_type: polymesh_primitives::statistics::StatType,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct StatType {
-                pub op: polymesh_primitives::statistics::StatOpType,
-                pub claim_issuer: Option<(
-                    polymesh_primitives::identity_claim::ClaimType,
-                    polymesh_primitives::identity_id::IdentityId,
-                )>,
-            }
-        }
-        pub mod agent {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum AgentGroup {
-                #[codec(index = 0u8)]
-                Full,
-                #[codec(index = 1u8)]
-                Custom(polymesh_primitives::agent::AGId),
-                #[codec(index = 2u8)]
-                ExceptMeta,
-                #[codec(index = 3u8)]
-                PolymeshV1CAA,
-                #[codec(index = 4u8)]
-                PolymeshV1PIA,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AGId(pub u32);
-        }
-        pub mod transfer_compliance {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct TransferConditionExemptKey {
-                pub asset: polymesh_primitives::statistics::AssetScope,
-                pub op: polymesh_primitives::statistics::StatOpType,
-                pub claim_type: Option<polymesh_primitives::identity_claim::ClaimType>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum TransferCondition {
-                #[codec(index = 0u8)]
-                MaxInvestorCount(u64),
-                #[codec(index = 1u8)]
-                MaxInvestorOwnership(polymesh_primitives::statistics::HashablePermill),
-                #[codec(index = 2u8)]
-                ClaimCount(
-                    polymesh_primitives::statistics::StatClaim,
-                    polymesh_primitives::identity_id::IdentityId,
-                    u64,
-                    Option<u64>,
-                ),
-                #[codec(index = 3u8)]
-                ClaimOwnership(
-                    polymesh_primitives::statistics::StatClaim,
-                    polymesh_primitives::identity_id::IdentityId,
-                    polymesh_primitives::statistics::HashablePermill,
-                    polymesh_primitives::statistics::HashablePermill,
-                ),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetTransferCompliance {
-                pub paused: bool,
-                pub requirements: Vec<polymesh_primitives::transfer_compliance::TransferCondition>,
-            }
-        }
-        pub mod asset {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetName(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct FundingRoundName(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum AssetType {
-                #[codec(index = 0u8)]
-                EquityCommon,
-                #[codec(index = 1u8)]
-                EquityPreferred,
-                #[codec(index = 2u8)]
-                Commodity,
-                #[codec(index = 3u8)]
-                FixedIncome,
-                #[codec(index = 4u8)]
-                REIT,
-                #[codec(index = 5u8)]
-                Fund,
-                #[codec(index = 6u8)]
-                RevenueShareAgreement,
-                #[codec(index = 7u8)]
-                StructuredProduct,
-                #[codec(index = 8u8)]
-                Derivative,
-                #[codec(index = 9u8)]
-                Custom(polymesh_primitives::asset::CustomAssetTypeId),
-                #[codec(index = 10u8)]
-                StableCoin,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct CustomAssetTypeId(pub u32);
-        }
-        pub mod cdd_id {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct InvestorUid(pub [u8; 16usize]);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct CddId(pub [u8; 32usize]);
-        }
-        pub mod identity_id {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct PortfolioId {
-                pub did: polymesh_primitives::identity_id::IdentityId,
-                pub kind: polymesh_primitives::identity_id::PortfolioKind,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct PortfolioNumber(pub u64);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct PortfolioName(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct IdentityId(pub [u8; 32usize]);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum PortfolioKind {
-                #[codec(index = 0u8)]
-                Default,
-                #[codec(index = 1u8)]
-                User(polymesh_primitives::identity_id::PortfolioNumber),
-            }
-        }
-        pub mod secondary_key {
-            use super::*;
-            pub mod v1 {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct SecondaryKey<AccountId> {
-                    pub signer: polymesh_primitives::secondary_key::Signatory<AccountId>,
-                    pub permissions: polymesh_primitives::secondary_key::Permissions,
-                }
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Permissions {
-                pub asset: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::ticker::Ticker,
-                >,
-                pub extrinsic: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::secondary_key::PalletPermissions,
-                >,
-                pub portfolio: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::identity_id::PortfolioId,
-                >,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct PalletPermissions {
-                pub pallet_name: polymesh_primitives::PalletName,
-                pub dispatchable_names: polymesh_primitives::subset::SubsetRestriction<
-                    polymesh_primitives::DispatchableName,
-                >,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct SecondaryKey<AccountId> {
-                pub key: AccountId,
-                pub permissions: polymesh_primitives::secondary_key::Permissions,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Signatory<AccountId> {
-                #[codec(index = 0u8)]
-                Identity(polymesh_primitives::identity_id::IdentityId),
-                #[codec(index = 1u8)]
-                Account(AccountId),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum KeyRecord<AccountId> {
-                #[codec(index = 0u8)]
-                PrimaryKey(polymesh_primitives::identity_id::IdentityId),
-                #[codec(index = 1u8)]
-                SecondaryKey(
-                    polymesh_primitives::identity_id::IdentityId,
-                    polymesh_primitives::secondary_key::Permissions,
-                ),
-                #[codec(index = 2u8)]
-                MultiSigSignerKey(AccountId),
-            }
-        }
         pub mod identity_claim {
             use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
@@ -1618,6 +5498,44 @@ pub mod types {
                 pub last_update_date: u64,
                 pub expiry: Option<u64>,
                 pub claim: polymesh_primitives::identity_claim::Claim,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Scope {
+                #[codec(index = 0u8)]
+                Identity(polymesh_primitives::identity_id::IdentityId),
+                #[codec(index = 1u8)]
+                Ticker(polymesh_primitives::ticker::Ticker),
+                #[codec(index = 2u8)]
+                Custom(Vec<u8>),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum ClaimType {
+                #[codec(index = 0u8)]
+                Accredited,
+                #[codec(index = 1u8)]
+                Affiliate,
+                #[codec(index = 2u8)]
+                BuyLockup,
+                #[codec(index = 3u8)]
+                SellLockup,
+                #[codec(index = 4u8)]
+                CustomerDueDiligence,
+                #[codec(index = 5u8)]
+                KnowYourCustomer,
+                #[codec(index = 6u8)]
+                Jurisdiction,
+                #[codec(index = 7u8)]
+                Exempted,
+                #[codec(index = 8u8)]
+                Blocked,
+                #[codec(index = 9u8)]
+                InvestorUniqueness,
+                #[codec(index = 10u8)]
+                NoType,
+                #[codec(index = 11u8)]
+                InvestorUniquenessV2,
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -1654,44 +5572,464 @@ pub mod types {
                 #[codec(index = 11u8)]
                 InvestorUniquenessV2(polymesh_primitives::cdd_id::CddId),
             }
+        }
+        pub mod calendar {
+            use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum ClaimType {
-                #[codec(index = 0u8)]
-                Accredited,
-                #[codec(index = 1u8)]
-                Affiliate,
-                #[codec(index = 2u8)]
-                BuyLockup,
-                #[codec(index = 3u8)]
-                SellLockup,
-                #[codec(index = 4u8)]
-                CustomerDueDiligence,
-                #[codec(index = 5u8)]
-                KnowYourCustomer,
-                #[codec(index = 6u8)]
-                Jurisdiction,
-                #[codec(index = 7u8)]
-                Exempted,
-                #[codec(index = 8u8)]
-                Blocked,
-                #[codec(index = 9u8)]
-                InvestorUniqueness,
-                #[codec(index = 10u8)]
-                NoType,
-                #[codec(index = 11u8)]
-                InvestorUniquenessV2,
+            pub struct CalendarPeriod {
+                pub unit: polymesh_primitives::calendar::CalendarUnit,
+                pub amount: u64,
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Scope {
+            pub struct CheckpointId(pub u64);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum CalendarUnit {
+                #[codec(index = 0u8)]
+                Second,
+                #[codec(index = 1u8)]
+                Minute,
+                #[codec(index = 2u8)]
+                Hour,
+                #[codec(index = 3u8)]
+                Day,
+                #[codec(index = 4u8)]
+                Week,
+                #[codec(index = 5u8)]
+                Month,
+                #[codec(index = 6u8)]
+                Year,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct CheckpointSchedule {
+                pub start: u64,
+                pub period: polymesh_primitives::calendar::CalendarPeriod,
+            }
+        }
+        pub mod condition {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum TargetIdentity {
+                #[codec(index = 0u8)]
+                ExternalAgent,
+                #[codec(index = 1u8)]
+                Specific(polymesh_primitives::identity_id::IdentityId),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum TrustedFor {
+                #[codec(index = 0u8)]
+                Any,
+                #[codec(index = 1u8)]
+                Specific(Vec<polymesh_primitives::identity_claim::ClaimType>),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Condition {
+                pub condition_type: polymesh_primitives::condition::ConditionType,
+                pub issuers: Vec<polymesh_primitives::condition::TrustedIssuer>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum ConditionType {
+                #[codec(index = 0u8)]
+                IsPresent(polymesh_primitives::identity_claim::Claim),
+                #[codec(index = 1u8)]
+                IsAbsent(polymesh_primitives::identity_claim::Claim),
+                #[codec(index = 2u8)]
+                IsAnyOf(Vec<polymesh_primitives::identity_claim::Claim>),
+                #[codec(index = 3u8)]
+                IsNoneOf(Vec<polymesh_primitives::identity_claim::Claim>),
+                #[codec(index = 4u8)]
+                IsIdentity(polymesh_primitives::condition::TargetIdentity),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct TrustedIssuer {
+                pub issuer: polymesh_primitives::identity_id::IdentityId,
+                pub trusted_for: polymesh_primitives::condition::TrustedFor,
+            }
+        }
+        pub mod subset {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum SubsetRestriction<A> {
+                #[codec(index = 0u8)]
+                Whole,
+                #[codec(index = 1u8)]
+                These(Vec<A>),
+                #[codec(index = 2u8)]
+                Except(Vec<A>),
+            }
+        }
+        pub mod agent {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AGId(pub u32);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum AgentGroup {
+                #[codec(index = 0u8)]
+                Full,
+                #[codec(index = 1u8)]
+                Custom(polymesh_primitives::agent::AGId),
+                #[codec(index = 2u8)]
+                ExceptMeta,
+                #[codec(index = 3u8)]
+                PolymeshV1CAA,
+                #[codec(index = 4u8)]
+                PolymeshV1PIA,
+            }
+        }
+        pub mod compliance_manager {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetCompliance {
+                pub paused: bool,
+                pub requirements:
+                    Vec<polymesh_primitives::compliance_manager::ComplianceRequirement>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct ComplianceRequirement {
+                pub sender_conditions: Vec<polymesh_primitives::condition::Condition>,
+                pub receiver_conditions: Vec<polymesh_primitives::condition::Condition>,
+                pub id: u32,
+            }
+        }
+        pub mod document_hash {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum DocumentHash {
+                #[codec(index = 0u8)]
+                None,
+                #[codec(index = 1u8)]
+                H512([u8; 64usize]),
+                #[codec(index = 2u8)]
+                H384([u8; 48usize]),
+                #[codec(index = 3u8)]
+                H320([u8; 40usize]),
+                #[codec(index = 4u8)]
+                H256([u8; 32usize]),
+                #[codec(index = 5u8)]
+                H224([u8; 28usize]),
+                #[codec(index = 6u8)]
+                H192([u8; 24usize]),
+                #[codec(index = 7u8)]
+                H160([u8; 20usize]),
+                #[codec(index = 8u8)]
+                H128([u8; 16usize]),
+            }
+        }
+        pub mod asset_metadata {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataValueDetail<Moment> {
+                pub expire: Option<Moment>,
+                pub lock_status:
+                    polymesh_primitives::asset_metadata::AssetMetadataLockStatus<Moment>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataName(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataValue(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataDescription(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum AssetMetadataKey {
+                #[codec(index = 0u8)]
+                Global(polymesh_primitives::asset_metadata::AssetMetadataGlobalKey),
+                #[codec(index = 1u8)]
+                Local(polymesh_primitives::asset_metadata::AssetMetadataLocalKey),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataGlobalKey(pub u64);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataSpec {
+                pub url: Option<polymesh_primitives::Url>,
+                pub description:
+                    Option<polymesh_primitives::asset_metadata::AssetMetadataDescription>,
+                pub type_def: Option<Vec<u8>>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum AssetMetadataLockStatus<Moment> {
+                #[codec(index = 0u8)]
+                Unlocked,
+                #[codec(index = 1u8)]
+                Locked,
+                #[codec(index = 2u8)]
+                LockedUntil(Moment),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetMetadataLocalKey(pub u64);
+        }
+        pub mod authorization {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum AuthorizationData<AccountId> {
+                #[codec(index = 0u8)]
+                AttestPrimaryKeyRotation(polymesh_primitives::identity_id::IdentityId),
+                #[codec(index = 1u8)]
+                RotatePrimaryKey,
+                #[codec(index = 2u8)]
+                TransferTicker(polymesh_primitives::ticker::Ticker),
+                #[codec(index = 3u8)]
+                AddMultiSigSigner(AccountId),
+                #[codec(index = 4u8)]
+                TransferAssetOwnership(polymesh_primitives::ticker::Ticker),
+                #[codec(index = 5u8)]
+                JoinIdentity(polymesh_primitives::secondary_key::Permissions),
+                #[codec(index = 6u8)]
+                PortfolioCustody(polymesh_primitives::identity_id::PortfolioId),
+                #[codec(index = 7u8)]
+                BecomeAgent(
+                    polymesh_primitives::ticker::Ticker,
+                    polymesh_primitives::agent::AgentGroup,
+                ),
+                #[codec(index = 8u8)]
+                AddRelayerPayingKey(AccountId, AccountId, u128),
+                #[codec(index = 9u8)]
+                RotatePrimaryKeyToSecondary(polymesh_primitives::secondary_key::Permissions),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Authorization<AccountId, Moment> {
+                pub authorization_data:
+                    polymesh_primitives::authorization::AuthorizationData<AccountId>,
+                pub authorized_by: polymesh_primitives::identity_id::IdentityId,
+                pub expiry: Option<Moment>,
+                pub auth_id: Moment,
+                pub count: u32,
+            }
+        }
+        pub mod cdd_id {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct CddId(pub [u8; 32usize]);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct InvestorUid(pub [u8; 16usize]);
+        }
+        pub mod secondary_key {
+            use super::*;
+            pub mod v1 {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct SecondaryKey<AccountId> {
+                    pub signer: polymesh_primitives::secondary_key::Signatory<AccountId>,
+                    pub permissions: polymesh_primitives::secondary_key::Permissions,
+                }
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum KeyRecord<AccountId> {
+                #[codec(index = 0u8)]
+                PrimaryKey(polymesh_primitives::identity_id::IdentityId),
+                #[codec(index = 1u8)]
+                SecondaryKey(
+                    polymesh_primitives::identity_id::IdentityId,
+                    polymesh_primitives::secondary_key::Permissions,
+                ),
+                #[codec(index = 2u8)]
+                MultiSigSignerKey(AccountId),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct PalletPermissions {
+                pub pallet_name: polymesh_primitives::PalletName,
+                pub dispatchable_names: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::DispatchableName,
+                >,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct SecondaryKey<AccountId> {
+                pub key: AccountId,
+                pub permissions: polymesh_primitives::secondary_key::Permissions,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Signatory<AccountId> {
                 #[codec(index = 0u8)]
                 Identity(polymesh_primitives::identity_id::IdentityId),
                 #[codec(index = 1u8)]
-                Ticker(polymesh_primitives::ticker::Ticker),
-                #[codec(index = 2u8)]
-                Custom(Vec<u8>),
+                Account(AccountId),
             }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Permissions {
+                pub asset: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::ticker::Ticker,
+                >,
+                pub extrinsic: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::secondary_key::PalletPermissions,
+                >,
+                pub portfolio: polymesh_primitives::subset::SubsetRestriction<
+                    polymesh_primitives::identity_id::PortfolioId,
+                >,
+            }
+        }
+        pub mod asset {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct FundingRoundName(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct CustomAssetTypeId(pub u32);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum AssetType {
+                #[codec(index = 0u8)]
+                EquityCommon,
+                #[codec(index = 1u8)]
+                EquityPreferred,
+                #[codec(index = 2u8)]
+                Commodity,
+                #[codec(index = 3u8)]
+                FixedIncome,
+                #[codec(index = 4u8)]
+                REIT,
+                #[codec(index = 5u8)]
+                Fund,
+                #[codec(index = 6u8)]
+                RevenueShareAgreement,
+                #[codec(index = 7u8)]
+                StructuredProduct,
+                #[codec(index = 8u8)]
+                Derivative,
+                #[codec(index = 9u8)]
+                Custom(polymesh_primitives::asset::CustomAssetTypeId),
+                #[codec(index = 10u8)]
+                StableCoin,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct AssetName(pub Vec<u8>);
+        }
+        pub mod event_only {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct EventOnly<T>(pub T);
+        }
+        pub mod statistics {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct StatType {
+                pub op: polymesh_primitives::statistics::StatOpType,
+                pub claim_issuer: Option<(
+                    polymesh_primitives::identity_claim::ClaimType,
+                    polymesh_primitives::identity_id::IdentityId,
+                )>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Stat2ndKey {
+                #[codec(index = 0u8)]
+                NoClaimStat,
+                #[codec(index = 1u8)]
+                Claim(polymesh_primitives::statistics::StatClaim),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct StatUpdate {
+                pub key2: polymesh_primitives::statistics::Stat2ndKey,
+                pub value: Option<u128>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Stat1stKey {
+                pub asset: polymesh_primitives::statistics::AssetScope,
+                pub stat_type: polymesh_primitives::statistics::StatType,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum StatClaim {
+                #[codec(index = 0u8)]
+                Accredited(bool),
+                #[codec(index = 1u8)]
+                Affiliate(bool),
+                #[codec(index = 2u8)]
+                Jurisdiction(Option<polymesh_primitives::jurisdiction::CountryCode>),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum StatOpType {
+                #[codec(index = 0u8)]
+                Count,
+                #[codec(index = 1u8)]
+                Balance,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum AssetScope {
+                #[codec(index = 0u8)]
+                Ticker(polymesh_primitives::ticker::Ticker),
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct HashablePermill(pub sp_arithmetic::per_things::Permill);
+        }
+        pub mod document {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct DocumentUri(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct DocumentName(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct DocumentId(pub u32);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Document {
+                pub uri: polymesh_primitives::document::DocumentUri,
+                pub content_hash: polymesh_primitives::document_hash::DocumentHash,
+                pub name: polymesh_primitives::document::DocumentName,
+                pub doc_type: Option<polymesh_primitives::document::DocumentType>,
+                pub filing_date: Option<u64>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct DocumentType(pub Vec<u8>);
+        }
+        pub mod ethereum {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct EthereumAddress(pub [u8; 20usize]);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct EcdsaSignature(pub [u8; 65usize]);
+        }
+        pub mod ticker {
+            use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Ticker(pub [u8; 12usize]);
         }
         pub mod jurisdiction {
             use super::*;
@@ -2200,92 +6538,77 @@ pub mod types {
                 SX,
             }
         }
-        pub mod calendar {
+        pub mod transfer_compliance {
             use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct CheckpointId(pub u64);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct CalendarPeriod {
-                pub unit: polymesh_primitives::calendar::CalendarUnit,
-                pub amount: u64,
+            pub struct TransferConditionExemptKey {
+                pub asset: polymesh_primitives::statistics::AssetScope,
+                pub op: polymesh_primitives::statistics::StatOpType,
+                pub claim_type: Option<polymesh_primitives::identity_claim::ClaimType>,
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct CheckpointSchedule {
-                pub start: u64,
-                pub period: polymesh_primitives::calendar::CalendarPeriod,
+            pub struct AssetTransferCompliance {
+                pub paused: bool,
+                pub requirements: Vec<polymesh_primitives::transfer_compliance::TransferCondition>,
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum CalendarUnit {
+            pub enum TransferCondition {
                 #[codec(index = 0u8)]
-                Second,
+                MaxInvestorCount(u64),
                 #[codec(index = 1u8)]
-                Minute,
+                MaxInvestorOwnership(polymesh_primitives::statistics::HashablePermill),
                 #[codec(index = 2u8)]
-                Hour,
+                ClaimCount(
+                    polymesh_primitives::statistics::StatClaim,
+                    polymesh_primitives::identity_id::IdentityId,
+                    u64,
+                    Option<u64>,
+                ),
                 #[codec(index = 3u8)]
-                Day,
-                #[codec(index = 4u8)]
-                Week,
-                #[codec(index = 5u8)]
-                Month,
-                #[codec(index = 6u8)]
-                Year,
+                ClaimOwnership(
+                    polymesh_primitives::statistics::StatClaim,
+                    polymesh_primitives::identity_id::IdentityId,
+                    polymesh_primitives::statistics::HashablePermill,
+                    polymesh_primitives::statistics::HashablePermill,
+                ),
             }
         }
-        pub mod asset_metadata {
+        pub mod identity {
             use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataValue(pub Vec<u8>);
+            pub struct DidRecord<AccountId> {
+                pub primary_key: Option<AccountId>,
+            }
+        }
+        pub mod identity_id {
+            use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataDescription(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum AssetMetadataKey {
+            pub enum PortfolioKind {
                 #[codec(index = 0u8)]
-                Global(polymesh_primitives::asset_metadata::AssetMetadataGlobalKey),
+                Default,
                 #[codec(index = 1u8)]
-                Local(polymesh_primitives::asset_metadata::AssetMetadataLocalKey),
+                User(polymesh_primitives::identity_id::PortfolioNumber),
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataLocalKey(pub u64);
+            pub struct IdentityId(pub [u8; 32usize]);
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataSpec {
-                pub url: Option<polymesh_primitives::Url>,
-                pub description:
-                    Option<polymesh_primitives::asset_metadata::AssetMetadataDescription>,
-                pub type_def: Option<Vec<u8>>,
+            pub struct PortfolioId {
+                pub did: polymesh_primitives::identity_id::IdentityId,
+                pub kind: polymesh_primitives::identity_id::PortfolioKind,
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataValueDetail<Moment> {
-                pub expire: Option<Moment>,
-                pub lock_status:
-                    polymesh_primitives::asset_metadata::AssetMetadataLockStatus<Moment>,
-            }
+            pub struct PortfolioNumber(pub u64);
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum AssetMetadataLockStatus<Moment> {
-                #[codec(index = 0u8)]
-                Unlocked,
-                #[codec(index = 1u8)]
-                Locked,
-                #[codec(index = 2u8)]
-                LockedUntil(Moment),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataName(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct AssetMetadataGlobalKey(pub u64);
+            pub struct PortfolioName(pub Vec<u8>);
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -2295,7 +6618,7 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Url(pub Vec<u8>);
+        pub struct DispatchableName(pub Vec<u8>);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct PosRatio(pub u32, pub u32);
@@ -2304,2961 +6627,9 @@ pub mod types {
         pub struct PalletName(pub Vec<u8>);
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct DispatchableName(pub Vec<u8>);
+        pub struct Url(pub Vec<u8>);
     }
-    pub mod pallet_compliance_manager {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            add_compliance_requirement {
-                ticker: polymesh_primitives::ticker::Ticker,
-                sender_conditions: Vec<polymesh_primitives::condition::Condition>,
-                receiver_conditions: Vec<polymesh_primitives::condition::Condition>,
-            },
-            #[codec(index = 1u8)]
-            remove_compliance_requirement {
-                ticker: polymesh_primitives::ticker::Ticker,
-                id: u32,
-            },
-            #[codec(index = 2u8)]
-            replace_asset_compliance {
-                ticker: polymesh_primitives::ticker::Ticker,
-                asset_compliance:
-                    Vec<polymesh_primitives::compliance_manager::ComplianceRequirement>,
-            },
-            #[codec(index = 3u8)]
-            reset_asset_compliance {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 4u8)]
-            pause_asset_compliance {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 5u8)]
-            resume_asset_compliance {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 6u8)]
-            add_default_trusted_claim_issuer {
-                ticker: polymesh_primitives::ticker::Ticker,
-                issuer: polymesh_primitives::condition::TrustedIssuer,
-            },
-            #[codec(index = 7u8)]
-            remove_default_trusted_claim_issuer {
-                ticker: polymesh_primitives::ticker::Ticker,
-                issuer: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 8u8)]
-            change_compliance_requirement {
-                ticker: polymesh_primitives::ticker::Ticker,
-                new_req: polymesh_primitives::compliance_manager::ComplianceRequirement,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            Unauthorized,
-            #[codec(index = 1u8)]
-            DidNotExist,
-            #[codec(index = 2u8)]
-            InvalidComplianceRequirementId,
-            #[codec(index = 3u8)]
-            IncorrectOperationOnTrustedIssuer,
-            #[codec(index = 4u8)]
-            DuplicateComplianceRequirements,
-            #[codec(index = 5u8)]
-            ComplianceRequirementTooComplex,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Event {
-            #[codec(index = 0u8)]
-            ComplianceRequirementCreated(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                polymesh_primitives::compliance_manager::ComplianceRequirement,
-            ),
-            #[codec(index = 1u8)]
-            ComplianceRequirementRemoved(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                u32,
-            ),
-            #[codec(index = 2u8)]
-            AssetComplianceReplaced(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                Vec<polymesh_primitives::compliance_manager::ComplianceRequirement>,
-            ),
-            #[codec(index = 3u8)]
-            AssetComplianceReset(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-            ),
-            #[codec(index = 4u8)]
-            AssetComplianceResumed(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-            ),
-            #[codec(index = 5u8)]
-            AssetCompliancePaused(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-            ),
-            #[codec(index = 6u8)]
-            ComplianceRequirementChanged(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                polymesh_primitives::compliance_manager::ComplianceRequirement,
-            ),
-            #[codec(index = 7u8)]
-            TrustedDefaultClaimIssuerAdded(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                polymesh_primitives::condition::TrustedIssuer,
-            ),
-            #[codec(index = 8u8)]
-            TrustedDefaultClaimIssuerRemoved(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                polymesh_primitives::identity_id::IdentityId,
-            ),
-        }
-    }
-    pub mod polymesh_contracts {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Event {}
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            instantiate_with_code_perms {
-                endowment: u128,
-                gas_limit: u64,
-                storage_deposit_limit: Option<u128>,
-                code: Vec<u8>,
-                data: Vec<u8>,
-                salt: Vec<u8>,
-                perms: polymesh_primitives::secondary_key::Permissions,
-            },
-            #[codec(index = 1u8)]
-            instantiate_with_hash_perms {
-                endowment: u128,
-                gas_limit: u64,
-                storage_deposit_limit: Option<u128>,
-                code_hash: primitive_types::H256,
-                data: Vec<u8>,
-                salt: Vec<u8>,
-                perms: polymesh_primitives::secondary_key::Permissions,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            RuntimeCallNotFound,
-            #[codec(index = 1u8)]
-            DataLeftAfterDecoding,
-            #[codec(index = 2u8)]
-            InLenTooLarge,
-            #[codec(index = 3u8)]
-            InstantiatorWithNoIdentity,
-        }
-    }
-    pub mod pallet_test_utils {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {}
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId> {
-            #[codec(index = 0u8)]
-            MockInvestorUIDCreated(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::cdd_id::InvestorUid,
-            ),
-            #[codec(index = 1u8)]
-            DidStatus(polymesh_primitives::identity_id::IdentityId, AccountId),
-            #[codec(index = 2u8)]
-            CddStatus(
-                Option<polymesh_primitives::identity_id::IdentityId>,
-                AccountId,
-                bool,
-            ),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            register_did {
-                uid: polymesh_primitives::cdd_id::InvestorUid,
-                secondary_keys: Vec<
-                    polymesh_primitives::secondary_key::SecondaryKey<sp_core::crypto::AccountId32>,
-                >,
-            },
-            #[codec(index = 1u8)]
-            mock_cdd_register_did {
-                target_account: sp_core::crypto::AccountId32,
-            },
-            #[codec(index = 2u8)]
-            get_my_did,
-            #[codec(index = 3u8)]
-            get_cdd_of { of: sp_core::crypto::AccountId32 },
-        }
-    }
-    pub mod pallet_contracts {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                call {
-                    dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                    value: ::codec::Compact<u128>,
-                    gas_limit: ::codec::Compact<u64>,
-                    storage_deposit_limit: Option<::codec::Compact<u128>>,
-                    data: Vec<u8>,
-                },
-                #[codec(index = 1u8)]
-                instantiate_with_code {
-                    value: ::codec::Compact<u128>,
-                    gas_limit: ::codec::Compact<u64>,
-                    storage_deposit_limit: Option<::codec::Compact<u128>>,
-                    code: Vec<u8>,
-                    data: Vec<u8>,
-                    salt: Vec<u8>,
-                },
-                #[codec(index = 2u8)]
-                instantiate {
-                    value: ::codec::Compact<u128>,
-                    gas_limit: ::codec::Compact<u64>,
-                    storage_deposit_limit: Option<::codec::Compact<u128>>,
-                    code_hash: primitive_types::H256,
-                    data: Vec<u8>,
-                    salt: Vec<u8>,
-                },
-                #[codec(index = 3u8)]
-                upload_code {
-                    code: Vec<u8>,
-                    storage_deposit_limit: Option<::codec::Compact<u128>>,
-                },
-                #[codec(index = 4u8)]
-                remove_code { code_hash: primitive_types::H256 },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                InvalidScheduleVersion,
-                #[codec(index = 1u8)]
-                InvalidCallFlags,
-                #[codec(index = 2u8)]
-                OutOfGas,
-                #[codec(index = 3u8)]
-                OutputBufferTooSmall,
-                #[codec(index = 4u8)]
-                TransferFailed,
-                #[codec(index = 5u8)]
-                MaxCallDepthReached,
-                #[codec(index = 6u8)]
-                ContractNotFound,
-                #[codec(index = 7u8)]
-                CodeTooLarge,
-                #[codec(index = 8u8)]
-                CodeNotFound,
-                #[codec(index = 9u8)]
-                OutOfBounds,
-                #[codec(index = 10u8)]
-                DecodingFailed,
-                #[codec(index = 11u8)]
-                ContractTrapped,
-                #[codec(index = 12u8)]
-                ValueTooLarge,
-                #[codec(index = 13u8)]
-                TerminatedWhileReentrant,
-                #[codec(index = 14u8)]
-                InputForwarded,
-                #[codec(index = 15u8)]
-                RandomSubjectTooLong,
-                #[codec(index = 16u8)]
-                TooManyTopics,
-                #[codec(index = 17u8)]
-                DuplicateTopics,
-                #[codec(index = 18u8)]
-                NoChainExtension,
-                #[codec(index = 19u8)]
-                DeletionQueueFull,
-                #[codec(index = 20u8)]
-                DuplicateContract,
-                #[codec(index = 21u8)]
-                TerminatedInConstructor,
-                #[codec(index = 22u8)]
-                DebugMessageInvalidUTF8,
-                #[codec(index = 23u8)]
-                ReentranceDenied,
-                #[codec(index = 24u8)]
-                StorageDepositNotEnoughFunds,
-                #[codec(index = 25u8)]
-                StorageDepositLimitExhausted,
-                #[codec(index = 26u8)]
-                CodeInUse,
-                #[codec(index = 27u8)]
-                ContractReverted,
-                #[codec(index = 28u8)]
-                CodeRejected,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                Instantiated {
-                    deployer: sp_core::crypto::AccountId32,
-                    contract: sp_core::crypto::AccountId32,
-                },
-                #[codec(index = 1u8)]
-                Terminated {
-                    contract: sp_core::crypto::AccountId32,
-                    beneficiary: sp_core::crypto::AccountId32,
-                },
-                #[codec(index = 2u8)]
-                CodeStored { code_hash: primitive_types::H256 },
-                #[codec(index = 3u8)]
-                ContractEmitted {
-                    contract: sp_core::crypto::AccountId32,
-                    data: Vec<u8>,
-                },
-                #[codec(index = 4u8)]
-                CodeRemoved { code_hash: primitive_types::H256 },
-                #[codec(index = 5u8)]
-                ContractCodeUpdated {
-                    contract: sp_core::crypto::AccountId32,
-                    new_code_hash: primitive_types::H256,
-                    old_code_hash: primitive_types::H256,
-                },
-            }
-        }
-        pub mod storage {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct DeletedContract {
-                pub trie_id: Vec<u8>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct RawContractInfo<CodeHash, Balance> {
-                pub trie_id: Vec<u8>,
-                pub code_hash: CodeHash,
-                pub storage_deposit: Balance,
-            }
-        }
-        pub mod wasm {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct OwnerInfo {
-                pub owner: sp_core::crypto::AccountId32,
-                pub deposit: ::codec::Compact<u128>,
-                pub refcount: ::codec::Compact<u64>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct PrefabWasmModule {
-                pub instruction_weights_version: ::codec::Compact<u32>,
-                pub initial: ::codec::Compact<u32>,
-                pub maximum: ::codec::Compact<u32>,
-                pub code: Vec<u8>,
-            }
-        }
-        pub mod schedule {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct HostFnWeights {
-                pub caller: u64,
-                pub is_contract: u64,
-                pub code_hash: u64,
-                pub own_code_hash: u64,
-                pub caller_is_origin: u64,
-                pub address: u64,
-                pub gas_left: u64,
-                pub balance: u64,
-                pub value_transferred: u64,
-                pub minimum_balance: u64,
-                pub block_number: u64,
-                pub now: u64,
-                pub weight_to_fee: u64,
-                pub gas: u64,
-                pub input: u64,
-                pub input_per_byte: u64,
-                pub r#return: u64,
-                pub return_per_byte: u64,
-                pub terminate: u64,
-                pub random: u64,
-                pub deposit_event: u64,
-                pub deposit_event_per_topic: u64,
-                pub deposit_event_per_byte: u64,
-                pub debug_message: u64,
-                pub set_storage: u64,
-                pub set_storage_per_new_byte: u64,
-                pub set_storage_per_old_byte: u64,
-                pub set_code_hash: u64,
-                pub clear_storage: u64,
-                pub clear_storage_per_byte: u64,
-                pub contains_storage: u64,
-                pub contains_storage_per_byte: u64,
-                pub get_storage: u64,
-                pub get_storage_per_byte: u64,
-                pub take_storage: u64,
-                pub take_storage_per_byte: u64,
-                pub transfer: u64,
-                pub call: u64,
-                pub delegate_call: u64,
-                pub call_transfer_surcharge: u64,
-                pub call_per_cloned_byte: u64,
-                pub instantiate: u64,
-                pub instantiate_transfer_surcharge: u64,
-                pub instantiate_per_salt_byte: u64,
-                pub hash_sha2_256: u64,
-                pub hash_sha2_256_per_byte: u64,
-                pub hash_keccak_256: u64,
-                pub hash_keccak_256_per_byte: u64,
-                pub hash_blake2_256: u64,
-                pub hash_blake2_256_per_byte: u64,
-                pub hash_blake2_128: u64,
-                pub hash_blake2_128_per_byte: u64,
-                pub ecdsa_recover: u64,
-                pub ecdsa_to_eth_address: u64,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct InstructionWeights {
-                pub version: u32,
-                pub i64const: u32,
-                pub i64load: u32,
-                pub i64store: u32,
-                pub select: u32,
-                pub r#if: u32,
-                pub br: u32,
-                pub br_if: u32,
-                pub br_table: u32,
-                pub br_table_per_entry: u32,
-                pub call: u32,
-                pub call_indirect: u32,
-                pub call_indirect_per_param: u32,
-                pub local_get: u32,
-                pub local_set: u32,
-                pub local_tee: u32,
-                pub global_get: u32,
-                pub global_set: u32,
-                pub memory_current: u32,
-                pub memory_grow: u32,
-                pub i64clz: u32,
-                pub i64ctz: u32,
-                pub i64popcnt: u32,
-                pub i64eqz: u32,
-                pub i64extendsi32: u32,
-                pub i64extendui32: u32,
-                pub i32wrapi64: u32,
-                pub i64eq: u32,
-                pub i64ne: u32,
-                pub i64lts: u32,
-                pub i64ltu: u32,
-                pub i64gts: u32,
-                pub i64gtu: u32,
-                pub i64les: u32,
-                pub i64leu: u32,
-                pub i64ges: u32,
-                pub i64geu: u32,
-                pub i64add: u32,
-                pub i64sub: u32,
-                pub i64mul: u32,
-                pub i64divs: u32,
-                pub i64divu: u32,
-                pub i64rems: u32,
-                pub i64remu: u32,
-                pub i64and: u32,
-                pub i64or: u32,
-                pub i64xor: u32,
-                pub i64shl: u32,
-                pub i64shrs: u32,
-                pub i64shru: u32,
-                pub i64rotl: u32,
-                pub i64rotr: u32,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Schedule {
-                pub limits: pallet_contracts::schedule::Limits,
-                pub instruction_weights: pallet_contracts::schedule::InstructionWeights,
-                pub host_fn_weights: pallet_contracts::schedule::HostFnWeights,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Limits {
-                pub event_topics: u32,
-                pub stack_height: Option<u32>,
-                pub globals: u32,
-                pub parameters: u32,
-                pub memory_pages: u32,
-                pub table_size: u32,
-                pub br_table_size: u32,
-                pub subject_len: u32,
-                pub call_depth: u32,
-                pub payload_len: u32,
-                pub code_len: u32,
-            }
-        }
-    }
-    pub mod pallet_authorship {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                set_uncles {
-                    new_uncles:
-                        Vec<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>,
-                },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                InvalidUncleParent,
-                #[codec(index = 1u8)]
-                UnclesAlreadySet,
-                #[codec(index = 2u8)]
-                TooManyUncles,
-                #[codec(index = 3u8)]
-                GenesisUncle,
-                #[codec(index = 4u8)]
-                TooHighUncle,
-                #[codec(index = 5u8)]
-                UncleAlreadyIncluded,
-                #[codec(index = 6u8)]
-                OldUncle,
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum UncleEntryItem<BlockNumber, Hash, Author> {
-            #[codec(index = 0u8)]
-            InclusionHeight(BlockNumber),
-            #[codec(index = 1u8)]
-            Uncle(Hash, Option<Author>),
-        }
-    }
-    pub mod pallet_transaction_payment {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ChargeTransactionPayment(pub ::codec::Compact<u128>);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Releases {
-            #[codec(index = 0u8)]
-            V1Ancient,
-            #[codec(index = 1u8)]
-            V2,
-        }
-    }
-    pub mod pallet_timestamp {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                set { now: ::codec::Compact<u64> },
-            }
-        }
-    }
-    pub mod sp_consensus_babe {
-        use super::*;
-        pub mod app {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Public(pub sp_core::sr25519::Public);
-        }
-        pub mod digests {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum NextConfigDescriptor {
-                #[codec(index = 1u8)]
-                V1 {
-                    c: (u64, u64),
-                    allowed_slots: sp_consensus_babe::AllowedSlots,
-                },
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum AllowedSlots {
-            #[codec(index = 0u8)]
-            PrimarySlots,
-            #[codec(index = 1u8)]
-            PrimaryAndSecondaryPlainSlots,
-            #[codec(index = 2u8)]
-            PrimaryAndSecondaryVRFSlots,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct BabeEpochConfiguration {
-            pub c: (u64, u64),
-            pub allowed_slots: sp_consensus_babe::AllowedSlots,
-        }
-    }
-    pub mod pallet_identity {
-        use super::*;
-        pub mod types {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Claim2ndKey {
-                pub issuer: polymesh_primitives::identity_id::IdentityId,
-                pub scope: Option<polymesh_primitives::identity_claim::Scope>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Claim1stKey {
-                pub target: polymesh_primitives::identity_id::IdentityId,
-                pub claim_type: polymesh_primitives::identity_claim::ClaimType,
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            AlreadyLinked,
-            #[codec(index = 1u8)]
-            MissingCurrentIdentity,
-            #[codec(index = 2u8)]
-            Unauthorized,
-            #[codec(index = 3u8)]
-            InvalidAccountKey,
-            #[codec(index = 4u8)]
-            UnAuthorizedCddProvider,
-            #[codec(index = 5u8)]
-            InvalidAuthorizationFromOwner,
-            #[codec(index = 6u8)]
-            InvalidAuthorizationFromCddProvider,
-            #[codec(index = 7u8)]
-            NotCddProviderAttestation,
-            #[codec(index = 8u8)]
-            AuthorizationsNotForSameDids,
-            #[codec(index = 9u8)]
-            DidMustAlreadyExist,
-            #[codec(index = 10u8)]
-            CurrentIdentityCannotBeForwarded,
-            #[codec(index = 11u8)]
-            AuthorizationExpired,
-            #[codec(index = 12u8)]
-            TargetHasNoCdd,
-            #[codec(index = 13u8)]
-            AuthorizationHasBeenRevoked,
-            #[codec(index = 14u8)]
-            InvalidAuthorizationSignature,
-            #[codec(index = 15u8)]
-            KeyNotAllowed,
-            #[codec(index = 16u8)]
-            NotPrimaryKey,
-            #[codec(index = 17u8)]
-            DidDoesNotExist,
-            #[codec(index = 18u8)]
-            DidAlreadyExists,
-            #[codec(index = 19u8)]
-            SecondaryKeysContainPrimaryKey,
-            #[codec(index = 20u8)]
-            FailedToChargeFee,
-            #[codec(index = 21u8)]
-            NotASigner,
-            #[codec(index = 22u8)]
-            CannotDecodeSignerAccountId,
-            #[codec(index = 23u8)]
-            MultiSigHasBalance,
-            #[codec(index = 24u8)]
-            ConfidentialScopeClaimNotAllowed,
-            #[codec(index = 25u8)]
-            InvalidScopeClaim,
-            #[codec(index = 26u8)]
-            ClaimVariantNotAllowed,
-            #[codec(index = 27u8)]
-            TargetHasNonZeroBalanceAtScopeId,
-            #[codec(index = 28u8)]
-            CDDIdNotUniqueForIdentity,
-            #[codec(index = 29u8)]
-            InvalidCDDId,
-            #[codec(index = 30u8)]
-            ClaimAndProofVersionsDoNotMatch,
-            #[codec(index = 31u8)]
-            AccountKeyIsBeingUsed,
-            #[codec(index = 32u8)]
-            CustomScopeTooLong,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            cdd_register_did {
-                target_account: sp_core::crypto::AccountId32,
-                secondary_keys: Vec<
-                    polymesh_primitives::secondary_key::SecondaryKey<sp_core::crypto::AccountId32>,
-                >,
-            },
-            #[codec(index = 1u8)]
-            invalidate_cdd_claims {
-                cdd: polymesh_primitives::identity_id::IdentityId,
-                disable_from: u64,
-                expiry: Option<u64>,
-            },
-            #[codec(index = 2u8)]
-            remove_secondary_keys_old {
-                keys_to_remove: Vec<
-                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                >,
-            },
-            #[codec(index = 3u8)]
-            accept_primary_key {
-                rotation_auth_id: u64,
-                optional_cdd_auth_id: Option<u64>,
-            },
-            #[codec(index = 4u8)]
-            change_cdd_requirement_for_mk_rotation { auth_required: bool },
-            #[codec(index = 5u8)]
-            join_identity_as_key { auth_id: u64 },
-            #[codec(index = 6u8)]
-            leave_identity_as_key,
-            #[codec(index = 7u8)]
-            add_claim {
-                target: polymesh_primitives::identity_id::IdentityId,
-                claim: polymesh_primitives::identity_claim::Claim,
-                expiry: Option<u64>,
-            },
-            #[codec(index = 8u8)]
-            revoke_claim {
-                target: polymesh_primitives::identity_id::IdentityId,
-                claim: polymesh_primitives::identity_claim::Claim,
-            },
-            #[codec(index = 9u8)]
-            set_permission_to_signer {
-                key: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                perms: polymesh_primitives::secondary_key::Permissions,
-            },
-            #[codec(index = 10u8)]
-            placeholder_legacy_set_permission_to_signer,
-            #[codec(index = 11u8)]
-            freeze_secondary_keys,
-            #[codec(index = 12u8)]
-            unfreeze_secondary_keys,
-            #[codec(index = 13u8)]
-            add_authorization {
-                target: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                data: polymesh_primitives::authorization::AuthorizationData<
-                    sp_core::crypto::AccountId32,
-                >,
-                expiry: Option<u64>,
-            },
-            #[codec(index = 14u8)]
-            remove_authorization {
-                target: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                auth_id: u64,
-                _auth_issuer_pays: bool,
-            },
-            #[codec(index = 15u8)]
-            add_secondary_keys_with_authorization_old {
-                additional_keys: Vec<
-                    polymesh_common_utilities::traits::identity::SecondaryKeyWithAuthV1<
-                        sp_core::crypto::AccountId32,
-                    >,
-                >,
-                expires_at: u64,
-            },
-            #[codec(index = 16u8)]
-            add_investor_uniqueness_claim {
-                target: polymesh_primitives::identity_id::IdentityId,
-                claim: polymesh_primitives::identity_claim::Claim,
-                proof: [u8; 64usize],
-                expiry: Option<u64>,
-            },
-            #[codec(index = 17u8)]
-            gc_add_cdd_claim {
-                target: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 18u8)]
-            gc_revoke_cdd_claim {
-                target: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 19u8)]
-            add_investor_uniqueness_claim_v2 {
-                target: polymesh_primitives::identity_id::IdentityId,
-                scope: polymesh_primitives::identity_claim::Scope,
-                claim: polymesh_primitives::identity_claim::Claim,
-                proof: confidential_identity::claim_proofs::ScopeClaimProof,
-                expiry: Option<u64>,
-            },
-            #[codec(index = 20u8)]
-            revoke_claim_by_index {
-                target: polymesh_primitives::identity_id::IdentityId,
-                claim_type: polymesh_primitives::identity_claim::ClaimType,
-                scope: Option<polymesh_primitives::identity_claim::Scope>,
-            },
-            #[codec(index = 21u8)]
-            rotate_primary_key_to_secondary {
-                auth_id: u64,
-                optional_cdd_auth_id: Option<u64>,
-            },
-            #[codec(index = 22u8)]
-            add_secondary_keys_with_authorization {
-                additional_keys: Vec<
-                    polymesh_common_utilities::traits::identity::SecondaryKeyWithAuth<
-                        sp_core::crypto::AccountId32,
-                    >,
-                >,
-                expires_at: u64,
-            },
-            #[codec(index = 23u8)]
-            set_secondary_key_permissions {
-                key: sp_core::crypto::AccountId32,
-                perms: polymesh_primitives::secondary_key::Permissions,
-            },
-            #[codec(index = 24u8)]
-            remove_secondary_keys {
-                keys_to_remove: Vec<sp_core::crypto::AccountId32>,
-            },
-        }
-    }
-    pub mod pallet_permissions {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            UnauthorizedCaller,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct StoreCallMetadata();
-    }
-    pub mod pallet_multisig {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId> {
-            #[codec(index = 0u8)]
-            MultiSigCreated(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                AccountId,
-                Vec<polymesh_primitives::secondary_key::Signatory<AccountId>>,
-                u64,
-            ),
-            #[codec(index = 1u8)]
-            ProposalAdded(polymesh_primitives::identity_id::IdentityId, AccountId, u64),
-            #[codec(index = 2u8)]
-            ProposalExecuted(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                u64,
-                bool,
-            ),
-            #[codec(index = 3u8)]
-            MultiSigSignerAdded(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                polymesh_primitives::secondary_key::Signatory<AccountId>,
-            ),
-            #[codec(index = 4u8)]
-            MultiSigSignerAuthorized(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                polymesh_primitives::secondary_key::Signatory<AccountId>,
-            ),
-            #[codec(index = 5u8)]
-            MultiSigSignerRemoved(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                polymesh_primitives::secondary_key::Signatory<AccountId>,
-            ),
-            #[codec(index = 6u8)]
-            MultiSigSignaturesRequiredChanged(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                u64,
-            ),
-            #[codec(index = 7u8)]
-            ProposalApproved(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                polymesh_primitives::secondary_key::Signatory<AccountId>,
-                u64,
-            ),
-            #[codec(index = 8u8)]
-            ProposalRejectionVote(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                polymesh_primitives::secondary_key::Signatory<AccountId>,
-                u64,
-            ),
-            #[codec(index = 9u8)]
-            ProposalRejected(polymesh_primitives::identity_id::IdentityId, AccountId, u64),
-            #[codec(index = 10u8)]
-            ProposalExecutionFailed(sp_runtime::DispatchError),
-            #[codec(index = 11u8)]
-            SchedulingFailed(sp_runtime::DispatchError),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            CddMissing,
-            #[codec(index = 1u8)]
-            ProposalMissing,
-            #[codec(index = 2u8)]
-            DecodingError,
-            #[codec(index = 3u8)]
-            NoSigners,
-            #[codec(index = 4u8)]
-            RequiredSignaturesOutOfBounds,
-            #[codec(index = 5u8)]
-            NotASigner,
-            #[codec(index = 6u8)]
-            NoSuchMultisig,
-            #[codec(index = 7u8)]
-            NotEnoughSigners,
-            #[codec(index = 8u8)]
-            NonceOverflow,
-            #[codec(index = 9u8)]
-            AlreadyVoted,
-            #[codec(index = 10u8)]
-            AlreadyASigner,
-            #[codec(index = 11u8)]
-            FailedToChargeFee,
-            #[codec(index = 12u8)]
-            IdentityNotCreator,
-            #[codec(index = 13u8)]
-            ChangeNotAllowed,
-            #[codec(index = 14u8)]
-            SignerAlreadyLinkedToMultisig,
-            #[codec(index = 15u8)]
-            SignerAlreadyLinkedToIdentity,
-            #[codec(index = 16u8)]
-            MultisigNotAllowedToLinkToItself,
-            #[codec(index = 17u8)]
-            MissingCurrentIdentity,
-            #[codec(index = 18u8)]
-            NotPrimaryKey,
-            #[codec(index = 19u8)]
-            ProposalAlreadyRejected,
-            #[codec(index = 20u8)]
-            ProposalExpired,
-            #[codec(index = 21u8)]
-            ProposalAlreadyExecuted,
-            #[codec(index = 22u8)]
-            MultisigMissingIdentity,
-            #[codec(index = 23u8)]
-            FailedToSchedule,
-            #[codec(index = 24u8)]
-            TooManySigners,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum ProposalStatus {
-            #[codec(index = 0u8)]
-            Invalid,
-            #[codec(index = 1u8)]
-            ActiveOrExpired,
-            #[codec(index = 2u8)]
-            ExecutionSuccessful,
-            #[codec(index = 3u8)]
-            ExecutionFailed,
-            #[codec(index = 4u8)]
-            Rejected,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ProposalDetails<T> {
-            pub approvals: T,
-            pub rejections: T,
-            pub status: pallet_multisig::ProposalStatus,
-            pub expiry: Option<T>,
-            pub auto_close: bool,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            create_multisig {
-                signers: Vec<
-                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                >,
-                sigs_required: u64,
-            },
-            #[codec(index = 1u8)]
-            create_or_approve_proposal_as_identity {
-                multisig: sp_core::crypto::AccountId32,
-                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-                expiry: Option<u64>,
-                auto_close: bool,
-            },
-            #[codec(index = 2u8)]
-            create_or_approve_proposal_as_key {
-                multisig: sp_core::crypto::AccountId32,
-                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-                expiry: Option<u64>,
-                auto_close: bool,
-            },
-            #[codec(index = 3u8)]
-            create_proposal_as_identity {
-                multisig: sp_core::crypto::AccountId32,
-                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-                expiry: Option<u64>,
-                auto_close: bool,
-            },
-            #[codec(index = 4u8)]
-            create_proposal_as_key {
-                multisig: sp_core::crypto::AccountId32,
-                proposal: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-                expiry: Option<u64>,
-                auto_close: bool,
-            },
-            #[codec(index = 5u8)]
-            approve_as_identity {
-                multisig: sp_core::crypto::AccountId32,
-                proposal_id: u64,
-            },
-            #[codec(index = 6u8)]
-            approve_as_key {
-                multisig: sp_core::crypto::AccountId32,
-                proposal_id: u64,
-            },
-            #[codec(index = 7u8)]
-            reject_as_identity {
-                multisig: sp_core::crypto::AccountId32,
-                proposal_id: u64,
-            },
-            #[codec(index = 8u8)]
-            reject_as_key {
-                multisig: sp_core::crypto::AccountId32,
-                proposal_id: u64,
-            },
-            #[codec(index = 9u8)]
-            accept_multisig_signer_as_identity { auth_id: u64 },
-            #[codec(index = 10u8)]
-            accept_multisig_signer_as_key { auth_id: u64 },
-            #[codec(index = 11u8)]
-            add_multisig_signer {
-                signer: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 12u8)]
-            remove_multisig_signer {
-                signer: polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 13u8)]
-            add_multisig_signers_via_creator {
-                multisig: sp_core::crypto::AccountId32,
-                signers: Vec<
-                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                >,
-            },
-            #[codec(index = 14u8)]
-            remove_multisig_signers_via_creator {
-                multisig: sp_core::crypto::AccountId32,
-                signers: Vec<
-                    polymesh_primitives::secondary_key::Signatory<sp_core::crypto::AccountId32>,
-                >,
-            },
-            #[codec(index = 15u8)]
-            change_sigs_required { sigs_required: u64 },
-            #[codec(index = 16u8)]
-            make_multisig_secondary {
-                multisig: sp_core::crypto::AccountId32,
-            },
-            #[codec(index = 17u8)]
-            make_multisig_primary {
-                multisig: sp_core::crypto::AccountId32,
-                optional_cdd_auth_id: Option<u64>,
-            },
-            #[codec(index = 18u8)]
-            execute_scheduled_proposal {
-                multisig: sp_core::crypto::AccountId32,
-                proposal_id: u64,
-                multisig_did: polymesh_primitives::identity_id::IdentityId,
-                _proposal_weight: u64,
-            },
-        }
-    }
-    pub mod pallet_asset {
-        use super::*;
-        pub mod checkpoint {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                NoSuchSchedule,
-                #[codec(index = 1u8)]
-                ScheduleNotRemovable,
-                #[codec(index = 2u8)]
-                FailedToComputeNextCheckpoint,
-                #[codec(index = 3u8)]
-                ScheduleDurationTooShort,
-                #[codec(index = 4u8)]
-                SchedulesTooComplex,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                create_checkpoint {
-                    ticker: polymesh_primitives::ticker::Ticker,
-                },
-                #[codec(index = 1u8)]
-                set_schedules_max_complexity { max_complexity: u64 },
-                #[codec(index = 2u8)]
-                create_schedule {
-                    ticker: polymesh_primitives::ticker::Ticker,
-                    schedule: pallet_asset::checkpoint::ScheduleSpec,
-                },
-                #[codec(index = 3u8)]
-                remove_schedule {
-                    ticker: polymesh_primitives::ticker::Ticker,
-                    id: polymesh_common_utilities::traits::checkpoint::ScheduleId,
-                },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct ScheduleSpec {
-                pub start: Option<u64>,
-                pub period: polymesh_primitives::calendar::CalendarPeriod,
-                pub remaining: u32,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Version(pub u8);
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ClassicTickerRegistration {
-            pub eth_owner: polymesh_primitives::ethereum::EthereumAddress,
-            pub is_created: bool,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            Unauthorized,
-            #[codec(index = 1u8)]
-            AssetAlreadyCreated,
-            #[codec(index = 2u8)]
-            TickerTooLong,
-            #[codec(index = 3u8)]
-            TickerNotAscii,
-            #[codec(index = 4u8)]
-            TickerAlreadyRegistered,
-            #[codec(index = 5u8)]
-            TotalSupplyAboveLimit,
-            #[codec(index = 6u8)]
-            NoSuchAsset,
-            #[codec(index = 7u8)]
-            AlreadyFrozen,
-            #[codec(index = 8u8)]
-            NotAnOwner,
-            #[codec(index = 9u8)]
-            BalanceOverflow,
-            #[codec(index = 10u8)]
-            TotalSupplyOverflow,
-            #[codec(index = 11u8)]
-            InvalidGranularity,
-            #[codec(index = 12u8)]
-            NotFrozen,
-            #[codec(index = 13u8)]
-            InvalidTransfer,
-            #[codec(index = 14u8)]
-            InsufficientBalance,
-            #[codec(index = 15u8)]
-            AssetAlreadyDivisible,
-            #[codec(index = 16u8)]
-            InvalidEthereumSignature,
-            #[codec(index = 17u8)]
-            NoSuchClassicTicker,
-            #[codec(index = 18u8)]
-            TickerRegistrationExpired,
-            #[codec(index = 19u8)]
-            SenderSameAsReceiver,
-            #[codec(index = 20u8)]
-            NoSuchDoc,
-            #[codec(index = 21u8)]
-            MaxLengthOfAssetNameExceeded,
-            #[codec(index = 22u8)]
-            FundingRoundNameMaxLengthExceeded,
-            #[codec(index = 23u8)]
-            InvalidAssetIdentifier,
-            #[codec(index = 24u8)]
-            InvestorUniquenessClaimNotAllowed,
-            #[codec(index = 25u8)]
-            InvalidCustomAssetTypeId,
-            #[codec(index = 26u8)]
-            AssetMetadataNameMaxLengthExceeded,
-            #[codec(index = 27u8)]
-            AssetMetadataValueMaxLengthExceeded,
-            #[codec(index = 28u8)]
-            AssetMetadataTypeDefMaxLengthExceeded,
-            #[codec(index = 29u8)]
-            AssetMetadataKeyIsMissing,
-            #[codec(index = 30u8)]
-            AssetMetadataValueIsLocked,
-            #[codec(index = 31u8)]
-            AssetMetadataLocalKeyAlreadyExists,
-            #[codec(index = 32u8)]
-            AssetMetadataGlobalKeyAlreadyExists,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum AssetOwnershipRelation {
-            #[codec(index = 0u8)]
-            NotOwned,
-            #[codec(index = 1u8)]
-            TickerOwned,
-            #[codec(index = 2u8)]
-            AssetOwned,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            register_ticker {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 1u8)]
-            accept_ticker_transfer { auth_id: u64 },
-            #[codec(index = 2u8)]
-            accept_asset_ownership_transfer { auth_id: u64 },
-            #[codec(index = 3u8)]
-            create_asset {
-                name: polymesh_primitives::asset::AssetName,
-                ticker: polymesh_primitives::ticker::Ticker,
-                divisible: bool,
-                asset_type: polymesh_primitives::asset::AssetType,
-                identifiers: Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
-                funding_round: Option<polymesh_primitives::asset::FundingRoundName>,
-                disable_iu: bool,
-            },
-            #[codec(index = 4u8)]
-            freeze {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 5u8)]
-            unfreeze {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 6u8)]
-            rename_asset {
-                ticker: polymesh_primitives::ticker::Ticker,
-                name: polymesh_primitives::asset::AssetName,
-            },
-            #[codec(index = 7u8)]
-            issue {
-                ticker: polymesh_primitives::ticker::Ticker,
-                amount: u128,
-            },
-            #[codec(index = 8u8)]
-            redeem {
-                ticker: polymesh_primitives::ticker::Ticker,
-                value: u128,
-            },
-            #[codec(index = 9u8)]
-            make_divisible {
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 10u8)]
-            add_documents {
-                docs: Vec<polymesh_primitives::document::Document>,
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 11u8)]
-            remove_documents {
-                ids: Vec<polymesh_primitives::document::DocumentId>,
-                ticker: polymesh_primitives::ticker::Ticker,
-            },
-            #[codec(index = 12u8)]
-            set_funding_round {
-                ticker: polymesh_primitives::ticker::Ticker,
-                name: polymesh_primitives::asset::FundingRoundName,
-            },
-            #[codec(index = 13u8)]
-            update_identifiers {
-                ticker: polymesh_primitives::ticker::Ticker,
-                identifiers: Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
-            },
-            #[codec(index = 14u8)]
-            claim_classic_ticker {
-                ticker: polymesh_primitives::ticker::Ticker,
-                ethereum_signature: polymesh_primitives::ethereum::EcdsaSignature,
-            },
-            #[codec(index = 15u8)]
-            reserve_classic_ticker {
-                classic_ticker_import: pallet_asset::ClassicTickerImport,
-                contract_did: polymesh_primitives::identity_id::IdentityId,
-                config: pallet_asset::TickerRegistrationConfig<u64>,
-            },
-            #[codec(index = 16u8)]
-            controller_transfer {
-                ticker: polymesh_primitives::ticker::Ticker,
-                value: u128,
-                from_portfolio: polymesh_primitives::identity_id::PortfolioId,
-            },
-            #[codec(index = 17u8)]
-            register_custom_asset_type { ty: Vec<u8> },
-            #[codec(index = 18u8)]
-            create_asset_with_custom_type {
-                name: polymesh_primitives::asset::AssetName,
-                ticker: polymesh_primitives::ticker::Ticker,
-                divisible: bool,
-                custom_asset_type: Vec<u8>,
-                identifiers: Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
-                funding_round: Option<polymesh_primitives::asset::FundingRoundName>,
-                disable_iu: bool,
-            },
-            #[codec(index = 19u8)]
-            set_asset_metadata {
-                ticker: polymesh_primitives::ticker::Ticker,
-                key: polymesh_primitives::asset_metadata::AssetMetadataKey,
-                value: polymesh_primitives::asset_metadata::AssetMetadataValue,
-                detail: Option<polymesh_primitives::asset_metadata::AssetMetadataValueDetail<u64>>,
-            },
-            #[codec(index = 20u8)]
-            set_asset_metadata_details {
-                ticker: polymesh_primitives::ticker::Ticker,
-                key: polymesh_primitives::asset_metadata::AssetMetadataKey,
-                detail: polymesh_primitives::asset_metadata::AssetMetadataValueDetail<u64>,
-            },
-            #[codec(index = 21u8)]
-            register_and_set_local_asset_metadata {
-                ticker: polymesh_primitives::ticker::Ticker,
-                name: polymesh_primitives::asset_metadata::AssetMetadataName,
-                spec: polymesh_primitives::asset_metadata::AssetMetadataSpec,
-                value: polymesh_primitives::asset_metadata::AssetMetadataValue,
-                detail: Option<polymesh_primitives::asset_metadata::AssetMetadataValueDetail<u64>>,
-            },
-            #[codec(index = 22u8)]
-            register_asset_metadata_local_type {
-                ticker: polymesh_primitives::ticker::Ticker,
-                name: polymesh_primitives::asset_metadata::AssetMetadataName,
-                spec: polymesh_primitives::asset_metadata::AssetMetadataSpec,
-            },
-            #[codec(index = 23u8)]
-            register_asset_metadata_global_type {
-                name: polymesh_primitives::asset_metadata::AssetMetadataName,
-                spec: polymesh_primitives::asset_metadata::AssetMetadataSpec,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct SecurityToken {
-            pub total_supply: u128,
-            pub owner_did: polymesh_primitives::identity_id::IdentityId,
-            pub divisible: bool,
-            pub asset_type: polymesh_primitives::asset::AssetType,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct TickerRegistration<U> {
-            pub owner: polymesh_primitives::identity_id::IdentityId,
-            pub expiry: Option<U>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct TickerRegistrationConfig<U> {
-            pub max_ticker_length: u8,
-            pub registration_length: Option<U>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ClassicTickerImport {
-            pub eth_owner: polymesh_primitives::ethereum::EthereumAddress,
-            pub ticker: polymesh_primitives::ticker::Ticker,
-            pub is_contract: bool,
-            pub is_created: bool,
-        }
-    }
-    pub mod pallet_committee {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance1();
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct PolymeshVotes<BlockNumber> {
-            pub index: BlockNumber,
-            pub ayes: Vec<polymesh_primitives::identity_id::IdentityId>,
-            pub nays: Vec<polymesh_primitives::identity_id::IdentityId>,
-            pub expiry: polymesh_common_utilities::MaybeBlock<BlockNumber>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance4();
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            DuplicateVote,
-            #[codec(index = 1u8)]
-            NotAMember,
-            #[codec(index = 2u8)]
-            NoSuchProposal,
-            #[codec(index = 3u8)]
-            ProposalExpired,
-            #[codec(index = 4u8)]
-            DuplicateProposal,
-            #[codec(index = 5u8)]
-            MismatchedVotingIndex,
-            #[codec(index = 6u8)]
-            InvalidProportion,
-            #[codec(index = 7u8)]
-            FirstVoteReject,
-            #[codec(index = 8u8)]
-            ProposalsLimitReached,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<Hash, BlockNumber, I> {
-            #[codec(index = 0u8)]
-            Proposed(
-                polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                Hash,
-            ),
-            #[codec(index = 1u8)]
-            Voted(
-                polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                Hash,
-                bool,
-                BlockNumber,
-                BlockNumber,
-                BlockNumber,
-            ),
-            #[codec(index = 2u8)]
-            VoteRetracted(
-                polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                Hash,
-                bool,
-            ),
-            #[codec(index = 3u8)]
-            FinalVotes(
-                polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                Hash,
-                Vec<polymesh_primitives::identity_id::IdentityId>,
-                Vec<polymesh_primitives::identity_id::IdentityId>,
-            ),
-            #[codec(index = 4u8)]
-            Approved(
-                polymesh_primitives::identity_id::IdentityId,
-                Hash,
-                BlockNumber,
-                BlockNumber,
-                BlockNumber,
-            ),
-            #[codec(index = 5u8)]
-            Rejected(
-                polymesh_primitives::identity_id::IdentityId,
-                Hash,
-                BlockNumber,
-                BlockNumber,
-                BlockNumber,
-            ),
-            #[codec(index = 6u8)]
-            Executed(
-                polymesh_primitives::identity_id::IdentityId,
-                Hash,
-                Result<(), sp_runtime::DispatchError>,
-            ),
-            #[codec(index = 7u8)]
-            ReleaseCoordinatorUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                Option<polymesh_primitives::identity_id::IdentityId>,
-            ),
-            #[codec(index = 8u8)]
-            ExpiresAfterUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_common_utilities::MaybeBlock<BlockNumber>,
-            ),
-            #[codec(index = 9u8)]
-            VoteThresholdUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                BlockNumber,
-                BlockNumber,
-            ),
-            PhantomDataVariant(core::marker::PhantomData<I>),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            set_vote_threshold { n: u32, d: u32 },
-            #[codec(index = 1u8)]
-            set_release_coordinator {
-                id: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 2u8)]
-            set_expires_after {
-                expiry: polymesh_common_utilities::MaybeBlock<u32>,
-            },
-            #[codec(index = 3u8)]
-            vote_or_propose {
-                approve: bool,
-                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-            },
-            #[codec(index = 4u8)]
-            vote {
-                proposal: primitive_types::H256,
-                index: u32,
-                approve: bool,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawOrigin<AccountId, I> {
-            #[codec(index = 0u8)]
-            Endorsed,
-            PhantomDataVariant(core::marker::PhantomData<(AccountId, I)>),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance3();
-    }
-    pub mod polymesh_extensions {
-        use super::*;
-        pub mod check_weight {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct CheckWeight(pub frame_system::extensions::check_weight::CheckWeight);
-        }
-    }
-    pub mod pallet_scheduler {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                FailedToSchedule,
-                #[codec(index = 1u8)]
-                NotFound,
-                #[codec(index = 2u8)]
-                TargetBlockNumberInPast,
-                #[codec(index = 3u8)]
-                RescheduleNoChange,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                schedule {
-                    when: u32,
-                    maybe_periodic: Option<(u32, u32)>,
-                    priority: u8,
-                    call: ::std::boxed::Box<
-                        frame_support::traits::schedule::MaybeHashed<
-                            polymesh_runtime_develop::runtime::Call,
-                            primitive_types::H256,
-                        >,
-                    >,
-                },
-                #[codec(index = 1u8)]
-                cancel { when: u32, index: u32 },
-                #[codec(index = 2u8)]
-                schedule_named {
-                    id: Vec<u8>,
-                    when: u32,
-                    maybe_periodic: Option<(u32, u32)>,
-                    priority: u8,
-                    call: ::std::boxed::Box<
-                        frame_support::traits::schedule::MaybeHashed<
-                            polymesh_runtime_develop::runtime::Call,
-                            primitive_types::H256,
-                        >,
-                    >,
-                },
-                #[codec(index = 3u8)]
-                cancel_named { id: Vec<u8> },
-                #[codec(index = 4u8)]
-                schedule_after {
-                    after: u32,
-                    maybe_periodic: Option<(u32, u32)>,
-                    priority: u8,
-                    call: ::std::boxed::Box<
-                        frame_support::traits::schedule::MaybeHashed<
-                            polymesh_runtime_develop::runtime::Call,
-                            primitive_types::H256,
-                        >,
-                    >,
-                },
-                #[codec(index = 5u8)]
-                schedule_named_after {
-                    id: Vec<u8>,
-                    after: u32,
-                    maybe_periodic: Option<(u32, u32)>,
-                    priority: u8,
-                    call: ::std::boxed::Box<
-                        frame_support::traits::schedule::MaybeHashed<
-                            polymesh_runtime_develop::runtime::Call,
-                            primitive_types::H256,
-                        >,
-                    >,
-                },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                Scheduled { when: u32, index: u32 },
-                #[codec(index = 1u8)]
-                Canceled { when: u32, index: u32 },
-                #[codec(index = 2u8)]
-                Dispatched {
-                    task: (u32, u32),
-                    id: Option<Vec<u8>>,
-                    result: Result<(), sp_runtime::DispatchError>,
-                },
-                #[codec(index = 3u8)]
-                CallLookupFailed {
-                    task: (u32, u32),
-                    id: Option<Vec<u8>>,
-                    error: frame_support::traits::schedule::LookupError,
-                },
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ScheduledV3<Call, BlockNumber, PalletsOrigin, AccountId> {
-            pub maybe_id: Option<Vec<u8>>,
-            pub priority: u8,
-            pub call: Call,
-            pub maybe_periodic: Option<(BlockNumber, BlockNumber)>,
-            pub origin: PalletsOrigin,
-            _phantom_data: core::marker::PhantomData<AccountId>,
-        }
-    }
-    pub mod pallet_treasury {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            disbursement {
-                beneficiaries: Vec<polymesh_primitives::Beneficiary<u128>>,
-            },
-            #[codec(index = 1u8)]
-            reimbursement { amount: u128 },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<Balance, AccountId> {
-            #[codec(index = 0u8)]
-            TreasuryDisbursement(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Balance,
-            ),
-            #[codec(index = 1u8)]
-            TreasuryDisbursementFailed(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Balance,
-            ),
-            #[codec(index = 2u8)]
-            TreasuryReimbursement(polymesh_primitives::identity_id::IdentityId, Balance),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            InsufficientBalance,
-            #[codec(index = 1u8)]
-            InvalidIdentity,
-        }
-    }
-    pub mod pallet_protocol_fee {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId> {
-            #[codec(index = 0u8)]
-            FeeSet(polymesh_primitives::identity_id::IdentityId, u128),
-            #[codec(index = 1u8)]
-            CoefficientSet(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::PosRatio,
-            ),
-            #[codec(index = 2u8)]
-            FeeCharged(AccountId, u128),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            change_coefficient {
-                coefficient: polymesh_primitives::PosRatio,
-            },
-            #[codec(index = 1u8)]
-            change_base_fee {
-                op: polymesh_common_utilities::protocol_fee::ProtocolOp,
-                base_fee: u128,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            InsufficientAccountBalance,
-            #[codec(index = 1u8)]
-            UnHandledImbalances,
-            #[codec(index = 2u8)]
-            InsufficientSubsidyBalance,
-        }
-    }
-    pub mod pallet_statistics {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            set_active_asset_stats {
-                asset: polymesh_primitives::statistics::AssetScope,
-                stat_types: Vec<polymesh_primitives::statistics::StatType>,
-            },
-            #[codec(index = 1u8)]
-            batch_update_asset_stats {
-                asset: polymesh_primitives::statistics::AssetScope,
-                stat_type: polymesh_primitives::statistics::StatType,
-                values: Vec<polymesh_primitives::statistics::StatUpdate>,
-            },
-            #[codec(index = 2u8)]
-            set_asset_transfer_compliance {
-                asset: polymesh_primitives::statistics::AssetScope,
-                transfer_conditions:
-                    Vec<polymesh_primitives::transfer_compliance::TransferCondition>,
-            },
-            #[codec(index = 3u8)]
-            set_entities_exempt {
-                is_exempt: bool,
-                exempt_key: polymesh_primitives::transfer_compliance::TransferConditionExemptKey,
-                entities: Vec<polymesh_primitives::identity_id::IdentityId>,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            InvalidTransfer,
-            #[codec(index = 1u8)]
-            StatTypeMissing,
-            #[codec(index = 2u8)]
-            StatTypeNeededByTransferCondition,
-            #[codec(index = 3u8)]
-            CannotRemoveStatTypeInUse,
-            #[codec(index = 4u8)]
-            StatTypeLimitReached,
-            #[codec(index = 5u8)]
-            TransferConditionLimitReached,
-        }
-    }
-    pub mod pallet_sudo {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            sudo {
-                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-            },
-            #[codec(index = 1u8)]
-            sudo_unchecked_weight {
-                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-                _weight: u64,
-            },
-            #[codec(index = 2u8)]
-            set_key {
-                new: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-            },
-            #[codec(index = 3u8)]
-            sudo_as {
-                who: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                call: ::std::boxed::Box<polymesh_runtime_develop::runtime::Call>,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            RequireSudo,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId> {
-            #[codec(index = 0u8)]
-            Sudid(Result<(), sp_runtime::DispatchError>),
-            #[codec(index = 1u8)]
-            KeyChanged(AccountId),
-            #[codec(index = 2u8)]
-            SudoAsDone(Result<(), sp_runtime::DispatchError>),
-        }
-    }
-    pub mod pallet_bridge {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            ControllerNotSet,
-            #[codec(index = 1u8)]
-            BadCaller,
-            #[codec(index = 2u8)]
-            BadAdmin,
-            #[codec(index = 3u8)]
-            NoValidCdd,
-            #[codec(index = 4u8)]
-            ProposalAlreadyHandled,
-            #[codec(index = 5u8)]
-            Unauthorized,
-            #[codec(index = 6u8)]
-            Frozen,
-            #[codec(index = 7u8)]
-            NotFrozen,
-            #[codec(index = 8u8)]
-            FrozenTx,
-            #[codec(index = 9u8)]
-            BridgeLimitReached,
-            #[codec(index = 10u8)]
-            Overflow,
-            #[codec(index = 11u8)]
-            DivisionByZero,
-            #[codec(index = 12u8)]
-            TimelockedTx,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum BridgeTxStatus {
-            #[codec(index = 0u8)]
-            Absent,
-            #[codec(index = 1u8)]
-            Pending(u8),
-            #[codec(index = 2u8)]
-            Frozen,
-            #[codec(index = 3u8)]
-            Timelocked,
-            #[codec(index = 4u8)]
-            Handled,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum HandledTxStatus {
-            #[codec(index = 0u8)]
-            Success,
-            #[codec(index = 1u8)]
-            Error(Vec<u8>),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            change_controller {
-                controller: sp_core::crypto::AccountId32,
-            },
-            #[codec(index = 1u8)]
-            change_admin { admin: sp_core::crypto::AccountId32 },
-            #[codec(index = 2u8)]
-            change_timelock { timelock: u32 },
-            #[codec(index = 3u8)]
-            freeze,
-            #[codec(index = 4u8)]
-            unfreeze,
-            #[codec(index = 5u8)]
-            change_bridge_limit { amount: u128, duration: u32 },
-            #[codec(index = 6u8)]
-            change_bridge_exempted {
-                exempted: Vec<(polymesh_primitives::identity_id::IdentityId, bool)>,
-            },
-            #[codec(index = 7u8)]
-            force_handle_bridge_tx {
-                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 8u8)]
-            batch_propose_bridge_tx {
-                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
-            },
-            #[codec(index = 9u8)]
-            propose_bridge_tx {
-                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 10u8)]
-            handle_bridge_tx {
-                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 11u8)]
-            freeze_txs {
-                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
-            },
-            #[codec(index = 12u8)]
-            unfreeze_txs {
-                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
-            },
-            #[codec(index = 13u8)]
-            handle_scheduled_bridge_tx {
-                bridge_tx: pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 14u8)]
-            add_freeze_admin {
-                freeze_admin: sp_core::crypto::AccountId32,
-            },
-            #[codec(index = 15u8)]
-            remove_freeze_admin {
-                freeze_admin: sp_core::crypto::AccountId32,
-            },
-            #[codec(index = 16u8)]
-            remove_txs {
-                bridge_txs: Vec<pallet_bridge::BridgeTx<sp_core::crypto::AccountId32>>,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId, BlockNumber> {
-            #[codec(index = 0u8)]
-            ControllerChanged(polymesh_primitives::identity_id::IdentityId, AccountId),
-            #[codec(index = 1u8)]
-            AdminChanged(polymesh_primitives::identity_id::IdentityId, AccountId),
-            #[codec(index = 2u8)]
-            TimelockChanged(polymesh_primitives::identity_id::IdentityId, BlockNumber),
-            #[codec(index = 3u8)]
-            Bridged(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_bridge::BridgeTx<AccountId>,
-            ),
-            #[codec(index = 4u8)]
-            Frozen(polymesh_primitives::identity_id::IdentityId),
-            #[codec(index = 5u8)]
-            Unfrozen(polymesh_primitives::identity_id::IdentityId),
-            #[codec(index = 6u8)]
-            FrozenTx(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_bridge::BridgeTx<AccountId>,
-            ),
-            #[codec(index = 7u8)]
-            UnfrozenTx(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_bridge::BridgeTx<AccountId>,
-            ),
-            #[codec(index = 8u8)]
-            ExemptedUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::identity_id::IdentityId,
-                bool,
-            ),
-            #[codec(index = 9u8)]
-            BridgeLimitUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                u128,
-                BlockNumber,
-            ),
-            #[codec(index = 10u8)]
-            TxsHandled(Vec<(AccountId, BlockNumber, pallet_bridge::HandledTxStatus)>),
-            #[codec(index = 11u8)]
-            BridgeTxScheduled(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_bridge::BridgeTx<AccountId>,
-                BlockNumber,
-            ),
-            #[codec(index = 12u8)]
-            BridgeTxScheduleFailed(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_bridge::BridgeTx<AccountId>,
-                Vec<u8>,
-            ),
-            #[codec(index = 13u8)]
-            FreezeAdminAdded(polymesh_primitives::identity_id::IdentityId, AccountId),
-            #[codec(index = 14u8)]
-            FreezeAdminRemoved(polymesh_primitives::identity_id::IdentityId, AccountId),
-            #[codec(index = 15u8)]
-            TxRemoved(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_bridge::BridgeTx<AccountId>,
-            ),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct BridgeTx<Account> {
-            pub nonce: u32,
-            pub recipient: Account,
-            pub amount: u128,
-            pub tx_hash: primitive_types::H256,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct BridgeTxDetail<BlockNumber> {
-            pub amount: u128,
-            pub status: pallet_bridge::BridgeTxStatus,
-            pub execution_block: BlockNumber,
-            pub tx_hash: primitive_types::H256,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-    }
-    pub mod pallet_group {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance1();
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance2();
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance4();
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            OnlyPrimaryKeyAllowed,
-            #[codec(index = 1u8)]
-            DuplicateMember,
-            #[codec(index = 2u8)]
-            NoSuchMember,
-            #[codec(index = 3u8)]
-            LastMemberCannotQuit,
-            #[codec(index = 4u8)]
-            MissingCurrentIdentity,
-            #[codec(index = 5u8)]
-            ActiveMembersLimitExceeded,
-            #[codec(index = 6u8)]
-            ActiveMembersLimitOverflow,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            set_active_members_limit { limit: u32 },
-            #[codec(index = 1u8)]
-            disable_member {
-                who: polymesh_primitives::identity_id::IdentityId,
-                expiry: Option<u64>,
-                at: Option<u64>,
-            },
-            #[codec(index = 2u8)]
-            add_member {
-                who: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 3u8)]
-            remove_member {
-                who: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 4u8)]
-            swap_member {
-                remove: polymesh_primitives::identity_id::IdentityId,
-                add: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 5u8)]
-            reset_members {
-                members: Vec<polymesh_primitives::identity_id::IdentityId>,
-            },
-            #[codec(index = 6u8)]
-            abdicate_membership,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Instance3();
-    }
-    pub mod pallet_staking {
-        use super::*;
-        pub mod slashing {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct SpanRecord<Balance> {
-                pub slashed: Balance,
-                pub paid_out: Balance,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct SlashingSpans {
-                pub span_index: u32,
-                pub last_start: u32,
-                pub last_nonzero_slash: u32,
-                pub prior: Vec<u32>,
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RewardDestination<AccountId> {
-            #[codec(index = 0u8)]
-            Staked,
-            #[codec(index = 1u8)]
-            Stash,
-            #[codec(index = 2u8)]
-            Controller,
-            #[codec(index = 3u8)]
-            Account(AccountId),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct StakingLedger<AccountId, Balance> {
-            pub stash: AccountId,
-            pub total: ::codec::Compact<Balance>,
-            pub active: ::codec::Compact<Balance>,
-            pub unlocking: Vec<pallet_staking::UnlockChunk<Balance>>,
-            pub claimed_rewards: Vec<u32>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct PermissionedIdentityPrefs {
-            pub intended_count: u32,
-            pub running_count: u32,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum SlashingSwitch {
-            #[codec(index = 0u8)]
-            Validator,
-            #[codec(index = 1u8)]
-            ValidatorAndNominator,
-            #[codec(index = 2u8)]
-            None,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct UnappliedSlash<AccountId, Balance> {
-            pub validator: AccountId,
-            pub own: Balance,
-            pub others: Vec<(AccountId, Balance)>,
-            pub reporters: Vec<AccountId>,
-            pub payout: Balance,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Forcing {
-            #[codec(index = 0u8)]
-            NotForcing,
-            #[codec(index = 1u8)]
-            ForceNew,
-            #[codec(index = 2u8)]
-            ForceNone,
-            #[codec(index = 3u8)]
-            ForceAlways,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum ElectionStatus<BlockNumber> {
-            #[codec(index = 0u8)]
-            Closed,
-            #[codec(index = 1u8)]
-            Open(BlockNumber),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ActiveEraInfo {
-            pub index: u32,
-            pub start: Option<u64>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Nominations<AccountId> {
-            pub targets: Vec<AccountId>,
-            pub submitted_in: u32,
-            pub suppressed: bool,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ElectionSize {
-            pub validators: ::codec::Compact<u16>,
-            pub nominators: ::codec::Compact<u32>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ElectionResult<AccountId, Balance> {
-            pub elected_stashes: Vec<AccountId>,
-            pub exposures: Vec<(AccountId, pallet_staking::Exposure<AccountId, Balance>)>,
-            pub compute: pallet_staking::ElectionCompute,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct UnlockChunk<Balance> {
-            pub value: ::codec::Compact<Balance>,
-            pub era: ::codec::Compact<u32>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum ElectionCompute {
-            #[codec(index = 0u8)]
-            OnChain,
-            #[codec(index = 1u8)]
-            Signed,
-            #[codec(index = 2u8)]
-            Unsigned,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct IndividualExposure<AccountId, Balance> {
-            pub who: AccountId,
-            pub value: ::codec::Compact<Balance>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct EraRewardPoints<AccountId> {
-            pub total: u32,
-            pub individual: std::collections::BTreeMap<AccountId, u32>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            bond {
-                controller: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
-                payee: pallet_staking::RewardDestination<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 1u8)]
-            bond_extra {
-                max_additional: ::codec::Compact<u128>,
-            },
-            #[codec(index = 2u8)]
-            unbond { value: ::codec::Compact<u128> },
-            #[codec(index = 3u8)]
-            withdraw_unbonded { num_slashing_spans: u32 },
-            #[codec(index = 4u8)]
-            validate {
-                prefs: pallet_staking::ValidatorPrefs,
-            },
-            #[codec(index = 5u8)]
-            nominate {
-                targets: Vec<sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>>,
-            },
-            #[codec(index = 6u8)]
-            chill,
-            #[codec(index = 7u8)]
-            set_payee {
-                payee: pallet_staking::RewardDestination<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 8u8)]
-            set_controller {
-                controller: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-            },
-            #[codec(index = 9u8)]
-            set_validator_count { new: ::codec::Compact<u32> },
-            #[codec(index = 10u8)]
-            increase_validator_count { additional: ::codec::Compact<u32> },
-            #[codec(index = 11u8)]
-            scale_validator_count {
-                factor: sp_arithmetic::per_things::Percent,
-            },
-            #[codec(index = 12u8)]
-            add_permissioned_validator {
-                identity: polymesh_primitives::identity_id::IdentityId,
-                intended_count: Option<u32>,
-            },
-            #[codec(index = 13u8)]
-            remove_permissioned_validator {
-                identity: polymesh_primitives::identity_id::IdentityId,
-            },
-            #[codec(index = 14u8)]
-            validate_cdd_expiry_nominators {
-                targets: Vec<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 15u8)]
-            set_commission_cap {
-                new_cap: sp_arithmetic::per_things::Perbill,
-            },
-            #[codec(index = 16u8)]
-            set_min_bond_threshold { new_value: u128 },
-            #[codec(index = 17u8)]
-            force_no_eras,
-            #[codec(index = 18u8)]
-            force_new_era,
-            #[codec(index = 19u8)]
-            set_invulnerables {
-                invulnerables: Vec<sp_core::crypto::AccountId32>,
-            },
-            #[codec(index = 20u8)]
-            force_unstake {
-                stash: sp_core::crypto::AccountId32,
-                num_slashing_spans: u32,
-            },
-            #[codec(index = 21u8)]
-            force_new_era_always,
-            #[codec(index = 22u8)]
-            cancel_deferred_slash { era: u32, slash_indices: Vec<u32> },
-            #[codec(index = 23u8)]
-            payout_stakers {
-                validator_stash: sp_core::crypto::AccountId32,
-                era: u32,
-            },
-            #[codec(index = 24u8)]
-            rebond { value: ::codec::Compact<u128> },
-            #[codec(index = 25u8)]
-            set_history_depth {
-                new_history_depth: ::codec::Compact<u32>,
-                _era_items_deleted: ::codec::Compact<u32>,
-            },
-            #[codec(index = 26u8)]
-            reap_stash {
-                stash: sp_core::crypto::AccountId32,
-                num_slashing_spans: u32,
-            },
-            #[codec(index = 27u8)]
-            submit_election_solution {
-                winners: Vec<u16>,
-                compact: pallet_staking::CompactAssignments,
-                score: sp_npos_elections::ElectionScore,
-                era: u32,
-                size: pallet_staking::ElectionSize,
-            },
-            #[codec(index = 28u8)]
-            submit_election_solution_unsigned {
-                winners: Vec<u16>,
-                compact: pallet_staking::CompactAssignments,
-                score: sp_npos_elections::ElectionScore,
-                era: u32,
-                size: pallet_staking::ElectionSize,
-            },
-            #[codec(index = 29u8)]
-            payout_stakers_by_system {
-                validator_stash: sp_core::crypto::AccountId32,
-                era: u32,
-            },
-            #[codec(index = 30u8)]
-            change_slashing_allowed_for {
-                slashing_switch: pallet_staking::SlashingSwitch,
-            },
-            #[codec(index = 31u8)]
-            update_permissioned_validator_intended_count {
-                identity: polymesh_primitives::identity_id::IdentityId,
-                new_intended_count: u32,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<Balance, AccountId> {
-            #[codec(index = 0u8)]
-            EraPayout(u32, Balance, Balance),
-            #[codec(index = 1u8)]
-            Reward(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Balance,
-            ),
-            #[codec(index = 2u8)]
-            Slash(AccountId, Balance),
-            #[codec(index = 3u8)]
-            OldSlashingReportDiscarded(u32),
-            #[codec(index = 4u8)]
-            StakingElection(pallet_staking::ElectionCompute),
-            #[codec(index = 5u8)]
-            SolutionStored(pallet_staking::ElectionCompute),
-            #[codec(index = 6u8)]
-            Bonded(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Balance,
-            ),
-            #[codec(index = 7u8)]
-            Unbonded(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Balance,
-            ),
-            #[codec(index = 8u8)]
-            Nominated(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Vec<AccountId>,
-            ),
-            #[codec(index = 9u8)]
-            Withdrawn(AccountId, Balance),
-            #[codec(index = 10u8)]
-            PermissionedIdentityAdded(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::identity_id::IdentityId,
-            ),
-            #[codec(index = 11u8)]
-            PermissionedIdentityRemoved(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::identity_id::IdentityId,
-            ),
-            #[codec(index = 12u8)]
-            InvalidatedNominators(
-                polymesh_primitives::identity_id::IdentityId,
-                AccountId,
-                Vec<AccountId>,
-            ),
-            #[codec(index = 13u8)]
-            CommissionCapUpdated(
-                polymesh_primitives::identity_id::IdentityId,
-                sp_arithmetic::per_things::Perbill,
-                sp_arithmetic::per_things::Perbill,
-            ),
-            #[codec(index = 14u8)]
-            MinimumBondThresholdUpdated(
-                Option<polymesh_primitives::identity_id::IdentityId>,
-                Balance,
-            ),
-            #[codec(index = 15u8)]
-            RewardPaymentSchedulingInterrupted(AccountId, u32, sp_runtime::DispatchError),
-            #[codec(index = 16u8)]
-            SlashingAllowedForChanged(pallet_staking::SlashingSwitch),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Releases {
-            #[codec(index = 0u8)]
-            V1_0_0Ancient,
-            #[codec(index = 1u8)]
-            V2_0_0,
-            #[codec(index = 2u8)]
-            V3_0_0,
-            #[codec(index = 3u8)]
-            V4_0_0,
-            #[codec(index = 4u8)]
-            V5_0_0,
-            #[codec(index = 5u8)]
-            V6_0_0,
-            #[codec(index = 6u8)]
-            V6_0_1,
-            #[codec(index = 7u8)]
-            V7_0_0,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ValidatorPrefs {
-            pub commission: ::codec::Compact<sp_arithmetic::per_things::Perbill>,
-            pub blocked: bool,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Exposure<AccountId, Balance> {
-            pub total: ::codec::Compact<Balance>,
-            pub own: ::codec::Compact<Balance>,
-            pub others: Vec<pallet_staking::IndividualExposure<AccountId, Balance>>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            NotController,
-            #[codec(index = 1u8)]
-            NotStash,
-            #[codec(index = 2u8)]
-            AlreadyBonded,
-            #[codec(index = 3u8)]
-            AlreadyPaired,
-            #[codec(index = 4u8)]
-            EmptyTargets,
-            #[codec(index = 5u8)]
-            InvalidSlashIndex,
-            #[codec(index = 6u8)]
-            InsufficientValue,
-            #[codec(index = 7u8)]
-            NoMoreChunks,
-            #[codec(index = 8u8)]
-            NoUnlockChunk,
-            #[codec(index = 9u8)]
-            FundedTarget,
-            #[codec(index = 10u8)]
-            InvalidEraToReward,
-            #[codec(index = 11u8)]
-            NotSortedAndUnique,
-            #[codec(index = 12u8)]
-            AlreadyClaimed,
-            #[codec(index = 13u8)]
-            OffchainElectionEarlySubmission,
-            #[codec(index = 14u8)]
-            OffchainElectionWeakSubmission,
-            #[codec(index = 15u8)]
-            SnapshotUnavailable,
-            #[codec(index = 16u8)]
-            OffchainElectionBogusWinnerCount,
-            #[codec(index = 17u8)]
-            OffchainElectionBogusWinner,
-            #[codec(index = 18u8)]
-            OffchainElectionBogusCompact,
-            #[codec(index = 19u8)]
-            OffchainElectionBogusNominator,
-            #[codec(index = 20u8)]
-            OffchainElectionBogusNomination,
-            #[codec(index = 21u8)]
-            OffchainElectionSlashedNomination,
-            #[codec(index = 22u8)]
-            OffchainElectionBogusSelfVote,
-            #[codec(index = 23u8)]
-            OffchainElectionBogusEdge,
-            #[codec(index = 24u8)]
-            OffchainElectionBogusScore,
-            #[codec(index = 25u8)]
-            OffchainElectionBogusElectionSize,
-            #[codec(index = 26u8)]
-            CallNotAllowed,
-            #[codec(index = 27u8)]
-            IncorrectSlashingSpans,
-            #[codec(index = 28u8)]
-            AlreadyExists,
-            #[codec(index = 29u8)]
-            NotExists,
-            #[codec(index = 30u8)]
-            NoChange,
-            #[codec(index = 31u8)]
-            InvalidValidatorIdentity,
-            #[codec(index = 32u8)]
-            InvalidValidatorCommission,
-            #[codec(index = 33u8)]
-            StashIdentityDoesNotExist,
-            #[codec(index = 34u8)]
-            StashIdentityNotPermissioned,
-            #[codec(index = 35u8)]
-            StashIdentityNotCDDed,
-            #[codec(index = 36u8)]
-            HitIntendedValidatorCount,
-            #[codec(index = 37u8)]
-            IntendedCountIsExceedingConsensusLimit,
-            #[codec(index = 38u8)]
-            BondTooSmall,
-            #[codec(index = 39u8)]
-            BadState,
-            #[codec(index = 40u8)]
-            TooManyTargets,
-            #[codec(index = 41u8)]
-            BadTarget,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct CompactAssignments {
-            pub votes1: Vec<(::codec::Compact<u32>, ::codec::Compact<u16>)>,
-            pub votes2: Vec<(
-                ::codec::Compact<u32>,
-                (
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ),
-                ::codec::Compact<u16>,
-            )>,
-            pub votes3: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 2usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes4: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 3usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes5: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 4usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes6: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 5usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes7: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 6usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes8: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 7usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes9: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 8usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes10: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 9usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes11: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 10usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes12: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 11usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes13: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 12usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes14: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 13usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes15: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 14usize],
-                ::codec::Compact<u16>,
-            )>,
-            pub votes16: Vec<(
-                ::codec::Compact<u32>,
-                [(
-                    ::codec::Compact<u16>,
-                    ::codec::Compact<sp_arithmetic::per_things::PerU16>,
-                ); 15usize],
-                ::codec::Compact<u16>,
-            )>,
-        }
-    }
-    pub mod sp_staking {
-        use super::*;
-        pub mod offence {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct OffenceDetails<Reporter, Offender> {
-                pub offender: Offender,
-                pub reporters: Vec<Reporter>,
-            }
-        }
-    }
-    pub mod frame_system {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                InvalidSpecName,
-                #[codec(index = 1u8)]
-                SpecVersionNeedsToIncrease,
-                #[codec(index = 2u8)]
-                FailedToExtractRuntimeVersion,
-                #[codec(index = 3u8)]
-                NonDefaultComposite,
-                #[codec(index = 4u8)]
-                NonZeroRefCount,
-                #[codec(index = 5u8)]
-                CallFiltered,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                ExtrinsicSuccess {
-                    dispatch_info: frame_support::weights::DispatchInfo,
-                },
-                #[codec(index = 1u8)]
-                ExtrinsicFailed {
-                    dispatch_error: sp_runtime::DispatchError,
-                    dispatch_info: frame_support::weights::DispatchInfo,
-                },
-                #[codec(index = 2u8)]
-                CodeUpdated,
-                #[codec(index = 3u8)]
-                NewAccount {
-                    account: sp_core::crypto::AccountId32,
-                },
-                #[codec(index = 4u8)]
-                KilledAccount {
-                    account: sp_core::crypto::AccountId32,
-                },
-                #[codec(index = 5u8)]
-                Remarked {
-                    sender: sp_core::crypto::AccountId32,
-                    hash: primitive_types::H256,
-                },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                fill_block {
-                    ratio: sp_arithmetic::per_things::Perbill,
-                },
-                #[codec(index = 1u8)]
-                remark { remark: Vec<u8> },
-                #[codec(index = 2u8)]
-                set_heap_pages { pages: u64 },
-                #[codec(index = 3u8)]
-                set_code { code: Vec<u8> },
-                #[codec(index = 4u8)]
-                set_code_without_checks { code: Vec<u8> },
-                #[codec(index = 5u8)]
-                set_storage { items: Vec<(Vec<u8>, Vec<u8>)> },
-                #[codec(index = 6u8)]
-                kill_storage { keys: Vec<Vec<u8>> },
-                #[codec(index = 7u8)]
-                kill_prefix { prefix: Vec<u8>, subkeys: u32 },
-                #[codec(index = 8u8)]
-                remark_with_event { remark: Vec<u8> },
-            }
-        }
-        pub mod extensions {
-            use super::*;
-            pub mod check_mortality {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct CheckMortality(pub sp_runtime::generic::Era);
-            }
-            pub mod check_weight {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct CheckWeight();
-            }
-            pub mod check_genesis {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct CheckGenesis();
-            }
-            pub mod check_spec_version {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct CheckSpecVersion();
-            }
-            pub mod check_tx_version {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct CheckTxVersion();
-            }
-            pub mod check_nonce {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct CheckNonce(pub ::codec::Compact<u32>);
-            }
-        }
-        pub mod limits {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct WeightsPerClass {
-                pub base_extrinsic: u64,
-                pub max_extrinsic: Option<u64>,
-                pub max_total: Option<u64>,
-                pub reserved: Option<u64>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct BlockLength {
-                pub max: frame_support::weights::PerDispatchClass<u32>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct BlockWeights {
-                pub base_block: u64,
-                pub max_block: u64,
-                pub per_class:
-                    frame_support::weights::PerDispatchClass<frame_system::limits::WeightsPerClass>,
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct EventRecord<E, T> {
-            pub phase: frame_system::Phase,
-            pub event: E,
-            pub topics: Vec<T>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct AccountInfo<Index, AccountData> {
-            pub nonce: Index,
-            pub consumers: Index,
-            pub providers: Index,
-            pub sufficients: Index,
-            pub data: AccountData,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct LastRuntimeUpgradeInfo {
-            pub spec_version: ::codec::Compact<u32>,
-            pub spec_name: String,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Phase {
-            #[codec(index = 0u8)]
-            ApplyExtrinsic(u32),
-            #[codec(index = 1u8)]
-            Finalization,
-            #[codec(index = 2u8)]
-            Initialization,
-        }
-    }
-    pub mod pallet_indices {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                NotAssigned,
-                #[codec(index = 1u8)]
-                NotOwner,
-                #[codec(index = 2u8)]
-                InUse,
-                #[codec(index = 3u8)]
-                NotTransfer,
-                #[codec(index = 4u8)]
-                Permanent,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                claim { index: u32 },
-                #[codec(index = 1u8)]
-                transfer {
-                    new: sp_core::crypto::AccountId32,
-                    index: u32,
-                },
-                #[codec(index = 2u8)]
-                free { index: u32 },
-                #[codec(index = 3u8)]
-                force_transfer {
-                    new: sp_core::crypto::AccountId32,
-                    index: u32,
-                    freeze: bool,
-                },
-                #[codec(index = 4u8)]
-                freeze { index: u32 },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                IndexAssigned {
-                    who: sp_core::crypto::AccountId32,
-                    index: u32,
-                },
-                #[codec(index = 1u8)]
-                IndexFreed { index: u32 },
-                #[codec(index = 2u8)]
-                IndexFrozen {
-                    index: u32,
-                    who: sp_core::crypto::AccountId32,
-                },
-            }
-        }
-    }
-    pub mod confidential_identity {
-        use super::*;
-        pub mod claim_proofs {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct ScopeClaimProof {
-                pub proof_scope_id_wellformed: confidential_identity::sign::Signature,
-                pub proof_scope_id_cdd_id_match: confidential_identity::claim_proofs::ZkProofData,
-                pub scope_id: [u8; 32usize],
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct ZkProofData {
-                pub challenge_responses: [[u8; 32usize]; 2usize],
-                pub subtract_expressions_res: [u8; 32usize],
-                pub blinded_scope_did_hash: [u8; 32usize],
-            }
-        }
-        pub mod sign {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Signature {
-                pub r: [u8; 32usize],
-                pub s: [u8; 32usize],
-            }
-        }
-    }
-    pub mod pallet_im_online {
+    pub mod pallet_session {
         use super::*;
         pub mod pallet {
             use super::*;
@@ -5266,1283 +6637,88 @@ pub mod types {
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Event {
                 #[codec(index = 0u8)]
-                HeartbeatReceived {
-                    authority_id: pallet_im_online::sr25519::app_sr25519::Public,
-                },
-                #[codec(index = 1u8)]
-                AllGood,
-                #[codec(index = 2u8)]
-                SomeOffline {
-                    offline: Vec<(
-                        sp_core::crypto::AccountId32,
-                        pallet_staking::Exposure<sp_core::crypto::AccountId32, u128>,
-                    )>,
-                },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                heartbeat {
-                    heartbeat: pallet_im_online::Heartbeat<u32>,
-                    signature: pallet_im_online::sr25519::app_sr25519::Signature,
-                },
+                NewSession { session_index: u32 },
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Error {
                 #[codec(index = 0u8)]
-                InvalidKey,
+                InvalidProof,
                 #[codec(index = 1u8)]
-                DuplicatedHeartbeat,
+                NoAssociatedValidatorId,
+                #[codec(index = 2u8)]
+                DuplicatedKey,
+                #[codec(index = 3u8)]
+                NoKeys,
+                #[codec(index = 4u8)]
+                NoAccount,
             }
-        }
-        pub mod sr25519 {
-            use super::*;
-            pub mod app_sr25519 {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct Signature(pub sp_core::sr25519::Signature);
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct Public(pub sp_core::sr25519::Public);
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct BoundedOpaqueNetworkState {
-            pub peer_id: Vec<u8>,
-            pub external_addresses: Vec<Vec<u8>>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Heartbeat<BlockNumber> {
-            pub block_number: BlockNumber,
-            pub network_state: sp_core::offchain::OpaqueNetworkState,
-            pub session_index: BlockNumber,
-            pub authority_index: BlockNumber,
-            pub validators_len: BlockNumber,
-        }
-    }
-    pub mod pallet_rewards {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            UnknownItnAddress,
-            #[codec(index = 1u8)]
-            ItnRewardAlreadyClaimed,
-            #[codec(index = 2u8)]
-            InvalidSignature,
-            #[codec(index = 3u8)]
-            UnableToCovertBalance,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            claim_itn_reward {
-                reward_address: sp_core::crypto::AccountId32,
-                itn_address: sp_core::crypto::AccountId32,
-                signature: sp_runtime::MultiSignature,
-            },
-            #[codec(index = 1u8)]
-            set_itn_reward_status {
-                itn_address: sp_core::crypto::AccountId32,
-                status: pallet_rewards::ItnRewardStatus,
-            },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RawEvent<AccountId> {
-            #[codec(index = 0u8)]
-            ItnRewardClaimed(AccountId, u128),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum ItnRewardStatus {
-            #[codec(index = 0u8)]
-            Unclaimed(u128),
-            #[codec(index = 1u8)]
-            Claimed,
-        }
-    }
-    pub mod sp_consensus_slots {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Slot(pub u64);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct EquivocationProof<Header, Id> {
-            pub offender: Id,
-            pub slot: sp_consensus_slots::Slot,
-            pub first_header: Header,
-            pub second_header: Header,
-        }
-    }
-    pub mod pallet_offences {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                Offence {
-                    kind: [u8; 16usize],
-                    timeslot: Vec<u8>,
-                },
-            }
-        }
-    }
-    pub mod finality_grandpa {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Precommit<H, N> {
-            pub target_hash: H,
-            pub target_number: N,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Equivocation<Id, V, S> {
-            pub round_number: u64,
-            pub identity: Id,
-            pub first: (V, S),
-            pub second: (V, S),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Prevote<H, N> {
-            pub target_hash: H,
-            pub target_number: N,
-        }
-    }
-    pub mod polymesh_runtime_develop {
-        use super::*;
-        pub mod runtime {
-            use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Call {
                 #[codec(index = 0u8)]
-                System(frame_system::pallet::Call),
+                set_keys {
+                    keys: polymesh_runtime_develop::runtime::SessionKeys,
+                    proof: Vec<u8>,
+                },
                 #[codec(index = 1u8)]
-                Babe(pallet_babe::pallet::Call),
-                #[codec(index = 2u8)]
-                Timestamp(pallet_timestamp::pallet::Call),
-                #[codec(index = 3u8)]
-                Indices(pallet_indices::pallet::Call),
-                #[codec(index = 4u8)]
-                Authorship(pallet_authorship::pallet::Call),
-                #[codec(index = 5u8)]
-                Balances(pallet_balances::Call),
-                #[codec(index = 7u8)]
-                Identity(pallet_identity::Call),
-                #[codec(index = 8u8)]
-                CddServiceProviders(pallet_group::Call),
-                #[codec(index = 9u8)]
-                PolymeshCommittee(pallet_committee::Call),
-                #[codec(index = 10u8)]
-                CommitteeMembership(pallet_group::Call),
-                #[codec(index = 11u8)]
-                TechnicalCommittee(pallet_committee::Call),
-                #[codec(index = 12u8)]
-                TechnicalCommitteeMembership(pallet_group::Call),
-                #[codec(index = 13u8)]
-                UpgradeCommittee(pallet_committee::Call),
-                #[codec(index = 14u8)]
-                UpgradeCommitteeMembership(pallet_group::Call),
-                #[codec(index = 15u8)]
-                MultiSig(pallet_multisig::Call),
-                #[codec(index = 16u8)]
-                Bridge(pallet_bridge::Call),
-                #[codec(index = 17u8)]
-                Staking(pallet_staking::Call),
-                #[codec(index = 19u8)]
-                Session(pallet_session::pallet::Call),
-                #[codec(index = 21u8)]
-                Grandpa(pallet_grandpa::pallet::Call),
-                #[codec(index = 23u8)]
-                ImOnline(pallet_im_online::pallet::Call),
-                #[codec(index = 25u8)]
-                Sudo(pallet_sudo::Call),
-                #[codec(index = 26u8)]
-                Asset(pallet_asset::Call),
-                #[codec(index = 27u8)]
-                CapitalDistribution(pallet_corporate_actions::distribution::Call),
-                #[codec(index = 28u8)]
-                Checkpoint(pallet_asset::checkpoint::Call),
-                #[codec(index = 29u8)]
-                ComplianceManager(pallet_compliance_manager::Call),
-                #[codec(index = 30u8)]
-                CorporateAction(pallet_corporate_actions::Call),
-                #[codec(index = 31u8)]
-                CorporateBallot(pallet_corporate_actions::ballot::Call),
-                #[codec(index = 33u8)]
-                Pips(pallet_pips::Call),
-                #[codec(index = 34u8)]
-                Portfolio(pallet_portfolio::Call),
-                #[codec(index = 35u8)]
-                ProtocolFee(pallet_protocol_fee::Call),
-                #[codec(index = 36u8)]
-                Scheduler(pallet_scheduler::pallet::Call),
-                #[codec(index = 37u8)]
-                Settlement(pallet_settlement::Call),
-                #[codec(index = 38u8)]
-                Statistics(pallet_statistics::Call),
-                #[codec(index = 39u8)]
-                Sto(pallet_sto::Call),
-                #[codec(index = 40u8)]
-                Treasury(pallet_treasury::Call),
-                #[codec(index = 41u8)]
-                Utility(pallet_utility::Call),
-                #[codec(index = 42u8)]
-                Base(pallet_base::Call),
-                #[codec(index = 43u8)]
-                ExternalAgents(pallet_external_agents::Call),
-                #[codec(index = 44u8)]
-                Relayer(pallet_relayer::Call),
-                #[codec(index = 45u8)]
-                Rewards(pallet_rewards::Call),
-                #[codec(index = 46u8)]
-                Contracts(pallet_contracts::pallet::Call),
-                #[codec(index = 47u8)]
-                PolymeshContracts(polymesh_contracts::Call),
-                #[codec(index = 48u8)]
-                Preimage(pallet_preimage::pallet::Call),
-                #[codec(index = 50u8)]
-                TestUtils(pallet_test_utils::Call),
+                purge_keys,
             }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct SessionKeys {
-                pub grandpa: sp_finality_grandpa::app::Public,
-                pub babe: sp_consensus_babe::app::Public,
-                pub im_online: pallet_im_online::sr25519::app_sr25519::Public,
-                pub authority_discovery: sp_authority_discovery::app::Public,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Runtime();
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                System(frame_system::pallet::Event),
-                #[codec(index = 3u8)]
-                Indices(pallet_indices::pallet::Event),
-                #[codec(index = 5u8)]
-                Balances(
-                    polymesh_common_utilities::traits::balances::RawEvent<
-                        sp_core::crypto::AccountId32,
-                    >,
-                ),
-                #[codec(index = 7u8)]
-                Identity(
-                    polymesh_common_utilities::traits::identity::RawEvent<
-                        sp_core::crypto::AccountId32,
-                        u64,
-                    >,
-                ),
-                #[codec(index = 8u8)]
-                CddServiceProviders(
-                    polymesh_common_utilities::traits::group::RawEvent<
-                        sp_core::crypto::AccountId32,
-                        polymesh_runtime_develop::runtime::Event,
-                        pallet_group::Instance2,
-                    >,
-                ),
-                #[codec(index = 9u8)]
-                PolymeshCommittee(
-                    pallet_committee::RawEvent<
-                        primitive_types::H256,
-                        u32,
-                        pallet_committee::Instance1,
-                    >,
-                ),
-                #[codec(index = 10u8)]
-                CommitteeMembership(
-                    polymesh_common_utilities::traits::group::RawEvent<
-                        sp_core::crypto::AccountId32,
-                        polymesh_runtime_develop::runtime::Event,
-                        pallet_group::Instance1,
-                    >,
-                ),
-                #[codec(index = 11u8)]
-                TechnicalCommittee(
-                    pallet_committee::RawEvent<
-                        primitive_types::H256,
-                        u32,
-                        pallet_committee::Instance3,
-                    >,
-                ),
-                #[codec(index = 12u8)]
-                TechnicalCommitteeMembership(
-                    polymesh_common_utilities::traits::group::RawEvent<
-                        sp_core::crypto::AccountId32,
-                        polymesh_runtime_develop::runtime::Event,
-                        pallet_group::Instance3,
-                    >,
-                ),
-                #[codec(index = 13u8)]
-                UpgradeCommittee(
-                    pallet_committee::RawEvent<
-                        primitive_types::H256,
-                        u32,
-                        pallet_committee::Instance4,
-                    >,
-                ),
-                #[codec(index = 14u8)]
-                UpgradeCommitteeMembership(
-                    polymesh_common_utilities::traits::group::RawEvent<
-                        sp_core::crypto::AccountId32,
-                        polymesh_runtime_develop::runtime::Event,
-                        pallet_group::Instance4,
-                    >,
-                ),
-                #[codec(index = 15u8)]
-                MultiSig(pallet_multisig::RawEvent<sp_core::crypto::AccountId32>),
-                #[codec(index = 16u8)]
-                Bridge(pallet_bridge::RawEvent<sp_core::crypto::AccountId32, u32>),
-                #[codec(index = 17u8)]
-                Staking(pallet_staking::RawEvent<u128, sp_core::crypto::AccountId32>),
-                #[codec(index = 18u8)]
-                Offences(pallet_offences::pallet::Event),
-                #[codec(index = 19u8)]
-                Session(pallet_session::pallet::Event),
-                #[codec(index = 21u8)]
-                Grandpa(pallet_grandpa::pallet::Event),
-                #[codec(index = 23u8)]
-                ImOnline(pallet_im_online::pallet::Event),
-                #[codec(index = 25u8)]
-                Sudo(pallet_sudo::RawEvent<sp_core::crypto::AccountId32>),
-                #[codec(index = 26u8)]
-                Asset(
-                    polymesh_common_utilities::traits::asset::RawEvent<
-                        u64,
-                        sp_core::crypto::AccountId32,
-                    >,
-                ),
-                #[codec(index = 27u8)]
-                CapitalDistribution(pallet_corporate_actions::distribution::Event),
-                #[codec(index = 28u8)]
-                Checkpoint(polymesh_common_utilities::traits::checkpoint::Event),
-                #[codec(index = 29u8)]
-                ComplianceManager(pallet_compliance_manager::Event),
-                #[codec(index = 30u8)]
-                CorporateAction(pallet_corporate_actions::Event),
-                #[codec(index = 31u8)]
-                CorporateBallot(pallet_corporate_actions::ballot::Event),
-                #[codec(index = 33u8)]
-                Pips(pallet_pips::RawEvent<sp_core::crypto::AccountId32, u32>),
-                #[codec(index = 34u8)]
-                Portfolio(polymesh_common_utilities::traits::portfolio::Event),
-                #[codec(index = 35u8)]
-                ProtocolFee(pallet_protocol_fee::RawEvent<sp_core::crypto::AccountId32>),
-                #[codec(index = 36u8)]
-                Scheduler(pallet_scheduler::pallet::Event),
-                #[codec(index = 37u8)]
-                Settlement(pallet_settlement::RawEvent<u64, u32, sp_core::crypto::AccountId32>),
-                #[codec(index = 38u8)]
-                Statistics(polymesh_common_utilities::traits::statistics::Event),
-                #[codec(index = 39u8)]
-                Sto(pallet_sto::RawEvent<u64>),
-                #[codec(index = 40u8)]
-                Treasury(pallet_treasury::RawEvent<u128, sp_core::crypto::AccountId32>),
-                #[codec(index = 41u8)]
-                Utility(pallet_utility::Event),
-                #[codec(index = 42u8)]
-                Base(polymesh_common_utilities::traits::base::Event),
-                #[codec(index = 43u8)]
-                ExternalAgents(polymesh_common_utilities::traits::external_agents::Event),
-                #[codec(index = 44u8)]
-                Relayer(
-                    polymesh_common_utilities::traits::relayer::RawEvent<
-                        sp_core::crypto::AccountId32,
-                    >,
-                ),
-                #[codec(index = 45u8)]
-                Rewards(pallet_rewards::RawEvent<sp_core::crypto::AccountId32>),
-                #[codec(index = 46u8)]
-                Contracts(pallet_contracts::pallet::Event),
-                #[codec(index = 47u8)]
-                PolymeshContracts(polymesh_contracts::Event),
-                #[codec(index = 48u8)]
-                Preimage(pallet_preimage::pallet::Event),
-                #[codec(index = 50u8)]
-                TestUtils(pallet_test_utils::RawEvent<sp_core::crypto::AccountId32>),
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum OriginCaller {
-                #[codec(index = 0u8)]
-                system(frame_support::dispatch::RawOrigin<sp_core::crypto::AccountId32>),
-                #[codec(index = 9u8)]
-                PolymeshCommittee(
-                    pallet_committee::RawOrigin<
-                        sp_core::crypto::AccountId32,
-                        pallet_committee::Instance1,
-                    >,
-                ),
-                #[codec(index = 11u8)]
-                TechnicalCommittee(
-                    pallet_committee::RawOrigin<
-                        sp_core::crypto::AccountId32,
-                        pallet_committee::Instance3,
-                    >,
-                ),
-                #[codec(index = 13u8)]
-                UpgradeCommittee(
-                    pallet_committee::RawOrigin<
-                        sp_core::crypto::AccountId32,
-                        pallet_committee::Instance4,
-                    >,
-                ),
-                #[codec(index = 4u8)]
-                Void(sp_core::Void),
-            }
-        }
-    }
-    pub mod pallet_portfolio {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            create_portfolio {
-                name: polymesh_primitives::identity_id::PortfolioName,
-            },
-            #[codec(index = 1u8)]
-            delete_portfolio {
-                num: polymesh_primitives::identity_id::PortfolioNumber,
-            },
-            #[codec(index = 2u8)]
-            move_portfolio_funds {
-                from: polymesh_primitives::identity_id::PortfolioId,
-                to: polymesh_primitives::identity_id::PortfolioId,
-                items: Vec<pallet_portfolio::MovePortfolioItem>,
-            },
-            #[codec(index = 3u8)]
-            rename_portfolio {
-                num: polymesh_primitives::identity_id::PortfolioNumber,
-                to_name: polymesh_primitives::identity_id::PortfolioName,
-            },
-            #[codec(index = 4u8)]
-            quit_portfolio_custody {
-                pid: polymesh_primitives::identity_id::PortfolioId,
-            },
-            #[codec(index = 5u8)]
-            accept_portfolio_custody { auth_id: u64 },
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct MovePortfolioItem {
-            pub ticker: polymesh_primitives::ticker::Ticker,
-            pub amount: u128,
-            pub memo: Option<polymesh_common_utilities::traits::balances::Memo>,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            PortfolioDoesNotExist,
-            #[codec(index = 1u8)]
-            InsufficientPortfolioBalance,
-            #[codec(index = 2u8)]
-            DestinationIsSamePortfolio,
-            #[codec(index = 3u8)]
-            PortfolioNameAlreadyInUse,
-            #[codec(index = 4u8)]
-            SecondaryKeyNotAuthorizedForPortfolio,
-            #[codec(index = 5u8)]
-            UnauthorizedCustodian,
-            #[codec(index = 6u8)]
-            InsufficientTokensLocked,
-            #[codec(index = 7u8)]
-            PortfolioNotEmpty,
-            #[codec(index = 8u8)]
-            DifferentIdentityPortfolios,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Version(pub u8);
-    }
-    pub mod sp_npos_elections {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ElectionScore {
-            pub minimal_stake: u128,
-            pub sum_stake: u128,
-            pub sum_stake_squared: u128,
-        }
-    }
-    pub mod sp_authority_discovery {
-        use super::*;
-        pub mod app {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Public(pub sp_core::sr25519::Public);
-        }
-    }
-    pub mod pallet_relayer {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct Subsidy<Acc> {
-            pub paying_key: Acc,
-            pub remaining: u128,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            UserKeyCddMissing,
-            #[codec(index = 1u8)]
-            PayingKeyCddMissing,
-            #[codec(index = 2u8)]
-            NoPayingKey,
-            #[codec(index = 3u8)]
-            NotPayingKey,
-            #[codec(index = 4u8)]
-            NotAuthorizedForPayingKey,
-            #[codec(index = 5u8)]
-            NotAuthorizedForUserKey,
-            #[codec(index = 6u8)]
-            Overflow,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {
-            #[codec(index = 0u8)]
-            set_paying_key {
-                user_key: sp_core::crypto::AccountId32,
-                polyx_limit: u128,
-            },
-            #[codec(index = 1u8)]
-            accept_paying_key { auth_id: u64 },
-            #[codec(index = 2u8)]
-            remove_paying_key {
-                user_key: sp_core::crypto::AccountId32,
-                paying_key: sp_core::crypto::AccountId32,
-            },
-            #[codec(index = 3u8)]
-            update_polyx_limit {
-                user_key: sp_core::crypto::AccountId32,
-                polyx_limit: u128,
-            },
-            #[codec(index = 4u8)]
-            increase_polyx_limit {
-                user_key: sp_core::crypto::AccountId32,
-                amount: u128,
-            },
-            #[codec(index = 5u8)]
-            decrease_polyx_limit {
-                user_key: sp_core::crypto::AccountId32,
-                amount: u128,
-            },
-        }
-    }
-    pub mod polymesh_common_utilities {
-        use super::*;
-        pub mod traits {
-            use super::*;
-            pub mod statistics {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum Event {
-                    #[codec(index = 0u8)]
-                    StatTypesAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::statistics::AssetScope,
-                        Vec<polymesh_primitives::statistics::StatType>,
-                    ),
-                    #[codec(index = 1u8)]
-                    StatTypesRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::statistics::AssetScope,
-                        Vec<polymesh_primitives::statistics::StatType>,
-                    ),
-                    #[codec(index = 2u8)]
-                    AssetStatsUpdated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::statistics::AssetScope,
-                        polymesh_primitives::statistics::StatType,
-                        Vec<polymesh_primitives::statistics::StatUpdate>,
-                    ),
-                    #[codec(index = 3u8)]
-                    SetAssetTransferCompliance(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::statistics::AssetScope,
-                        Vec<polymesh_primitives::transfer_compliance::TransferCondition>,
-                    ),
-                    #[codec(index = 4u8)]
-                    TransferConditionExemptionsAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::transfer_compliance::TransferConditionExemptKey,
-                        Vec<polymesh_primitives::identity_id::IdentityId>,
-                    ),
-                    #[codec(index = 5u8)]
-                    TransferConditionExemptionsRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::transfer_compliance::TransferConditionExemptKey,
-                        Vec<polymesh_primitives::identity_id::IdentityId>,
-                    ),
-                }
-            }
-            pub mod balances {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum RawEvent<AccountId> {
-                    #[codec(index = 0u8)]
-                    Endowed(
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        AccountId,
-                        u128,
-                    ),
-                    #[codec(index = 1u8)]
-                    Transfer(
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        AccountId,
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        AccountId,
-                        u128,
-                        Option<polymesh_common_utilities::traits::balances::Memo>,
-                    ),
-                    #[codec(index = 2u8)]
-                    BalanceSet(
-                        polymesh_primitives::identity_id::IdentityId,
-                        AccountId,
-                        u128,
-                        u128,
-                    ),
-                    #[codec(index = 3u8)]
-                    AccountBalanceBurned(
-                        polymesh_primitives::identity_id::IdentityId,
-                        AccountId,
-                        u128,
-                    ),
-                    #[codec(index = 4u8)]
-                    Reserved(AccountId, u128),
-                    #[codec(index = 5u8)]
-                    Unreserved(AccountId, u128),
-                    #[codec(index = 6u8)]
-                    ReserveRepatriated(
-                        AccountId,
-                        AccountId,
-                        u128,
-                        frame_support::traits::BalanceStatus,
-                    ),
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum Reasons {
-                    #[codec(index = 0u8)]
-                    Fee,
-                    #[codec(index = 1u8)]
-                    Misc,
-                    #[codec(index = 2u8)]
-                    All,
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct AccountData {
-                    pub free: u128,
-                    pub reserved: u128,
-                    pub misc_frozen: u128,
-                    pub fee_frozen: u128,
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct Memo(pub [u8; 32usize]);
-            }
-            pub mod checkpoint {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum Event {
-                    #[codec(index = 0u8)]
-                    CheckpointCreated(
-                        Option<
-                            polymesh_primitives::event_only::EventOnly<
-                                polymesh_primitives::identity_id::IdentityId,
-                            >,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::calendar::CheckpointId,
-                        u128,
-                        u64,
-                    ),
-                    #[codec(index = 1u8)]
-                    MaximumSchedulesComplexityChanged(
-                        polymesh_primitives::identity_id::IdentityId,
-                        u64,
-                    ),
-                    #[codec(index = 2u8)]
-                    ScheduleCreated(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_common_utilities::traits::checkpoint::StoredSchedule,
-                    ),
-                    #[codec(index = 3u8)]
-                    ScheduleRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_common_utilities::traits::checkpoint::StoredSchedule,
-                    ),
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct ScheduleId(pub u64);
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct StoredSchedule {
-                    pub schedule: polymesh_primitives::calendar::CheckpointSchedule,
-                    pub id: polymesh_common_utilities::traits::checkpoint::ScheduleId,
-                    pub at: u64,
-                    pub remaining: u32,
-                }
-            }
-            pub mod identity {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum RawEvent<AccountId, Moment> {
-                    #[codec(index = 0u8)]
-                    DidCreated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        AccountId,
-                        Vec<polymesh_primitives::secondary_key::SecondaryKey<AccountId>>,
-                    ),
-                    #[codec(index = 1u8)]
-                    SecondaryKeysAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        Vec<polymesh_primitives::secondary_key::SecondaryKey<AccountId>>,
-                    ),
-                    #[codec(index = 2u8)]
-                    SecondaryKeysRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        Vec<AccountId>,
-                    ),
-                    #[codec(index = 3u8)]
-                    SecondaryKeyLeftIdentity(
-                        polymesh_primitives::identity_id::IdentityId,
-                        AccountId,
-                    ),
-                    #[codec(index = 4u8)]
-                    SecondaryKeyPermissionsUpdated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        AccountId,
-                        polymesh_primitives::secondary_key::Permissions,
-                        polymesh_primitives::secondary_key::Permissions,
-                    ),
-                    #[codec(index = 5u8)]
-                    PrimaryKeyUpdated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        AccountId,
-                        AccountId,
-                    ),
-                    #[codec(index = 6u8)]
-                    ClaimAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_claim::IdentityClaim,
-                    ),
-                    #[codec(index = 7u8)]
-                    ClaimRevoked(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_claim::IdentityClaim,
-                    ),
-                    #[codec(index = 8u8)]
-                    AssetDidRegistered(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                    ),
-                    #[codec(index = 9u8)]
-                    AuthorizationAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        Option<AccountId>,
-                        Moment,
-                        polymesh_primitives::authorization::AuthorizationData<AccountId>,
-                        Option<Moment>,
-                    ),
-                    #[codec(index = 10u8)]
-                    AuthorizationRevoked(
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        Option<AccountId>,
-                        Moment,
-                    ),
-                    #[codec(index = 11u8)]
-                    AuthorizationRejected(
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        Option<AccountId>,
-                        Moment,
-                    ),
-                    #[codec(index = 12u8)]
-                    AuthorizationConsumed(
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        Option<AccountId>,
-                        Moment,
-                    ),
-                    #[codec(index = 13u8)]
-                    AuthorizationRetryLimitReached(
-                        Option<polymesh_primitives::identity_id::IdentityId>,
-                        Option<AccountId>,
-                        Moment,
-                    ),
-                    #[codec(index = 14u8)]
-                    CddRequirementForPrimaryKeyUpdated(bool),
-                    #[codec(index = 15u8)]
-                    CddClaimsInvalidated(polymesh_primitives::identity_id::IdentityId, Moment),
-                    #[codec(index = 16u8)]
-                    SecondaryKeysFrozen(polymesh_primitives::identity_id::IdentityId),
-                    #[codec(index = 17u8)]
-                    SecondaryKeysUnfrozen(polymesh_primitives::identity_id::IdentityId),
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct SecondaryKeyWithAuth<AccountId> {
-                    pub secondary_key: polymesh_primitives::secondary_key::SecondaryKey<AccountId>,
-                    pub auth_signature: primitive_types::H512,
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct SecondaryKeyWithAuthV1<AccountId> {
-                    pub secondary_key:
-                        polymesh_primitives::secondary_key::v1::SecondaryKey<AccountId>,
-                    pub auth_signature: primitive_types::H512,
-                }
-            }
-            pub mod group {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum RawEvent<AccountId, Event, I> {
-                    #[codec(index = 0u8)]
-                    MemberAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 1u8)]
-                    MemberRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 2u8)]
-                    MemberRevoked(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 3u8)]
-                    MembersSwapped(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 4u8)]
-                    MembersReset(
-                        polymesh_primitives::identity_id::IdentityId,
-                        Vec<polymesh_primitives::identity_id::IdentityId>,
-                    ),
-                    #[codec(index = 5u8)]
-                    ActiveLimitChanged(polymesh_primitives::identity_id::IdentityId, u32, u32),
-                    #[codec(index = 6u8)]
-                    Dummy,
-                    PhantomDataVariant(core::marker::PhantomData<(AccountId, Event, I)>),
-                }
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub struct InactiveMember<Moment> {
-                    pub id: polymesh_primitives::identity_id::IdentityId,
-                    pub deactivated_at: Moment,
-                    pub expiry: Option<Moment>,
-                }
-            }
-            pub mod base {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum Event {
-                    #[codec(index = 0u8)]
-                    UnexpectedError(Option<sp_runtime::DispatchError>),
-                }
-            }
-            pub mod external_agents {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum Event {
-                    #[codec(index = 0u8)]
-                    GroupCreated(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::agent::AGId,
-                        polymesh_primitives::subset::SubsetRestriction<
-                            polymesh_primitives::secondary_key::PalletPermissions,
-                        >,
-                    ),
-                    #[codec(index = 1u8)]
-                    GroupPermissionsUpdated(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::agent::AGId,
-                        polymesh_primitives::subset::SubsetRestriction<
-                            polymesh_primitives::secondary_key::PalletPermissions,
-                        >,
-                    ),
-                    #[codec(index = 2u8)]
-                    AgentAdded(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::agent::AgentGroup,
-                    ),
-                    #[codec(index = 3u8)]
-                    AgentRemoved(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 4u8)]
-                    GroupChanged(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::agent::AgentGroup,
-                    ),
-                }
-            }
-            pub mod portfolio {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum Event {
-                    #[codec(index = 0u8)]
-                    PortfolioCreated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::PortfolioNumber,
-                        polymesh_primitives::identity_id::PortfolioName,
-                    ),
-                    #[codec(index = 1u8)]
-                    PortfolioDeleted(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::PortfolioNumber,
-                    ),
-                    #[codec(index = 2u8)]
-                    MovedBetweenPortfolios(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::PortfolioId,
-                        polymesh_primitives::identity_id::PortfolioId,
-                        polymesh_primitives::ticker::Ticker,
-                        u128,
-                        Option<polymesh_common_utilities::traits::balances::Memo>,
-                    ),
-                    #[codec(index = 3u8)]
-                    PortfolioRenamed(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::PortfolioNumber,
-                        polymesh_primitives::identity_id::PortfolioName,
-                    ),
-                    #[codec(index = 4u8)]
-                    UserPortfolios(
-                        polymesh_primitives::identity_id::IdentityId,
-                        Vec<(
-                            polymesh_primitives::identity_id::PortfolioNumber,
-                            polymesh_primitives::identity_id::PortfolioName,
-                        )>,
-                    ),
-                    #[codec(index = 5u8)]
-                    PortfolioCustodianChanged(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::PortfolioId,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                }
-            }
-            pub mod relayer {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum RawEvent<AccountId> {
-                    #[codec(index = 0u8)]
-                    AuthorizedPayingKey(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        AccountId,
-                        AccountId,
-                        u128,
-                        u64,
-                    ),
-                    #[codec(index = 1u8)]
-                    AcceptedPayingKey(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        AccountId,
-                        AccountId,
-                    ),
-                    #[codec(index = 2u8)]
-                    RemovedPayingKey(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        AccountId,
-                        AccountId,
-                    ),
-                    #[codec(index = 3u8)]
-                    UpdatedPolyxLimit(
-                        polymesh_primitives::event_only::EventOnly<
-                            polymesh_primitives::identity_id::IdentityId,
-                        >,
-                        AccountId,
-                        AccountId,
-                        u128,
-                        u128,
-                    ),
-                }
-            }
-            pub mod asset {
-                use super::*;
-                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-                pub enum RawEvent<Moment, AccountId> {
-                    #[codec(index = 0u8)]
-                    Transfer(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::PortfolioId,
-                        polymesh_primitives::identity_id::PortfolioId,
-                        u128,
-                    ),
-                    #[codec(index = 1u8)]
-                    Issued(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                        u128,
-                        polymesh_primitives::asset::FundingRoundName,
-                        u128,
-                    ),
-                    #[codec(index = 2u8)]
-                    Redeemed(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                        u128,
-                    ),
-                    #[codec(index = 3u8)]
-                    AssetCreated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        bool,
-                        polymesh_primitives::asset::AssetType,
-                        polymesh_primitives::identity_id::IdentityId,
-                        bool,
-                    ),
-                    #[codec(index = 4u8)]
-                    IdentifiersUpdated(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        Vec<polymesh_primitives::asset_identifier::AssetIdentifier>,
-                    ),
-                    #[codec(index = 5u8)]
-                    DivisibilityChanged(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        bool,
-                    ),
-                    #[codec(index = 6u8)]
-                    TransferWithData(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::identity_id::IdentityId,
-                        u128,
-                        Vec<u8>,
-                    ),
-                    #[codec(index = 7u8)]
-                    IsIssuable(polymesh_primitives::ticker::Ticker, bool),
-                    #[codec(index = 8u8)]
-                    TickerRegistered(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        Option<Moment>,
-                    ),
-                    #[codec(index = 9u8)]
-                    TickerTransferred(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 10u8)]
-                    AssetOwnershipTransferred(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::IdentityId,
-                    ),
-                    #[codec(index = 11u8)]
-                    AssetFrozen(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                    ),
-                    #[codec(index = 12u8)]
-                    AssetUnfrozen(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                    ),
-                    #[codec(index = 13u8)]
-                    AssetRenamed(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::asset::AssetName,
-                    ),
-                    #[codec(index = 14u8)]
-                    FundingRoundSet(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::asset::FundingRoundName,
-                    ),
-                    #[codec(index = 15u8)]
-                    DocumentAdded(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::document::DocumentId,
-                        polymesh_primitives::document::Document,
-                    ),
-                    #[codec(index = 16u8)]
-                    DocumentRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::document::DocumentId,
-                    ),
-                    #[codec(index = 17u8)]
-                    ExtensionRemoved(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        AccountId,
-                    ),
-                    #[codec(index = 18u8)]
-                    ClassicTickerClaimed(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::ethereum::EthereumAddress,
-                    ),
-                    #[codec(index = 19u8)]
-                    ControllerTransfer(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::identity_id::PortfolioId,
-                        u128,
-                    ),
-                    #[codec(index = 20u8)]
-                    CustomAssetTypeExists(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::asset::CustomAssetTypeId,
-                        Vec<u8>,
-                    ),
-                    #[codec(index = 21u8)]
-                    CustomAssetTypeRegistered(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::asset::CustomAssetTypeId,
-                        Vec<u8>,
-                    ),
-                    #[codec(index = 22u8)]
-                    SetAssetMetadataValue(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::asset_metadata::AssetMetadataValue,
-                        Option<
-                            polymesh_primitives::asset_metadata::AssetMetadataValueDetail<Moment>,
-                        >,
-                    ),
-                    #[codec(index = 23u8)]
-                    SetAssetMetadataValueDetails(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::asset_metadata::AssetMetadataValueDetail<Moment>,
-                    ),
-                    #[codec(index = 24u8)]
-                    RegisterAssetMetadataLocalType(
-                        polymesh_primitives::identity_id::IdentityId,
-                        polymesh_primitives::ticker::Ticker,
-                        polymesh_primitives::asset_metadata::AssetMetadataName,
-                        polymesh_primitives::asset_metadata::AssetMetadataLocalKey,
-                        polymesh_primitives::asset_metadata::AssetMetadataSpec,
-                    ),
-                    #[codec(index = 25u8)]
-                    RegisterAssetMetadataGlobalType(
-                        polymesh_primitives::asset_metadata::AssetMetadataName,
-                        polymesh_primitives::asset_metadata::AssetMetadataGlobalKey,
-                        polymesh_primitives::asset_metadata::AssetMetadataSpec,
-                    ),
-                }
-            }
-        }
-        pub mod protocol_fee {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum ProtocolOp {
-                #[codec(index = 0u8)]
-                AssetRegisterTicker,
-                #[codec(index = 1u8)]
-                AssetIssue,
-                #[codec(index = 2u8)]
-                AssetAddDocuments,
-                #[codec(index = 3u8)]
-                AssetCreateAsset,
-                #[codec(index = 4u8)]
-                CheckpointCreateSchedule,
-                #[codec(index = 5u8)]
-                ComplianceManagerAddComplianceRequirement,
-                #[codec(index = 6u8)]
-                IdentityCddRegisterDid,
-                #[codec(index = 7u8)]
-                IdentityAddClaim,
-                #[codec(index = 8u8)]
-                IdentityAddSecondaryKeysWithAuthorization,
-                #[codec(index = 9u8)]
-                PipsPropose,
-                #[codec(index = 10u8)]
-                ContractsPutCode,
-                #[codec(index = 11u8)]
-                CorporateBallotAttachBallot,
-                #[codec(index = 12u8)]
-                CapitalDistributionDistribute,
-            }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum MaybeBlock<BlockNumber> {
-            #[codec(index = 0u8)]
-            Some(BlockNumber),
-            #[codec(index = 1u8)]
-            None,
         }
     }
     pub mod pallet_corporate_actions {
         use super::*;
         pub mod distribution {
             use super::*;
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Distribution {
+                pub from: polymesh_primitives::identity_id::PortfolioId,
+                pub currency: polymesh_primitives::ticker::Ticker,
+                pub per_share: u128,
+                pub amount: u128,
+                pub remaining: u128,
+                pub reclaimed: bool,
+                pub payment_at: u64,
+                pub expires_at: Option<u64>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Version(pub u8);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                CANotBenefit,
+                #[codec(index = 1u8)]
+                AlreadyExists,
+                #[codec(index = 2u8)]
+                ExpiryBeforePayment,
+                #[codec(index = 3u8)]
+                HolderAlreadyPaid,
+                #[codec(index = 4u8)]
+                NoSuchDistribution,
+                #[codec(index = 5u8)]
+                CannotClaimBeforeStart,
+                #[codec(index = 6u8)]
+                CannotClaimAfterExpiry,
+                #[codec(index = 7u8)]
+                BalancePerShareProductOverflowed,
+                #[codec(index = 8u8)]
+                NotDistributionCreator,
+                #[codec(index = 9u8)]
+                AlreadyReclaimed,
+                #[codec(index = 10u8)]
+                NotExpired,
+                #[codec(index = 11u8)]
+                DistributionStarted,
+                #[codec(index = 12u8)]
+                InsufficientRemainingAmount,
+                #[codec(index = 13u8)]
+                DistributionAmountIsZero,
+                #[codec(index = 14u8)]
+                DistributionPerShareIsZero,
+            }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Event {
@@ -6614,66 +6790,62 @@ pub mod types {
                     ca_id: pallet_corporate_actions::CAId,
                 },
             }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Version(pub u8);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Distribution {
-                pub from: polymesh_primitives::identity_id::PortfolioId,
-                pub currency: polymesh_primitives::ticker::Ticker,
-                pub per_share: u128,
-                pub amount: u128,
-                pub remaining: u128,
-                pub reclaimed: bool,
-                pub payment_at: u64,
-                pub expires_at: Option<u64>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                CANotBenefit,
-                #[codec(index = 1u8)]
-                AlreadyExists,
-                #[codec(index = 2u8)]
-                ExpiryBeforePayment,
-                #[codec(index = 3u8)]
-                HolderAlreadyPaid,
-                #[codec(index = 4u8)]
-                NoSuchDistribution,
-                #[codec(index = 5u8)]
-                CannotClaimBeforeStart,
-                #[codec(index = 6u8)]
-                CannotClaimAfterExpiry,
-                #[codec(index = 7u8)]
-                BalancePerShareProductOverflowed,
-                #[codec(index = 8u8)]
-                NotDistributionCreator,
-                #[codec(index = 9u8)]
-                AlreadyReclaimed,
-                #[codec(index = 10u8)]
-                NotExpired,
-                #[codec(index = 11u8)]
-                DistributionStarted,
-                #[codec(index = 12u8)]
-                InsufficientRemainingAmount,
-                #[codec(index = 13u8)]
-                DistributionAmountIsZero,
-                #[codec(index = 14u8)]
-                DistributionPerShareIsZero,
-            }
         }
         pub mod ballot {
             use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Error {
+                #[codec(index = 0u8)]
+                CANotNotice,
+                #[codec(index = 1u8)]
+                AlreadyExists,
+                #[codec(index = 2u8)]
+                NoSuchBallot,
+                #[codec(index = 3u8)]
+                StartAfterEnd,
+                #[codec(index = 4u8)]
+                NowAfterEnd,
+                #[codec(index = 5u8)]
+                NumberOfChoicesOverflow,
+                #[codec(index = 6u8)]
+                VotingAlreadyStarted,
+                #[codec(index = 7u8)]
+                VotingNotStarted,
+                #[codec(index = 8u8)]
+                VotingAlreadyEnded,
+                #[codec(index = 9u8)]
+                WrongVoteCount,
+                #[codec(index = 10u8)]
+                InsufficientVotes,
+                #[codec(index = 11u8)]
+                NoSuchRCVFallback,
+                #[codec(index = 12u8)]
+                RCVSelfCycle,
+                #[codec(index = 13u8)]
+                RCVNotAllowed,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Motion {
+                pub title: pallet_corporate_actions::ballot::MotionTitle,
+                pub info_link: pallet_corporate_actions::ballot::MotionInfoLink,
+                pub choices: Vec<pallet_corporate_actions::ballot::ChoiceTitle>,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct MotionTitle(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct BallotTitle(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub struct ChoiceTitle(pub Vec<u8>);
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct BallotMeta {
-                pub title: pallet_corporate_actions::ballot::BallotTitle,
-                pub motions: Vec<pallet_corporate_actions::ballot::Motion>,
+            pub struct BallotVote {
+                pub power: u128,
+                pub fallback: Option<u16>,
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -6720,9 +6892,6 @@ pub mod types {
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct MotionInfoLink(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Call {
                 #[codec(index = 0u8)]
                 attach_ballot {
@@ -6758,82 +6927,84 @@ pub mod types {
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                CANotNotice,
-                #[codec(index = 1u8)]
-                AlreadyExists,
-                #[codec(index = 2u8)]
-                NoSuchBallot,
-                #[codec(index = 3u8)]
-                StartAfterEnd,
-                #[codec(index = 4u8)]
-                NowAfterEnd,
-                #[codec(index = 5u8)]
-                NumberOfChoicesOverflow,
-                #[codec(index = 6u8)]
-                VotingAlreadyStarted,
-                #[codec(index = 7u8)]
-                VotingNotStarted,
-                #[codec(index = 8u8)]
-                VotingAlreadyEnded,
-                #[codec(index = 9u8)]
-                WrongVoteCount,
-                #[codec(index = 10u8)]
-                InsufficientVotes,
-                #[codec(index = 11u8)]
-                NoSuchRCVFallback,
-                #[codec(index = 12u8)]
-                RCVSelfCycle,
-                #[codec(index = 13u8)]
-                RCVNotAllowed,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Motion {
-                pub title: pallet_corporate_actions::ballot::MotionTitle,
-                pub info_link: pallet_corporate_actions::ballot::MotionInfoLink,
-                pub choices: Vec<pallet_corporate_actions::ballot::ChoiceTitle>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct BallotTitle(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct BallotVote {
-                pub power: u128,
-                pub fallback: Option<u16>,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct MotionTitle(pub Vec<u8>);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub struct BallotTimeRange {
                 pub start: u64,
                 pub end: u64,
             }
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct InitiateCorporateActionArgs {
-            pub ticker: polymesh_primitives::ticker::Ticker,
-            pub kind: pallet_corporate_actions::CAKind,
-            pub decl_date: u64,
-            pub record_date: Option<pallet_corporate_actions::RecordDateSpec>,
-            pub details: pallet_corporate_actions::CADetails,
-            pub targets: Option<pallet_corporate_actions::TargetIdentities>,
-            pub default_withholding_tax: Option<sp_arithmetic::per_things::Permill>,
-            pub withholding_tax: Option<
-                Vec<(
-                    polymesh_primitives::identity_id::IdentityId,
-                    sp_arithmetic::per_things::Permill,
-                )>,
-            >,
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct MotionInfoLink(pub Vec<u8>);
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct BallotMeta {
+                pub title: pallet_corporate_actions::ballot::BallotTitle,
+                pub motions: Vec<pallet_corporate_actions::ballot::Motion>,
+            }
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct CADetails(pub Vec<u8>);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Event {
+            #[codec(index = 0u8)]
+            MaxDetailsLengthChanged(polymesh_primitives::identity_id::IdentityId, u32),
+            #[codec(index = 1u8)]
+            DefaultTargetIdentitiesChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                pallet_corporate_actions::TargetIdentities,
+            ),
+            #[codec(index = 2u8)]
+            DefaultWithholdingTaxChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                sp_arithmetic::per_things::Permill,
+            ),
+            #[codec(index = 3u8)]
+            DidWithholdingTaxChanged(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                polymesh_primitives::identity_id::IdentityId,
+                Option<sp_arithmetic::per_things::Permill>,
+            ),
+            #[codec(index = 4u8)]
+            CAATransferred(
+                polymesh_primitives::identity_id::IdentityId,
+                polymesh_primitives::ticker::Ticker,
+                polymesh_primitives::identity_id::IdentityId,
+            ),
+            #[codec(index = 5u8)]
+            CAInitiated(
+                polymesh_primitives::event_only::EventOnly<
+                    polymesh_primitives::identity_id::IdentityId,
+                >,
+                pallet_corporate_actions::CAId,
+                pallet_corporate_actions::CorporateAction,
+                pallet_corporate_actions::CADetails,
+            ),
+            #[codec(index = 6u8)]
+            CALinkedToDoc(
+                polymesh_primitives::identity_id::IdentityId,
+                pallet_corporate_actions::CAId,
+                Vec<polymesh_primitives::document::DocumentId>,
+            ),
+            #[codec(index = 7u8)]
+            CARemoved(
+                polymesh_primitives::event_only::EventOnly<
+                    polymesh_primitives::identity_id::IdentityId,
+                >,
+                pallet_corporate_actions::CAId,
+            ),
+            #[codec(index = 8u8)]
+            RecordDateChanged(
+                polymesh_primitives::event_only::EventOnly<
+                    polymesh_primitives::identity_id::IdentityId,
+                >,
+                pallet_corporate_actions::CAId,
+                pallet_corporate_actions::CorporateAction,
+            ),
+        }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum Call {
@@ -6898,21 +7069,49 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum TargetTreatment {
+        pub enum CACheckpoint {
             #[codec(index = 0u8)]
-            Include,
+            Scheduled(
+                polymesh_common_utilities::traits::checkpoint::ScheduleId,
+                u64,
+            ),
             #[codec(index = 1u8)]
-            Exclude,
+            Existing(polymesh_primitives::calendar::CheckpointId),
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RecordDateSpec {
-            #[codec(index = 0u8)]
-            Scheduled(u64),
-            #[codec(index = 1u8)]
-            ExistingSchedule(polymesh_common_utilities::traits::checkpoint::ScheduleId),
-            #[codec(index = 2u8)]
-            Existing(polymesh_primitives::calendar::CheckpointId),
+        pub struct Version(pub u8);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct RecordDate {
+            pub date: u64,
+            pub checkpoint: pallet_corporate_actions::CACheckpoint,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct InitiateCorporateActionArgs {
+            pub ticker: polymesh_primitives::ticker::Ticker,
+            pub kind: pallet_corporate_actions::CAKind,
+            pub decl_date: u64,
+            pub record_date: Option<pallet_corporate_actions::RecordDateSpec>,
+            pub details: pallet_corporate_actions::CADetails,
+            pub targets: Option<pallet_corporate_actions::TargetIdentities>,
+            pub default_withholding_tax: Option<sp_arithmetic::per_things::Permill>,
+            pub withholding_tax: Option<
+                Vec<(
+                    polymesh_primitives::identity_id::IdentityId,
+                    sp_arithmetic::per_things::Permill,
+                )>,
+            >,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct LocalCAId(pub u32);
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct TargetIdentities {
+            pub identities: Vec<polymesh_primitives::identity_id::IdentityId>,
+            pub treatment: pallet_corporate_actions::TargetTreatment,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -6944,21 +7143,6 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct TargetIdentities {
-            pub identities: Vec<polymesh_primitives::identity_id::IdentityId>,
-            pub treatment: pallet_corporate_actions::TargetTreatment,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct LocalCAId(pub u32);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct CAId {
-            pub ticker: polymesh_primitives::ticker::Ticker,
-            pub local_id: pallet_corporate_actions::LocalCAId,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum CAKind {
             #[codec(index = 0u8)]
             PredictableBenefit,
@@ -6970,12 +7154,6 @@ pub mod types {
             Reorganization,
             #[codec(index = 4u8)]
             Other,
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct RecordDate {
-            pub date: u64,
-            pub checkpoint: pallet_corporate_actions::CACheckpoint,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -6992,273 +7170,144 @@ pub mod types {
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum CACheckpoint {
+        pub struct CAId {
+            pub ticker: polymesh_primitives::ticker::Ticker,
+            pub local_id: pallet_corporate_actions::LocalCAId,
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RecordDateSpec {
             #[codec(index = 0u8)]
-            Scheduled(
-                polymesh_common_utilities::traits::checkpoint::ScheduleId,
-                u64,
-            ),
+            Scheduled(u64),
             #[codec(index = 1u8)]
+            ExistingSchedule(polymesh_common_utilities::traits::checkpoint::ScheduleId),
+            #[codec(index = 2u8)]
             Existing(polymesh_primitives::calendar::CheckpointId),
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Event {
+        pub enum TargetTreatment {
             #[codec(index = 0u8)]
-            MaxDetailsLengthChanged(polymesh_primitives::identity_id::IdentityId, u32),
+            Include,
             #[codec(index = 1u8)]
-            DefaultTargetIdentitiesChanged(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                pallet_corporate_actions::TargetIdentities,
-            ),
+            Exclude,
+        }
+    }
+    pub mod pallet_statistics {
+        use super::*;
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Call {
+            #[codec(index = 0u8)]
+            set_active_asset_stats {
+                asset: polymesh_primitives::statistics::AssetScope,
+                stat_types: Vec<polymesh_primitives::statistics::StatType>,
+            },
+            #[codec(index = 1u8)]
+            batch_update_asset_stats {
+                asset: polymesh_primitives::statistics::AssetScope,
+                stat_type: polymesh_primitives::statistics::StatType,
+                values: Vec<polymesh_primitives::statistics::StatUpdate>,
+            },
             #[codec(index = 2u8)]
-            DefaultWithholdingTaxChanged(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                sp_arithmetic::per_things::Permill,
-            ),
+            set_asset_transfer_compliance {
+                asset: polymesh_primitives::statistics::AssetScope,
+                transfer_conditions:
+                    Vec<polymesh_primitives::transfer_compliance::TransferCondition>,
+            },
             #[codec(index = 3u8)]
-            DidWithholdingTaxChanged(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                polymesh_primitives::identity_id::IdentityId,
-                Option<sp_arithmetic::per_things::Permill>,
-            ),
+            set_entities_exempt {
+                is_exempt: bool,
+                exempt_key: polymesh_primitives::transfer_compliance::TransferConditionExemptKey,
+                entities: Vec<polymesh_primitives::identity_id::IdentityId>,
+            },
+        }
+        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Error {
+            #[codec(index = 0u8)]
+            InvalidTransfer,
+            #[codec(index = 1u8)]
+            StatTypeMissing,
+            #[codec(index = 2u8)]
+            StatTypeNeededByTransferCondition,
+            #[codec(index = 3u8)]
+            CannotRemoveStatTypeInUse,
             #[codec(index = 4u8)]
-            CAATransferred(
-                polymesh_primitives::identity_id::IdentityId,
-                polymesh_primitives::ticker::Ticker,
-                polymesh_primitives::identity_id::IdentityId,
-            ),
+            StatTypeLimitReached,
             #[codec(index = 5u8)]
-            CAInitiated(
-                polymesh_primitives::event_only::EventOnly<
-                    polymesh_primitives::identity_id::IdentityId,
-                >,
-                pallet_corporate_actions::CAId,
-                pallet_corporate_actions::CorporateAction,
-                pallet_corporate_actions::CADetails,
-            ),
-            #[codec(index = 6u8)]
-            CALinkedToDoc(
-                polymesh_primitives::identity_id::IdentityId,
-                pallet_corporate_actions::CAId,
-                Vec<polymesh_primitives::document::DocumentId>,
-            ),
-            #[codec(index = 7u8)]
-            CARemoved(
-                polymesh_primitives::event_only::EventOnly<
-                    polymesh_primitives::identity_id::IdentityId,
-                >,
-                pallet_corporate_actions::CAId,
-            ),
-            #[codec(index = 8u8)]
-            RecordDateChanged(
-                polymesh_primitives::event_only::EventOnly<
-                    polymesh_primitives::identity_id::IdentityId,
-                >,
-                pallet_corporate_actions::CAId,
-                pallet_corporate_actions::CorporateAction,
-            ),
+            TransferConditionLimitReached,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct Version(pub u8);
     }
-    pub mod pallet_preimage {
+    pub mod pallet_im_online {
         use super::*;
-        pub mod pallet {
+        pub mod sr25519 {
             use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                TooLarge,
-                #[codec(index = 1u8)]
-                AlreadyNoted,
-                #[codec(index = 2u8)]
-                NotAuthorized,
-                #[codec(index = 3u8)]
-                NotNoted,
-                #[codec(index = 4u8)]
-                Requested,
-                #[codec(index = 5u8)]
-                NotRequested,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                note_preimage { bytes: Vec<u8> },
-                #[codec(index = 1u8)]
-                unnote_preimage { hash: primitive_types::H256 },
-                #[codec(index = 2u8)]
-                request_preimage { hash: primitive_types::H256 },
-                #[codec(index = 3u8)]
-                unrequest_preimage { hash: primitive_types::H256 },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Event {
-                #[codec(index = 0u8)]
-                Noted { hash: primitive_types::H256 },
-                #[codec(index = 1u8)]
-                Requested { hash: primitive_types::H256 },
-                #[codec(index = 2u8)]
-                Cleared { hash: primitive_types::H256 },
+            pub mod app_sr25519 {
+                use super::*;
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct Public(pub sp_core::sr25519::Public);
+                #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct Signature(pub sp_core::sr25519::Signature);
             }
         }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum RequestStatus<AccountId, Balance> {
-            #[codec(index = 0u8)]
-            Unrequested(Option<(AccountId, Balance)>),
-            #[codec(index = 1u8)]
-            Requested(u32),
-        }
-    }
-    pub mod pallet_session {
-        use super::*;
         pub mod pallet {
             use super::*;
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Event {
                 #[codec(index = 0u8)]
-                NewSession { session_index: u32 },
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Error {
-                #[codec(index = 0u8)]
-                InvalidProof,
+                HeartbeatReceived {
+                    authority_id: pallet_im_online::sr25519::app_sr25519::Public,
+                },
                 #[codec(index = 1u8)]
-                NoAssociatedValidatorId,
+                AllGood,
                 #[codec(index = 2u8)]
-                DuplicatedKey,
-                #[codec(index = 3u8)]
-                NoKeys,
-                #[codec(index = 4u8)]
-                NoAccount,
-            }
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                set_keys {
-                    keys: polymesh_runtime_develop::runtime::SessionKeys,
-                    proof: Vec<u8>,
-                },
-                #[codec(index = 1u8)]
-                purge_keys,
-            }
-        }
-    }
-    pub mod primitive_types {
-        use super::*;
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct H256(pub [u8; 32usize]);
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct H512(pub [u8; 64usize]);
-    }
-    pub mod sp_finality_grandpa {
-        use super::*;
-        pub mod app {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Public(pub sp_core::ed25519::Public);
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub struct Signature(pub sp_core::ed25519::Signature);
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Equivocation<H, N> {
-            #[codec(index = 0u8)]
-            Prevote(
-                finality_grandpa::Equivocation<
-                    sp_finality_grandpa::app::Public,
-                    finality_grandpa::Prevote<H, N>,
-                    sp_finality_grandpa::app::Signature,
-                >,
-            ),
-            #[codec(index = 1u8)]
-            Precommit(
-                finality_grandpa::Equivocation<
-                    sp_finality_grandpa::app::Public,
-                    finality_grandpa::Precommit<H, N>,
-                    sp_finality_grandpa::app::Signature,
-                >,
-            ),
-        }
-        #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct EquivocationProof<H, N> {
-            pub set_id: u64,
-            pub equivocation: sp_finality_grandpa::Equivocation<H, N>,
-        }
-    }
-    pub mod pallet_babe {
-        use super::*;
-        pub mod pallet {
-            use super::*;
-            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum Call {
-                #[codec(index = 0u8)]
-                report_equivocation {
-                    equivocation_proof: ::std::boxed::Box<
-                        sp_consensus_slots::EquivocationProof<
-                            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                            sp_consensus_babe::app::Public,
-                        >,
-                    >,
-                    key_owner_proof: sp_session::MembershipProof,
-                },
-                #[codec(index = 1u8)]
-                report_equivocation_unsigned {
-                    equivocation_proof: ::std::boxed::Box<
-                        sp_consensus_slots::EquivocationProof<
-                            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                            sp_consensus_babe::app::Public,
-                        >,
-                    >,
-                    key_owner_proof: sp_session::MembershipProof,
-                },
-                #[codec(index = 2u8)]
-                plan_config_change {
-                    config: sp_consensus_babe::digests::NextConfigDescriptor,
+                SomeOffline {
+                    offline: Vec<(
+                        sp_core::crypto::AccountId32,
+                        pallet_staking::Exposure<sp_core::crypto::AccountId32, u128>,
+                    )>,
                 },
             }
             #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum Error {
                 #[codec(index = 0u8)]
-                InvalidEquivocationProof,
+                InvalidKey,
                 #[codec(index = 1u8)]
-                InvalidKeyOwnershipProof,
-                #[codec(index = 2u8)]
-                DuplicateOffenceReport,
+                DuplicatedHeartbeat,
+            }
+            #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum Call {
+                #[codec(index = 0u8)]
+                heartbeat {
+                    heartbeat: pallet_im_online::Heartbeat<u32>,
+                    signature: pallet_im_online::sr25519::app_sr25519::Signature,
+                },
             }
         }
-    }
-    pub mod pallet_base {
-        use super::*;
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Error {
-            #[codec(index = 0u8)]
-            TooLong,
-            #[codec(index = 1u8)]
-            CounterOverflow,
+        pub struct BoundedOpaqueNetworkState {
+            pub peer_id: Vec<u8>,
+            pub external_addresses: Vec<Vec<u8>>,
         }
         #[derive(Clone, Debug, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub enum Call {}
+        pub struct Heartbeat<BlockNumber> {
+            pub block_number: BlockNumber,
+            pub network_state: sp_core::offchain::OpaqueNetworkState,
+            pub session_index: BlockNumber,
+            pub authority_index: BlockNumber,
+            pub validators_len: BlockNumber,
+        }
     }
 }
 #[allow(dead_code, unused_imports, non_camel_case_types)]
@@ -7386,10 +7435,7 @@ pub mod api {
         #[derive(Clone, Debug, Default)]
         pub struct CallApi;
         impl CallApi {
-            pub fn set(
-                &self,
-                now: ::codec::Compact<u64>,
-            ) -> polymesh_runtime_develop::runtime::Call {
+            pub fn set(&self, now: u64) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Timestamp(
                     types::pallet_timestamp::pallet::Call::set { now },
                 )
@@ -7460,7 +7506,7 @@ pub mod api {
             pub fn transfer(
                 &self,
                 dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
+                value: u128,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Balances(
                     types::pallet_balances::Call::transfer { dest, value },
@@ -7469,7 +7515,7 @@ pub mod api {
             pub fn transfer_with_memo(
                 &self,
                 dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
+                value: u128,
                 memo: Option<polymesh_common_utilities::traits::balances::Memo>,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Balances(
@@ -7478,7 +7524,7 @@ pub mod api {
             }
             pub fn deposit_block_reward_reserve_balance(
                 &self,
-                value: ::codec::Compact<u128>,
+                value: u128,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Balances(
                     types::pallet_balances::Call::deposit_block_reward_reserve_balance { value },
@@ -7487,8 +7533,8 @@ pub mod api {
             pub fn set_balance(
                 &self,
                 who: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                new_free: ::codec::Compact<u128>,
-                new_reserved: ::codec::Compact<u128>,
+                new_free: u128,
+                new_reserved: u128,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Balances(
                     types::pallet_balances::Call::set_balance {
@@ -7502,7 +7548,7 @@ pub mod api {
                 &self,
                 source: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
                 dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
+                value: u128,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Balances(
                     types::pallet_balances::Call::force_transfer {
@@ -8621,7 +8667,7 @@ pub mod api {
             pub fn bond(
                 &self,
                 controller: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
+                value: u128,
                 payee: pallet_staking::RewardDestination<sp_core::crypto::AccountId32>,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
@@ -8634,16 +8680,13 @@ pub mod api {
             }
             pub fn bond_extra(
                 &self,
-                max_additional: ::codec::Compact<u128>,
+                max_additional: u128,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
                     types::pallet_staking::Call::bond_extra { max_additional },
                 )
             }
-            pub fn unbond(
-                &self,
-                value: ::codec::Compact<u128>,
-            ) -> polymesh_runtime_develop::runtime::Call {
+            pub fn unbond(&self, value: u128) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
                     types::pallet_staking::Call::unbond { value },
                 )
@@ -8693,17 +8736,14 @@ pub mod api {
                     types::pallet_staking::Call::set_controller { controller },
                 )
             }
-            pub fn set_validator_count(
-                &self,
-                new: ::codec::Compact<u32>,
-            ) -> polymesh_runtime_develop::runtime::Call {
+            pub fn set_validator_count(&self, new: u32) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
                     types::pallet_staking::Call::set_validator_count { new },
                 )
             }
             pub fn increase_validator_count(
                 &self,
-                additional: ::codec::Compact<u32>,
+                additional: u32,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
                     types::pallet_staking::Call::increase_validator_count { additional },
@@ -8817,18 +8857,15 @@ pub mod api {
                     },
                 )
             }
-            pub fn rebond(
-                &self,
-                value: ::codec::Compact<u128>,
-            ) -> polymesh_runtime_develop::runtime::Call {
+            pub fn rebond(&self, value: u128) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
                     types::pallet_staking::Call::rebond { value },
                 )
             }
             pub fn set_history_depth(
                 &self,
-                new_history_depth: ::codec::Compact<u32>,
-                _era_items_deleted: ::codec::Compact<u32>,
+                new_history_depth: u32,
+                _era_items_deleted: u32,
             ) -> polymesh_runtime_develop::runtime::Call {
                 types::polymesh_runtime_develop::runtime::Call::Staking(
                     types::pallet_staking::Call::set_history_depth {
@@ -10785,8 +10822,8 @@ pub mod api {
             pub fn call(
                 &self,
                 dest: sp_runtime::MultiAddress<sp_core::crypto::AccountId32, u32>,
-                value: ::codec::Compact<u128>,
-                gas_limit: ::codec::Compact<u64>,
+                value: u128,
+                gas_limit: u64,
                 storage_deposit_limit: Option<::codec::Compact<u128>>,
                 data: Vec<u8>,
             ) -> polymesh_runtime_develop::runtime::Call {
@@ -10802,8 +10839,8 @@ pub mod api {
             }
             pub fn instantiate_with_code(
                 &self,
-                value: ::codec::Compact<u128>,
-                gas_limit: ::codec::Compact<u64>,
+                value: u128,
+                gas_limit: u64,
                 storage_deposit_limit: Option<::codec::Compact<u128>>,
                 code: Vec<u8>,
                 data: Vec<u8>,
@@ -10822,8 +10859,8 @@ pub mod api {
             }
             pub fn instantiate(
                 &self,
-                value: ::codec::Compact<u128>,
-                gas_limit: ::codec::Compact<u64>,
+                value: u128,
+                gas_limit: u64,
                 storage_deposit_limit: Option<::codec::Compact<u128>>,
                 code_hash: primitive_types::H256,
                 data: Vec<u8>,

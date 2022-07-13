@@ -207,12 +207,28 @@ mod v14 {
       }
     }
 
-    fn type_name(&self, id: u32) -> Option<TokenStream> {
-      let mut scope = TypeParameters::default();
-      self.type_name_scoped(id, &mut scope)
+    fn is_compact(&self, field: &Field<PortableForm>) -> bool {
+      if let Some(ty) = self.md.types.resolve(field.ty().id()) {
+        match ty.type_def() {
+          TypeDef::Compact(_) => true,
+          _ => false,
+        }
+      } else {
+        false
+      }
     }
 
-    fn type_name_scoped(&self, id: u32, scope: &mut TypeParameters) -> Option<TokenStream> {
+    fn type_name(&self, id: u32, compact_wrap: bool) -> Option<TokenStream> {
+      let mut scope = TypeParameters::default();
+      self.type_name_scoped(id, &mut scope, compact_wrap)
+    }
+
+    fn type_name_scoped(
+      &self,
+      id: u32,
+      scope: &mut TypeParameters,
+      compact_wrap: bool,
+    ) -> Option<TokenStream> {
       if let Some(scope_type) = scope.get_param(id) {
         return Some(scope_type);
       }
@@ -228,7 +244,7 @@ mod v14 {
       match ty.type_def() {
         TypeDef::Sequence(ty) => {
           return self
-            .type_name_scoped(ty.type_param().id(), scope)
+            .type_name_scoped(ty.type_param().id(), scope, true)
             .map(|elem_ty| {
               quote! { Vec<#elem_ty> }
             });
@@ -236,7 +252,7 @@ mod v14 {
         TypeDef::Array(ty) => {
           let len = ty.len() as usize;
           return self
-            .type_name_scoped(ty.type_param().id(), scope)
+            .type_name_scoped(ty.type_param().id(), scope, true)
             .map(|elem_ty| {
               quote! { [#elem_ty; #len] }
             });
@@ -245,7 +261,7 @@ mod v14 {
           let fields = ty
             .fields()
             .into_iter()
-            .filter_map(|field| self.type_name_scoped(field.id(), scope))
+            .filter_map(|field| self.type_name_scoped(field.id(), scope, true))
             .collect::<Vec<_>>();
           return Some(quote! { (#(#fields),*) });
         }
@@ -275,9 +291,13 @@ mod v14 {
         }
         TypeDef::Compact(ty) => {
           return self
-            .type_name_scoped(ty.type_param().id(), scope)
+            .type_name_scoped(ty.type_param().id(), scope, true)
             .map(|ty| {
-              quote! { ::codec::Compact<#ty> }
+              if compact_wrap {
+                quote! { ::codec::Compact<#ty> }
+              } else {
+                ty
+              }
             });
         }
         _ => {}
@@ -286,7 +306,11 @@ mod v14 {
       let type_params = ty
         .type_params()
         .iter()
-        .filter_map(|param| param.ty().map(|ty| self.type_name_scoped(ty.id(), scope)))
+        .filter_map(|param| {
+          param
+            .ty()
+            .map(|ty| self.type_name_scoped(ty.id(), scope, true))
+        })
         .collect::<Vec<_>>();
 
       if type_params.len() > 0 {
@@ -306,7 +330,7 @@ mod v14 {
       md: &Variant<PortableForm>,
     ) -> TokenStream {
       let mod_call_ident = format_ident!("{mod_name}");
-      let mod_call = self.type_name(mod_call_ty).unwrap();
+      let mod_call = self.type_name(mod_call_ty, true).unwrap();
       let func_name = md.name();
       let func_ident = format_ident!("{}", func_name.to_snake_case());
 
@@ -318,7 +342,7 @@ mod v14 {
           .map(|n| format_ident!("{n}"))
           .unwrap_or_else(|| format_ident!("param_{idx}"));
         let type_name = self
-          .type_name(field.ty().id())
+          .type_name(field.ty().id(), false)
           .expect("Missing Extrinsic param type");
         fields.append_all(quote! {#name: #type_name,});
         if Self::is_boxed(field) {
@@ -415,14 +439,19 @@ mod v14 {
       }
 
       for field in fields {
-        let mut field_ty = self.type_name_scoped(field.ty().id(), scope)?;
+        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false)?;
         if Self::is_boxed(field) {
           field_ty = quote!(::std::boxed::Box<#field_ty>);
         }
-        unnamed.push(quote! { pub #field_ty });
+        let attr = if self.is_compact(field) {
+          quote! { #[codec(compact)]}
+        } else {
+          quote! {}
+        };
+        unnamed.push(quote! { #attr pub #field_ty });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
-          named.push(quote! { pub #name: #field_ty });
+          named.push(quote! { #attr pub #name: #field_ty });
         } else {
           // If there are any unnamed fields, then make it a tuple.
           is_tuple = true;
@@ -456,14 +485,19 @@ mod v14 {
       }
 
       for field in fields {
-        let mut field_ty = self.type_name_scoped(field.ty().id(), scope)?;
+        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false)?;
         if Self::is_boxed(field) {
           field_ty = quote!(::std::boxed::Box<#field_ty>);
         }
-        unnamed.push(quote! { #field_ty });
+        let attr = if self.is_compact(field) {
+          quote! { #[codec(compact)]}
+        } else {
+          quote! {}
+        };
+        unnamed.push(quote! { #attr #field_ty });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
-          named.push(quote! { #name: #field_ty });
+          named.push(quote! { #attr #name: #field_ty });
         } else {
           // If there are any unnamed fields, then make it a tuple.
           is_tuple = true;

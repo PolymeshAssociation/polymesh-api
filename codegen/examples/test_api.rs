@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
 
   let dest = AccountKeyring::Bob.to_account_id().into();
   let api = Api::new();
-  let call = api.call.balances.transfer(dest, 123_012_345.into());
+  let call = api.call.balances.transfer(dest, 123_012_345);
   println!("balances.transfer = {call:#?}");
   Ok(())
 }
