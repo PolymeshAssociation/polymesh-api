@@ -149,7 +149,10 @@ mod v14 {
     fn new(md: RuntimeMetadataV14) -> Self {
       // Detect the chain runtime path.
       let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
-      let runtime_ident = segments_ident(runtime_ty.path().namespace());
+      let runtime_ns = runtime_ty.path().namespace();
+      let runtime_ident = segments_ident(runtime_ns);
+
+      let runtime_call_ty = format!("{}::Call", runtime_ns.join("::"));
       let call = quote! { #runtime_ident::Call };
       let external_modules = HashSet::from_iter(
         [
@@ -165,23 +168,24 @@ mod v14 {
       );
       let rename_types = HashMap::from_iter(
         [
+          (runtime_call_ty.as_str(), quote!(WrappedCall)),
           (
             "sp_runtime::multiaddress::MultiAddress",
-            quote!(sp_runtime::MultiAddress),
+            quote!(::sub_api::basic_types::sp_runtime::MultiAddress),
           ),
           (
             "sp_runtime::generic::era::Era",
-            quote!(sp_runtime::generic::Era),
+            quote!(::sub_api::basic_types::sp_runtime::generic::Era),
           ),
           (
             "sp_runtime::generic::header::Header",
-            quote!(sp_runtime::generic::Header),
+            quote!(::sub_api::basic_types::sp_runtime::generic::Header),
           ),
           ("BTreeSet", quote!(Vec)),
           ("BTreeMap", quote!(std::collections::BTreeMap)),
           (
             "frame_support::traits::tokens::misc::BalanceStatus",
-            quote!(frame_support::traits::BalanceStatus),
+            quote!(::sub_api::basic_types::frame_support::traits::BalanceStatus),
           ),
           (
             "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
@@ -355,14 +359,14 @@ mod v14 {
       let call_ty = &self.call;
       if md.fields().len() > 0 {
         quote! {
-          pub fn #func_ident(&self, #fields) -> #call_ty {
-            types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names })
+          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall> {
+            Ok(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }).into())
           }
         }
       } else {
         quote! {
-          pub fn #func_ident(&self, #fields) -> #call_ty {
-            types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident)
+          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall> {
+            Ok(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident).into())
           }
         }
       }
@@ -645,6 +649,7 @@ mod v14 {
       let types_code = self.generate_types();
 
       let metadata_bytes = self.md.encode();
+      let call_ty = &self.call;
       quote! {
         use ::codec::Decode;
 
@@ -656,13 +661,41 @@ mod v14 {
             };
         }
 
+        #[derive(Clone, Debug)]
+        #[derive(::codec::Encode, ::codec::Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct WrappedCall {
+          call: types::#call_ty,
+        }
+
+        impl From<types::#call_ty> for WrappedCall {
+            fn from(call: types::#call_ty) -> Self {
+                Self { call }
+            }
+        }
+
+        impl From<WrappedCall> for types::#call_ty {
+            fn from(wrapped: WrappedCall) -> Self {
+                wrapped.call
+            }
+        }
+
+        impl From<&WrappedCall> for types::#call_ty {
+            fn from(wrapped: &WrappedCall) -> Self {
+                wrapped.call.clone()
+            }
+        }
+
         pub mod types {
+          use super::WrappedCall;
           #types_code
         }
 
         pub mod api {
           use super::types;
           use super::types::*;
+          use super::WrappedCall;
+
           #( #modules )*
         }
 
@@ -728,7 +761,7 @@ pub fn macro_codegen(mut buf: &[u8], mod_ident: TokenStream) -> Result<TokenStre
   let code = generate(metadata)?;
   Ok(quote! {
     pub mod #mod_ident {
-        #code
+      #code
     }
   })
 }

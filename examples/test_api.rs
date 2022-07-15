@@ -29,16 +29,16 @@ async fn main() -> Result<()> {
   let api = Api::from(metadata);
 
   let dest = MultiAddress::from(AccountKeyring::Bob.to_account_id());
-  let call = api.call().balances().transfer(dest.clone(), 123_012_345);
+  let call = api.call().balances().transfer(dest.clone(), 123_012_345)?;
   println!("balances.transfer = {call:#?}");
   println!("encoded = {}", hex::encode(call.encode()));
 
   // Test batches.
   let batch_calls = api.call().utility().batch(vec![
-    api.call().balances().transfer(dest.clone(), 1),
-    api.call().balances().transfer(dest.clone(), 2),
-    api.call().balances().transfer(dest, 3),
-  ]);
+    api.call().balances().transfer(dest.clone(), 1)?,
+    api.call().balances().transfer(dest.clone(), 2)?,
+    api.call().balances().transfer(dest, 3)?,
+  ])?;
   println!("encoded = {}", hex::encode(batch_calls.encode()));
 
   Ok(())
