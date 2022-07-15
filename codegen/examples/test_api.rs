@@ -2,6 +2,7 @@ use std::env;
 
 use anyhow::Result;
 
+use sp_runtime::MultiAddress;
 use sp_keyring::AccountKeyring;
 
 use sub_api::rpc::*;
@@ -23,16 +24,10 @@ async fn main() -> Result<()> {
   // Get current Metadata.
   let metadata = client.get_metadata(None).await?;
 
-  //let version = client.get_runtime_version(None).await?;
-  //println!("{version:#?}");
+  let api = Api::from(metadata);
 
-  let code = generate(metadata)?;
-  println!("{}", rustfmt_wrapper::rustfmt(code).unwrap());
-  //println!("{code}");
-
-  let dest = AccountKeyring::Bob.to_account_id().into();
-  let api = Api::new();
-  let call = api.call.balances.transfer(dest, 123_012_345);
+  let dest = MultiAddress::from(AccountKeyring::Bob.to_account_id());
+  let call = api.call().balances().transfer(dest.clone(), 123_012_345);
   println!("balances.transfer = {call:#?}");
   Ok(())
 }

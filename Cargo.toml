@@ -46,6 +46,7 @@ frame-support = { version = "4.0.0-dev", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "2", default-features = false }
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 anyhow = "1"

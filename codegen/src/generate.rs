@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
-use codec::Decode;
+use codec::{Decode, Encode};
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
 
 fn segments_ident(segments: &[String]) -> TokenStream {
@@ -404,11 +404,19 @@ mod v14 {
         pub mod #mod_ident {
           use super::*;
 
-          #[derive(Clone, Debug, Default)]
-          pub struct CallApi;
+          #[derive(Clone, Debug)]
+          pub struct CallApi<'a> {
+            api: &'a super::super::Api,
+          }
 
-          impl CallApi {
+          impl<'a> CallApi<'a> {
             #call_fields
+          }
+
+          impl<'a> From<&'a super::super::Api> for CallApi<'a> {
+              fn from(api: &'a super::super::Api) -> Self {
+                  Self { api }
+              }
           }
 
           /*
@@ -618,11 +626,15 @@ mod v14 {
         .map(|m| {
           let (ident, code) = self.gen_module(m);
           call_fields.append_all(quote! {
-            pub #ident: api::#ident::CallApi,
+            pub fn #ident(&self) -> api::#ident::CallApi {
+              api::#ident::CallApi::from(self.api)
+            }
           });
           /*
           query_fields.append_all(quote! {
-            pub #ident: api::#ident::QueryApi,
+            pub fn #ident(&self) -> api::#ident::QueryApi {
+              api::#ident::QueryApi::default()
+            }
           });
           */
 
@@ -632,39 +644,62 @@ mod v14 {
 
       let types_code = self.generate_types();
 
+      let metadata_bytes = self.md.encode();
       quote! {
-        #[allow(dead_code, unused_imports, non_camel_case_types)]
+        use ::codec::Decode;
+
+        pub const API_METADATA_BYTES: &'static [u8] = &[ #(#metadata_bytes,)* ];
+        ::lazy_static::lazy_static! {
+            pub static ref API_METADATA: ::frame_metadata::v14::RuntimeMetadataV14 = {
+              ::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
+                  .expect("Shouldn't be able to fail")
+            };
+        }
+
         pub mod types {
           #types_code
         }
 
-        #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod api {
           use super::types;
           use super::types::*;
           #( #modules )*
         }
 
-        #[derive(Clone, Debug, Default)]
+        #[derive(Debug)]
         pub struct Api {
-          pub call: CallApi,
-          //pub query: QueryApi,
+          metadata: ::std::sync::Arc<::std::sync::RwLock<::frame_metadata::RuntimeMetadataPrefixed>>,
+        }
+
+        impl From<::frame_metadata::RuntimeMetadataPrefixed> for Api {
+            fn from(metadata: ::frame_metadata::RuntimeMetadataPrefixed) -> Self {
+                Self {
+                  metadata: ::std::sync::Arc::new(::std::sync::RwLock::new(metadata)),
+                }
+            }
         }
 
         impl Api {
-          pub fn new() -> Self {
-            Self::default()
+          pub fn call(&self) -> CallApi {
+            CallApi { api: self }
           }
         }
 
-        #[derive(Clone, Debug, Default)]
-        pub struct CallApi {
+        #[derive(Clone, Debug)]
+        pub struct CallApi<'a> {
+          api: &'a Api,
+        }
+
+        impl<'a> CallApi<'a> {
           #call_fields
         }
 
         /*
         #[derive(Clone, Default)]
         pub struct QueryApi {
+        }
+
+        impl QueryApi {
           #query_fields
         }
           */

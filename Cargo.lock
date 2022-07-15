@@ -2900,6 +2900,7 @@ dependencies = [
  "frame-support",
  "hex",
  "jsonrpsee",
+ "lazy_static",
  "log",
  "parity-scale-codec",
  "scale-info",
