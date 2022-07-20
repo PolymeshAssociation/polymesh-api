@@ -310,6 +310,7 @@ dependencies = [
  "heck 0.4.0",
  "hex",
  "indexmap",
+ "lazy_static",
  "log",
  "parity-scale-codec",
  "proc-macro2",
@@ -317,6 +318,7 @@ dependencies = [
  "rustfmt-wrapper",
  "scale-info",
  "serde",
+ "serde-big-array",
  "serde_json",
  "sp-api",
  "sp-arithmetic",
@@ -2278,6 +2280,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-big-array"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3323f09a748af288c3dc2474ea6803ee81f118321775bffa3ac8f7e65c5e90e7"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2905,6 +2916,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "serde-big-array",
  "serde_json",
  "sp-api",
  "sp-arithmetic",

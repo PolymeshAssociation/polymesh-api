@@ -73,6 +73,7 @@ mod v14 {
   struct TypeParameters {
     names: IndexMap<u32, String>,
     used: HashSet<String>,
+    need_bounds: HashMap<u32, HashMap<String, TokenStream>>,
   }
 
   impl TypeParameters {
@@ -91,7 +92,18 @@ mod v14 {
 
       Self {
         names,
-        used: HashSet::default(),
+        used: Default::default(),
+        need_bounds: Default::default(),
+      }
+    }
+
+    fn add_param_bounds(&mut self, id: u32, bound_name: &str, type_bound: TokenStream) -> bool {
+      if self.names.contains_key(&id) {
+        let bounds = self.need_bounds.entry(id).or_default();
+        bounds.insert(bound_name.to_string(), type_bound);
+        true
+      } else {
+        false
       }
     }
 
@@ -105,9 +117,14 @@ mod v14 {
 
     fn get_type_params(&self) -> TokenStream {
       if self.names.len() > 0 {
-        let params = self.names.values().map(|name| {
+        let params = self.names.iter().map(|(id, name)| {
           let ident = format_ident!("{name}");
-          quote!(#ident)
+          if let Some(with_bounds) = self.need_bounds.get(&id) {
+            let bounds: Vec<_> = with_bounds.values().collect();
+            quote!(#ident: #(#bounds) + *)
+          } else {
+            quote!(#ident)
+          }
         });
         quote!(<#(#params),*>)
       } else {
@@ -142,6 +159,7 @@ mod v14 {
     md: RuntimeMetadataV14,
     external_modules: HashSet<String>,
     rename_types: HashMap<String, TokenStream>,
+    ord_types: HashSet<String>,
     call: TokenStream,
   }
 
@@ -155,38 +173,44 @@ mod v14 {
       let runtime_call_ty = format!("{}::Call", runtime_ns.join("::"));
       let call = quote! { #runtime_ident::Call };
       let external_modules = HashSet::from_iter(
-        [
-          "sp_arithmetic",
-          "sp_core",
-          "sp_session",
-          "sp_runtime",
-          "sp_version",
-          "frame_support",
-        ]
-        .iter()
-        .map(|t| t.to_string()),
+        ["sp_arithmetic", "sp_version"]
+          .iter()
+          .map(|t| t.to_string()),
       );
       let rename_types = HashMap::from_iter(
         [
           (runtime_call_ty.as_str(), quote!(WrappedCall)),
           (
+            "sp_core::crypto::AccountId32",
+            quote!(::sub_api::basic_types::sp_core::crypto::AccountId32),
+          ),
+          (
             "sp_runtime::multiaddress::MultiAddress",
-            quote!(::sub_api::basic_types::sp_runtime::MultiAddress),
+            quote!(::sub_api::basic_types::MultiAddress),
           ),
           (
             "sp_runtime::generic::era::Era",
             quote!(::sub_api::basic_types::sp_runtime::generic::Era),
           ),
+          /*
+          (
+            "sp_runtime::traits::BlakeTwo256",
+            quote!(::sub_api::basic_types::sp_runtime::traits::BlakeTwo256),
+          ),
           (
             "sp_runtime::generic::header::Header",
             quote!(::sub_api::basic_types::sp_runtime::generic::Header),
           ),
-          ("BTreeSet", quote!(Vec)),
+          ("sp_core::Void", quote!(())),
+          */
+          ("BTreeSet", quote!(std::collections::BTreeSet)),
           ("BTreeMap", quote!(std::collections::BTreeMap)),
+          /*
           (
             "frame_support::traits::tokens::misc::BalanceStatus",
             quote!(::sub_api::basic_types::frame_support::traits::BalanceStatus),
           ),
+          */
           (
             "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
             quote!(Vec),
@@ -195,12 +219,102 @@ mod v14 {
         .into_iter()
         .map(|(name, code)| (name.to_string(), code)),
       );
-      Self {
+
+      let mut gen = Self {
         md,
         external_modules,
         rename_types,
+        ord_types: Default::default(),
         call,
+      };
+      // Try a limited number of types to mark all types needing the `Ord` type.
+      let mut ord_type_ids = HashSet::new();
+      for _ in 0..10 {
+        if !gen.check_for_ord_types(&mut ord_type_ids) {
+          // Finished, no new ord types.
+          break;
+        }
       }
+      // Convert ord type ids to full names.
+      for id in ord_type_ids {
+        match gen.id_to_full_name(id) {
+          Some(name) if name != "Option" => {
+            gen.ord_types.insert(name);
+          }
+          _ => (),
+        }
+      }
+
+      gen
+    }
+
+    fn id_to_full_name(&self, id: u32) -> Option<String> {
+      let ty = self.md.types.resolve(id)?;
+      let segments = ty.path().segments();
+      if segments.len() > 0 {
+        Some(segments.join("::"))
+      } else {
+        None
+      }
+    }
+
+    fn check_for_ord_types(&self, ord_type_ids: &mut HashSet<u32>) -> bool {
+      let count = ord_type_ids.len();
+      for ty in self.md.types.types() {
+        let id = ty.id();
+        let ty = ty.ty();
+        let full_name = self.id_to_full_name(id).unwrap_or_default();
+        // Check for `BTreeSet` and `BTreeMap`.
+        match full_name.as_str() {
+          "BTreeSet" | "BTreeMap" => {
+            // Mark the first type parameter as needing `Ord`.
+            ty.type_params()
+              .first()
+              .and_then(|param| param.ty())
+              .map(|ty| {
+                ord_type_ids.insert(ty.id());
+              });
+            continue;
+          }
+          _ => (),
+        }
+        // Check if this type needs `Ord`.
+        if ord_type_ids.contains(&id) {
+          // Mark fields and used types as needing `Ord`.
+          match ty.type_def() {
+            TypeDef::Composite(struct_ty) => {
+              for field in struct_ty.fields() {
+                ord_type_ids.insert(field.ty().id());
+              }
+            }
+            TypeDef::Variant(enum_ty) => {
+              for variant in enum_ty.variants() {
+                for field in variant.fields() {
+                  ord_type_ids.insert(field.ty().id());
+                }
+              }
+            }
+            TypeDef::Sequence(ty) => {
+              ord_type_ids.insert(ty.type_param().id());
+            }
+            TypeDef::Array(ty) => {
+              ord_type_ids.insert(ty.type_param().id());
+            }
+            TypeDef::Tuple(ty) => {
+              for field in ty.fields() {
+                ord_type_ids.insert(field.id());
+              }
+            }
+            TypeDef::Primitive(_) => (),
+            TypeDef::Compact(ty) => {
+              ord_type_ids.insert(ty.type_param().id());
+            }
+            _ => {}
+          }
+        }
+      }
+      let new_count = ord_type_ids.len();
+      count != new_count
     }
 
     fn is_boxed(field: &Field<PortableForm>) -> bool {
@@ -211,15 +325,22 @@ mod v14 {
       }
     }
 
-    fn is_compact(&self, field: &Field<PortableForm>) -> bool {
+    fn need_field_attributes(&self, field: &Field<PortableForm>) -> TokenStream {
       if let Some(ty) = self.md.types.resolve(field.ty().id()) {
         match ty.type_def() {
-          TypeDef::Compact(_) => true,
-          _ => false,
+          TypeDef::Compact(_) => {
+            return quote! { #[codec(compact)] };
+          }
+          TypeDef::Array(ty) => {
+            let len = ty.len() as usize;
+            if len > 32 {
+              return quote! { #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))] };
+            }
+          }
+          _ => (),
         }
-      } else {
-        false
       }
+      quote! {}
     }
 
     fn type_name(&self, id: u32, compact_wrap: bool) -> Option<TokenStream> {
@@ -239,6 +360,10 @@ mod v14 {
       let ty = self.md.types.resolve(id)?;
       let segments = ty.path().segments();
       let full_name = segments.join("::");
+      let is_btree = match full_name.as_str() {
+        "BTreeSet" | "BTreeMap" => true,
+        _ => false,
+      };
       let type_ident = self
         .rename_types
         .get(&full_name)
@@ -307,6 +432,14 @@ mod v14 {
         _ => {}
       }
 
+      // Check if `BTreeSet` or `BTreeMap` use a scoped paramter for the key.
+      if is_btree {
+        ty.type_params()
+          .first()
+          .and_then(|param| param.ty())
+          .map(|ty| scope.add_param_bounds(ty.id(), "Ord", quote!(Ord)));
+      }
+
       let type_params = ty
         .type_params()
         .iter()
@@ -334,7 +467,7 @@ mod v14 {
       md: &Variant<PortableForm>,
     ) -> TokenStream {
       let mod_call_ident = format_ident!("{mod_name}");
-      let mod_call = self.type_name(mod_call_ty, true).unwrap();
+      let mod_call = self.type_name(mod_call_ty, false).unwrap();
       let func_name = md.name();
       let func_ident = format_ident!("{}", func_name.to_snake_case());
 
@@ -418,9 +551,9 @@ mod v14 {
           }
 
           impl<'a> From<&'a super::super::Api> for CallApi<'a> {
-              fn from(api: &'a super::super::Api) -> Self {
-                  Self { api }
-              }
+            fn from(api: &'a super::super::Api) -> Self {
+              Self { api }
+            }
           }
 
           /*
@@ -455,11 +588,7 @@ mod v14 {
         if Self::is_boxed(field) {
           field_ty = quote!(::std::boxed::Box<#field_ty>);
         }
-        let attr = if self.is_compact(field) {
-          quote! { #[codec(compact)]}
-        } else {
-          quote! {}
-        };
+        let attr = self.need_field_attributes(field);
         unnamed.push(quote! { #attr pub #field_ty });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
@@ -501,11 +630,7 @@ mod v14 {
         if Self::is_boxed(field) {
           field_ty = quote!(::std::boxed::Box<#field_ty>);
         }
-        let attr = if self.is_compact(field) {
-          quote! { #[codec(compact)]}
-        } else {
-          quote! {}
-        };
+        let attr = self.need_field_attributes(field);
         unnamed.push(quote! { #attr #field_ty });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
@@ -527,10 +652,18 @@ mod v14 {
       }
     }
 
-    fn gen_type(&self, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
+    fn gen_type(&self, id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
       let ident = ty.path().ident()?;
       let ty_ident = format_ident!("{ident}");
       let mut scope = TypeParameters::new(ty);
+      let full_name = self.id_to_full_name(id)?;
+      let derive_ord = if self.ord_types.contains(&full_name) {
+        quote! {
+          #[derive(PartialOrd, Ord)]
+        }
+      } else {
+        quote!()
+      };
       Some((
         ident,
         match ty.type_def() {
@@ -550,14 +683,16 @@ mod v14 {
             let params = scope.get_type_params();
             if is_tuple {
               quote! {
-                #[derive(Clone, Debug)]
+                #[derive(Clone, Debug, PartialEq, Eq)]
+                #derive_ord
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params (#fields);
               }
             } else {
               quote! {
-                #[derive(Clone, Debug)]
+                #[derive(Clone, Debug, PartialEq, Eq)]
+                #derive_ord
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params { #fields }
@@ -582,7 +717,8 @@ mod v14 {
             }
             let params = scope.get_type_params();
             quote! {
-              #[derive(Clone, Debug)]
+              #[derive(Clone, Debug, PartialEq, Eq)]
+              #derive_ord
               #[derive(::codec::Encode, ::codec::Decode)]
               #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
               pub enum #ty_ident #params {
@@ -602,13 +738,14 @@ mod v14 {
       let mut modules = ModuleCode::new("".into());
 
       for ty in self.md.types.types() {
+        let ty_id = ty.id();
         let ty = ty.ty();
         // Only generate type code for types with namespaces.  Basic rust types like
         // `Result` and `Option` have no namespace.
         if let Some(ns_top) = ty.path().namespace().first() {
           // Don't generate code for external types.
           if !self.external_modules.contains(ns_top) {
-            if let Some((ident, code)) = self.gen_type(ty) {
+            if let Some((ident, code)) = self.gen_type(ty_id, ty) {
               modules.add_type(ty.path().namespace(), ident, code);
             }
           }
@@ -655,16 +792,16 @@ mod v14 {
 
         pub const API_METADATA_BYTES: &'static [u8] = &[ #(#metadata_bytes,)* ];
         ::lazy_static::lazy_static! {
-            pub static ref API_METADATA: ::frame_metadata::v14::RuntimeMetadataV14 = {
+            pub static ref API_METADATA: ::frame_metadata::v14::RuntimeMetadataV14 =
               ::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
-                  .expect("Shouldn't be able to fail")
-            };
+                  .expect("Shouldn't be able to fail");
         }
 
-        #[derive(Clone, Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         #[derive(::codec::Encode, ::codec::Decode)]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct WrappedCall {
+          #[serde(flatten)]
           call: types::#call_ty,
         }
 
@@ -686,11 +823,13 @@ mod v14 {
             }
         }
 
+        #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod types {
           use super::WrappedCall;
           #types_code
         }
 
+        #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod api {
           use super::types;
           use super::types::*;

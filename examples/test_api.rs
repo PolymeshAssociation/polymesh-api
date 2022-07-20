@@ -2,7 +2,6 @@ use std::env;
 
 use anyhow::Result;
 
-use sp_runtime::MultiAddress;
 use sp_keyring::AccountKeyring;
 use codec::Encode;
 
@@ -28,18 +27,22 @@ async fn main() -> Result<()> {
 
   let api = Api::from(metadata);
 
-  let dest = MultiAddress::from(AccountKeyring::Bob.to_account_id());
-  let call = api.call().balances().transfer(dest.clone(), 123_012_345)?;
-  println!("balances.transfer = {call:#?}");
+  let dest_id = AccountKeyring::Bob.to_account_id();
+  let dest = &dest_id;
+  let call = api.call().balances().transfer(dest.into(), 123_012_345)?;
+  println!("call = {call:#?}");
   println!("encoded = {}", hex::encode(call.encode()));
+  println!("call_json = {:#?}", serde_json::to_string(&call));
 
   // Test batches.
-  let batch_calls = api.call().utility().batch(vec![
-    api.call().balances().transfer(dest.clone(), 1)?,
-    api.call().balances().transfer(dest.clone(), 2)?,
-    api.call().balances().transfer(dest, 3)?,
+  let call = api.call().utility().batch(vec![
+    api.call().balances().transfer(dest.into(), 1)?,
+    api.call().balances().transfer(dest.into(), 2)?,
+    api.call().balances().transfer(dest.into(), 3)?,
   ])?;
-  println!("encoded = {}", hex::encode(batch_calls.encode()));
+  println!("call = {call:#?}");
+  println!("encoded = {}", hex::encode(call.encode()));
+  println!("call_json = {:#?}", serde_json::to_string(&call));
 
   Ok(())
 }

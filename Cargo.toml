@@ -47,6 +47,7 @@ frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "2", default-features = false }
 lazy_static = "1.4.0"
+serde-big-array = "0.4.1"
 
 [dev-dependencies]
 anyhow = "1"
@@ -57,7 +58,15 @@ env_logger = "0.9"
 sub-api-macro = { path = "./macro" }
 
 [features]
-default = [ "std", "v12", "v13", "v14", "rpc" ]
+default = [ "std", "serde", "v12", "v13", "v14", "rpc" ]
+
+serde = [
+	"frame-support/serde",
+	"sp-core/serde",
+	"sp-version/serde",
+	"sp-runtime/serde",
+	"sp-arithmetic/serde",
+]
 
 rpc = [
 	"tokio",

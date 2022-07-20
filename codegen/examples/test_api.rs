@@ -2,12 +2,9 @@ use std::env;
 
 use anyhow::Result;
 
-use sp_runtime::MultiAddress;
 use sp_keyring::AccountKeyring;
 
 use sub_api::rpc::*;
-
-use codegen::*;
 
 pub mod polymesh;
 use polymesh::Api;
@@ -26,8 +23,8 @@ async fn main() -> Result<()> {
 
   let api = Api::from(metadata);
 
-  let dest = MultiAddress::from(AccountKeyring::Bob.to_account_id());
-  let call = api.call().balances().transfer(dest.clone(), 123_012_345);
+  let dest = AccountKeyring::Bob.to_account_id();
+  let call = api.call().balances().transfer(dest.into(), 123_012_345);
   println!("balances.transfer = {call:#?}");
   Ok(())
 }
