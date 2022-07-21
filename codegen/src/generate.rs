@@ -489,15 +489,18 @@ mod v14 {
         }
       }
 
+      let docs = md.docs();
       let call_ty = &self.call;
       if md.fields().len() > 0 {
         quote! {
+          #(#[doc = #docs])*
           pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall> {
             Ok(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }).into())
           }
         }
       } else {
         quote! {
+          #(#[doc = #docs])*
           pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall> {
             Ok(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident).into())
           }
@@ -591,8 +594,13 @@ mod v14 {
         let attr = self.need_field_attributes(field);
         unnamed.push(quote! { #attr pub #field_ty });
         if let Some(name) = field.name() {
+          let docs = field.docs();
           let name = format_ident!("{name}");
-          named.push(quote! { #attr pub #name: #field_ty });
+          named.push(quote! {
+              #(#[doc = #docs])*
+              #attr
+              pub #name: #field_ty
+          });
         } else {
           // If there are any unnamed fields, then make it a tuple.
           is_tuple = true;
@@ -630,11 +638,20 @@ mod v14 {
         if Self::is_boxed(field) {
           field_ty = quote!(::std::boxed::Box<#field_ty>);
         }
+        let docs = field.docs();
         let attr = self.need_field_attributes(field);
-        unnamed.push(quote! { #attr #field_ty });
+        unnamed.push(quote! {
+            #(#[doc = #docs])*
+            #attr
+            #field_ty
+        });
         if let Some(name) = field.name() {
           let name = format_ident!("{name}");
-          named.push(quote! { #attr #name: #field_ty });
+          named.push(quote! {
+              #(#[doc = #docs])*
+              #attr
+              #name: #field_ty
+          });
         } else {
           // If there are any unnamed fields, then make it a tuple.
           is_tuple = true;
@@ -664,6 +681,7 @@ mod v14 {
       } else {
         quote!()
       };
+      let docs = ty.docs();
       Some((
         ident,
         match ty.type_def() {
@@ -683,6 +701,7 @@ mod v14 {
             let params = scope.get_type_params();
             if is_tuple {
               quote! {
+                #(#[doc = #docs])*
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 #derive_ord
                 #[derive(::codec::Encode, ::codec::Decode)]
@@ -691,6 +710,7 @@ mod v14 {
               }
             } else {
               quote! {
+                #(#[doc = #docs])*
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 #derive_ord
                 #[derive(::codec::Encode, ::codec::Decode)]
@@ -703,9 +723,11 @@ mod v14 {
             let mut variants = TokenStream::new();
             for variant in enum_ty.variants() {
               let idx = variant.index();
+              let docs = variant.docs();
               let name = format_ident!("{}", variant.name());
               let fields = self.gen_enum_fields(variant.fields(), &mut scope)?;
               variants.append_all(quote! {
+                #(#[doc = #docs])*
                 #[codec(index = #idx)]
                 #name #fields
               });
@@ -717,6 +739,7 @@ mod v14 {
             }
             let params = scope.get_type_params();
             quote! {
+              #(#[doc = #docs])*
               #[derive(Clone, Debug, PartialEq, Eq)]
               #derive_ord
               #[derive(::codec::Encode, ::codec::Decode)]
