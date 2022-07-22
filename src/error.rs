@@ -14,13 +14,15 @@ pub enum Error {
   #[error("parity-scale-codec error: {0}")]
   ParityScaleCodec(#[from] codec::Error),
 
+  #[error("Call API incompatible with connected chain: {0}")]
+  IncompatibleCall(String),
+
   #[error("Schema failed to parse: {0}")]
   SchemaParseFailed(String),
 
   #[error("RpcClient: {0}")]
   RpcClient(String),
 
-  #[cfg(feature = "rpc")]
   #[error("Jsonrpsee error: {0}")]
   Jsonrpsee(#[from] jsonrpsee::core::Error),
 }

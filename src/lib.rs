@@ -1,9 +1,14 @@
 pub mod error;
+pub use error::*;
 
 pub mod basic_types;
 
-#[cfg(feature = "rpc")]
 pub mod rpc;
+
+pub mod block;
+
+pub mod client;
+pub use client::*;
 
 pub mod type_def;
 

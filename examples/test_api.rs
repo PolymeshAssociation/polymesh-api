@@ -5,9 +5,8 @@ use anyhow::Result;
 use sp_keyring::AccountKeyring;
 use codec::Encode;
 
-use sub_api::rpc::*;
-
 use sub_api_macro::*;
+use sub_api::SimpleSigner;
 
 #[sub_api(metadata_file = "specs/polymesh_dev_spec_5000001.meta")]
 pub mod polymesh {}
@@ -20,29 +19,30 @@ async fn main() -> Result<()> {
 
   let url = env::args().nth(1).expect("Missing ws url");
 
-  let client = RpcClient::new(&url).await?;
+  let mut alice = SimpleSigner::new(AccountKeyring::Alice.pair());
 
-  // Get current Metadata.
-  let metadata = client.get_metadata(None).await?;
-
-  let api = Api::from(metadata);
+  let api = Api::new(&url).await?;
 
   let dest_id = AccountKeyring::Bob.to_account_id();
   let dest = &dest_id;
   let call = api.call().balances().transfer(dest.into(), 123_012_345)?;
   println!("call = {call:#?}");
   println!("encoded = {}", hex::encode(call.encode()));
-  println!("call_json = {:#?}", serde_json::to_string(&call));
+  println!("call_json = {:#?}", serde_json::to_string(call.runtime_call()));
+  let mut res1 = alice.submit_and_watch(&call).await?;
 
   // Test batches.
   let call = api.call().utility().batch(vec![
-    api.call().balances().transfer(dest.into(), 1)?,
-    api.call().balances().transfer(dest.into(), 2)?,
-    api.call().balances().transfer(dest.into(), 3)?,
+    api.call().balances().transfer(dest.into(), 1)?.into(),
+    api.call().balances().transfer(dest.into(), 2)?.into(),
+    api.call().balances().transfer(dest.into(), 3)?.into(),
   ])?;
   println!("call = {call:#?}");
   println!("encoded = {}", hex::encode(call.encode()));
-  println!("call_json = {:#?}", serde_json::to_string(&call));
+  println!("call_json = {:#?}", serde_json::to_string(call.runtime_call()));
+  let mut res2 = alice.submit_and_watch(&call).await?;
+  println!("call1 result = {:?}", res1.next().await);
+  println!("call2 result = {:?}", res2.next().await);
 
   Ok(())
 }

@@ -28,8 +28,8 @@ thiserror = "1.0.31"
 log = "0.4"
 hex = "0.4"
 
-tokio = { version = "1.19", features = ["full"], optional = true }
-jsonrpsee = { version = "0.14", features = ["client"], optional = true }
+tokio = { version = "1.19", features = ["full"] }
+jsonrpsee = { version = "0.14", features = ["client"] }
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
@@ -58,7 +58,7 @@ env_logger = "0.9"
 sub-api-macro = { path = "./macro" }
 
 [features]
-default = [ "std", "serde", "v12", "v13", "v14", "rpc" ]
+default = [ "std", "serde", "v12", "v13", "v14" ]
 
 serde = [
 	"frame-support/serde",
@@ -66,11 +66,6 @@ serde = [
 	"sp-version/serde",
 	"sp-runtime/serde",
 	"sp-arithmetic/serde",
-]
-
-rpc = [
-	"tokio",
-	"jsonrpsee",
 ]
 
 v12 = ["frame-metadata/v12"]

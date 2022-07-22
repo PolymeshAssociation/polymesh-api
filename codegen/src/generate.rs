@@ -170,7 +170,6 @@ mod v14 {
       let runtime_ns = runtime_ty.path().namespace();
       let runtime_ident = segments_ident(runtime_ns);
 
-      let runtime_call_ty = format!("{}::Call", runtime_ns.join("::"));
       let call = quote! { #runtime_ident::Call };
       let external_modules = HashSet::from_iter(
         ["sp_arithmetic", "sp_version"]
@@ -179,7 +178,6 @@ mod v14 {
       );
       let rename_types = HashMap::from_iter(
         [
-          (runtime_call_ty.as_str(), quote!(WrappedCall)),
           (
             "sp_core::crypto::AccountId32",
             quote!(::sub_api::basic_types::sp_core::crypto::AccountId32),
@@ -192,25 +190,8 @@ mod v14 {
             "sp_runtime::generic::era::Era",
             quote!(::sub_api::basic_types::sp_runtime::generic::Era),
           ),
-          /*
-          (
-            "sp_runtime::traits::BlakeTwo256",
-            quote!(::sub_api::basic_types::sp_runtime::traits::BlakeTwo256),
-          ),
-          (
-            "sp_runtime::generic::header::Header",
-            quote!(::sub_api::basic_types::sp_runtime::generic::Header),
-          ),
-          ("sp_core::Void", quote!(())),
-          */
           ("BTreeSet", quote!(std::collections::BTreeSet)),
           ("BTreeMap", quote!(std::collections::BTreeMap)),
-          /*
-          (
-            "frame_support::traits::tokens::misc::BalanceStatus",
-            quote!(::sub_api::basic_types::frame_support::traits::BalanceStatus),
-          ),
-          */
           (
             "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
             quote!(Vec),
@@ -494,15 +475,15 @@ mod v14 {
       if md.fields().len() > 0 {
         quote! {
           #(#[doc = #docs])*
-          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall> {
-            Ok(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }).into())
+          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall<'api>> {
+            self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
           }
         }
       } else {
         quote! {
           #(#[doc = #docs])*
-          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall> {
-            Ok(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident).into())
+          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall<'api>> {
+            self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
           }
         }
       }
@@ -545,16 +526,16 @@ mod v14 {
           use super::*;
 
           #[derive(Clone, Debug)]
-          pub struct CallApi<'a> {
-            api: &'a super::super::Api,
+          pub struct CallApi<'api> {
+            api: &'api super::super::Api,
           }
 
-          impl<'a> CallApi<'a> {
+          impl<'api> CallApi<'api> {
             #call_fields
           }
 
-          impl<'a> From<&'a super::super::Api> for CallApi<'a> {
-            fn from(api: &'a super::super::Api) -> Self {
+          impl<'api> From<&'api super::super::Api> for CallApi<'api> {
+            fn from(api: &'api super::super::Api) -> Self {
               Self { api }
             }
           }
@@ -790,7 +771,7 @@ mod v14 {
         .map(|m| {
           let (ident, code) = self.gen_module(m);
           call_fields.append_all(quote! {
-            pub fn #ident(&self) -> api::#ident::CallApi {
+            pub fn #ident(&self) -> api::#ident::CallApi<'api> {
               api::#ident::CallApi::from(self.api)
             }
           });
@@ -820,32 +801,6 @@ mod v14 {
                   .expect("Shouldn't be able to fail");
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
-        #[derive(::codec::Encode, ::codec::Decode)]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct WrappedCall {
-          #[serde(flatten)]
-          call: types::#call_ty,
-        }
-
-        impl From<types::#call_ty> for WrappedCall {
-            fn from(call: types::#call_ty) -> Self {
-                Self { call }
-            }
-        }
-
-        impl From<WrappedCall> for types::#call_ty {
-            fn from(wrapped: WrappedCall) -> Self {
-                wrapped.call
-            }
-        }
-
-        impl From<&WrappedCall> for types::#call_ty {
-            fn from(wrapped: &WrappedCall) -> Self {
-                wrapped.call.clone()
-            }
-        }
-
         #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod types {
           use super::WrappedCall;
@@ -863,30 +818,53 @@ mod v14 {
 
         #[derive(Debug)]
         pub struct Api {
-          metadata: ::std::sync::Arc<::std::sync::RwLock<::frame_metadata::RuntimeMetadataPrefixed>>,
-        }
-
-        impl From<::frame_metadata::RuntimeMetadataPrefixed> for Api {
-            fn from(metadata: ::frame_metadata::RuntimeMetadataPrefixed) -> Self {
-                Self {
-                  metadata: ::std::sync::Arc::new(::std::sync::RwLock::new(metadata)),
-                }
-            }
+          client: ::sub_api::Client,
         }
 
         impl Api {
+          pub async fn new(url: &str) -> ::sub_api::error::Result<Self> {
+            Ok(Self {
+              client: ::sub_api::Client::new(url).await?
+            })
+          }
+
           pub fn call(&self) -> CallApi {
             CallApi { api: self }
+          }
+
+          pub fn wrap_call(&self, call: types::#call_ty) -> ::sub_api::Result<WrappedCall> {
+            Ok(WrappedCall::new(self, call))
+          }
+        }
+
+        impl ::sub_api::ChainApi for Api {
+          type RuntimeCall = types::#call_ty;
+          fn client(&self) -> &::sub_api::Client {
+            &self.client
           }
         }
 
         #[derive(Clone, Debug)]
-        pub struct CallApi<'a> {
-          api: &'a Api,
+        pub struct CallApi<'api> {
+          api: &'api Api,
         }
 
-        impl<'a> CallApi<'a> {
+        impl<'api> CallApi<'api> {
           #call_fields
+        }
+
+        pub type WrappedCall<'api> = ::sub_api::client::WrappedCall<'api, Api>;
+
+        impl<'api> From<WrappedCall<'api>> for types::#call_ty {
+          fn from(wrapped: WrappedCall<'api>) -> Self {
+            wrapped.into_runtime_call()
+          }
+        }
+
+        impl<'api> From<&WrappedCall<'api>> for types::#call_ty {
+          fn from(wrapped: &WrappedCall<'api>) -> Self {
+            wrapped.runtime_call().clone()
+          }
         }
 
         /*

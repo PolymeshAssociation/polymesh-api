@@ -1,4 +1,4 @@
-use jsonrpsee::core::client::ClientT;
+use jsonrpsee::core::client::{ClientT, Subscription, SubscriptionClientT};
 use jsonrpsee::rpc_params;
 use jsonrpsee::types::ParamsSer;
 use jsonrpsee::ws_client::{WsClient, WsClientBuilder};
@@ -10,30 +10,30 @@ use serde::de::DeserializeOwned;
 use codec::Decode;
 use frame_metadata::RuntimeMetadataPrefixed;
 use sp_version::RuntimeVersion;
-use sp_core::H256;
 
+use crate::block::BlockHash;
 use crate::error::*;
 
-pub type BlockHash = H256;
-
+#[derive(Debug)]
 enum InnerRpcClient {
   Ws(WsClient),
   Http(HttpClient),
 }
 
+#[derive(Debug)]
 pub struct RpcClient {
   client: InnerRpcClient,
 }
 
 impl RpcClient {
   pub async fn new(url: &str) -> Result<Self> {
-      if url.starts_with("Http") {
-          Self::new_http(url)
-      } else if url.starts_with("ws") {
-          Self::new_ws(url).await
-      } else {
-          Err(Error::RpcClient(format!("Unsupported url: {url}")))
-      }
+    if url.starts_with("Http") {
+      Self::new_http(url)
+    } else if url.starts_with("ws") {
+      Self::new_ws(url).await
+    } else {
+      Err(Error::RpcClient(format!("Unsupported url: {url}")))
+    }
   }
 
   async fn new_ws(url: &str) -> Result<Self> {
@@ -50,14 +50,18 @@ impl RpcClient {
     })
   }
 
-  pub async fn notification<'a>(
+  pub async fn subscribe<'a, Notif>(
     &self,
-    method: &'a str,
+    subscribe_method: &'a str,
     params: Option<ParamsSer<'a>>,
-  ) -> Result<()> {
+    unsubscribe_method: &'a str,
+  ) -> Result<Subscription<Notif>>
+  where
+    Notif: DeserializeOwned,
+  {
     Ok(match &self.client {
-      InnerRpcClient::Ws(ws) => ws.notification(method, params).await,
-      InnerRpcClient::Http(http) => http.notification(method, params).await,
+      InnerRpcClient::Ws(ws) => ws.subscribe(subscribe_method, params, unsubscribe_method).await,
+      InnerRpcClient::Http(http) => http.subscribe(subscribe_method, params, unsubscribe_method).await,
     }?)
   }
 
