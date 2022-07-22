@@ -303,6 +303,7 @@ name = "codegen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "dotenv",
  "env_logger",
  "frame-metadata",
@@ -2905,6 +2906,7 @@ name = "sub-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "dotenv",
  "env_logger",
  "frame-metadata",

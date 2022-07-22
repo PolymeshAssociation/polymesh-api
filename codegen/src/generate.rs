@@ -66,7 +66,9 @@ impl ModuleCode {
 #[cfg(feature = "v14")]
 mod v14 {
   use super::*;
-  use frame_metadata::v14::RuntimeMetadataV14;
+  use frame_metadata::v14::{
+    RuntimeMetadataV14, StorageEntryMetadata, StorageEntryModifier, StorageEntryType, StorageHasher,
+  };
   use scale_info::{form::PortableForm, Field, Type, TypeDef, Variant};
 
   #[derive(Default)]
@@ -440,6 +442,113 @@ mod v14 {
       }
     }
 
+    fn gen_storage_func(
+      &self,
+      mod_prefix: &str,
+      md: &StorageEntryMetadata<PortableForm>,
+    ) -> TokenStream {
+      let storage_name = &md.name;
+      let storage_ident = format_ident!("{}", storage_name.to_snake_case());
+      let mut key_prefix = Vec::with_capacity(512);
+      key_prefix.extend(sp_core::twox_128(mod_prefix.as_bytes()));
+      key_prefix.extend(sp_core::twox_128(storage_name.as_bytes()));
+
+      let (hashers, value_ty) = match &md.ty {
+        StorageEntryType::Plain(value) => (vec![], value.id()),
+        StorageEntryType::Map {
+          hashers,
+          key,
+          value,
+        } => match hashers.as_slice() {
+          [hasher] => {
+            // 1 key.
+            (vec![(key, hasher)], value.id())
+          }
+          hashers => {
+            // >=2 keys.
+            let keys_ty = self.md.types.resolve(key.id()).unwrap();
+            let key_hashers = if let TypeDef::Tuple(ty) = keys_ty.type_def() {
+              ty.fields().iter().zip(hashers).collect()
+            } else {
+              vec![]
+            };
+            (key_hashers, value.id())
+          }
+        },
+      };
+      let keys_len = hashers.len();
+      let mut keys = TokenStream::new();
+      let mut hashing = TokenStream::new();
+      for (idx, (key, hasher)) in hashers.into_iter().enumerate() {
+        let key_ident = format_ident!("key_{}", idx);
+        let type_name = self
+          .type_name(key.id(), false)
+          .expect("Missing Storage key type");
+        keys.append_all(quote! {#key_ident: #type_name,});
+        let hash_func = match hasher {
+          StorageHasher::Blake2_128 => Some(quote! { Blake2_128::hash }),
+          StorageHasher::Blake2_256 => Some(quote! { Blake2_256::hash }),
+          StorageHasher::Blake2_128Concat => Some(quote! { Blake2_128Concat::hash }),
+          StorageHasher::Twox128 => Some(quote! { Twox128::hash }),
+          StorageHasher::Twox256 => Some(quote! { Twox256::hash }),
+          StorageHasher::Twox64Concat => Some(quote! { Twox64Concat::hash }),
+          StorageHasher::Identity => None,
+        };
+        if let Some(hash) = hash_func {
+          hashing.append_all(quote! {
+            buf.extend(::sub_api::basic_types::frame_support::#hash(&#key_ident.encode()));
+          });
+        } else {
+          hashing.append_all(quote! {
+            buf.extend(#key_ident.encode());
+          });
+        }
+      }
+      let value_ty = self.type_name(value_ty, false).unwrap();
+      let (return_ty, return_value) = match md.modifier {
+        StorageEntryModifier::Optional => (quote! { Option<#value_ty>}, quote! { Ok(value) }),
+        StorageEntryModifier::Default => {
+          let default_value = &md.default;
+          (
+            quote! { #value_ty },
+            quote! {
+              Ok(value.unwrap_or_else(|| {
+                use ::codec::Decode;
+                const DEFAULT: &'static [u8] = &[#(#default_value,)*];
+                <#value_ty>::decode(&mut &DEFAULT[..]).unwrap()
+              }))
+            },
+          )
+        }
+      };
+
+      let docs = &md.docs;
+      if keys_len > 0 {
+        quote! {
+          #(#[doc = #docs])*
+          pub async fn #storage_ident(&self, #keys) -> ::sub_api::error::Result<#return_ty> {
+            use ::sub_api::basic_types::frame_support::StorageHasher;
+            use ::codec::Encode;
+            let mut buf = Vec::with_capacity(512);
+            buf.extend([#(#key_prefix,)*]);
+            #hashing
+            let key = ::sp_core::storage::StorageKey(buf);
+            let value = self.api.client.get_storage_by_key(key, self.at).await?;
+            #return_value
+          }
+        }
+      } else {
+        quote! {
+          #(#[doc = #docs])*
+          pub async fn #storage_ident(&self) -> ::sub_api::error::Result<#return_ty> {
+            let key = ::sp_core::storage::StorageKey(vec![#(#key_prefix,)*]);
+            let value = self.api.client.get_storage_by_key(key, self.at).await?;
+            #return_value
+          }
+        }
+      }
+    }
+
     fn gen_func(
       &self,
       mod_name: &str,
@@ -482,7 +591,7 @@ mod v14 {
       } else {
         quote! {
           #(#[doc = #docs])*
-          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall<'api>> {
+          pub fn #func_ident(&self) -> ::sub_api::error::Result<super::super::WrappedCall<'api>> {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
           }
         }
@@ -498,7 +607,7 @@ mod v14 {
       let mod_ident = format_ident!("{}", mod_name.to_snake_case());
 
       let mut call_fields = TokenStream::new();
-      //let mut query_fields = TokenStream::new();
+      let mut query_fields = TokenStream::new();
 
       // Generate module functions.
       if let Some(calls) = &md.calls {
@@ -521,6 +630,15 @@ mod v14 {
         }
       }
 
+      // Generate module storage query functions.
+      if let Some(storage) = &md.storage {
+        let mod_prefix = &storage.prefix;
+        for md in &storage.entries {
+          let code = self.gen_storage_func(mod_prefix, md);
+          query_fields.append_all(code);
+        }
+      }
+
       let code = quote! {
         pub mod #mod_ident {
           use super::*;
@@ -540,14 +658,15 @@ mod v14 {
             }
           }
 
-          /*
-          #[derive(Clone, Debug, Default)]
-          pub struct QueryApi;
+          #[derive(Clone, Debug)]
+          pub struct QueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            pub(crate) at: Option<::sub_api::BlockHash>,
+          }
 
-          impl QueryApi {
+          impl<'api> QueryApi<'api> {
             #query_fields
           }
-          */
         }
       };
       (mod_ident, code)
@@ -761,7 +880,7 @@ mod v14 {
 
     pub fn generate(self) -> TokenStream {
       let mut call_fields = TokenStream::new();
-      //let mut query_fields = TokenStream::new();
+      let mut query_fields = TokenStream::new();
 
       // Generate module code.
       let modules: Vec<_> = self
@@ -775,13 +894,14 @@ mod v14 {
               api::#ident::CallApi::from(self.api)
             }
           });
-          /*
           query_fields.append_all(quote! {
-            pub fn #ident(&self) -> api::#ident::QueryApi {
-              api::#ident::QueryApi::default()
+            pub fn #ident(&self) -> api::#ident::QueryApi<'api> {
+              api::#ident::QueryApi {
+                api: self.api,
+                at: self.at,
+              }
             }
           });
-          */
 
           code
         })
@@ -832,13 +952,28 @@ mod v14 {
             CallApi { api: self }
           }
 
+          pub fn query(&self) -> QueryApi {
+            QueryApi { api: self, at: None }
+          }
+
+          pub fn query_at(&self, block: ::sub_api::BlockHash) -> QueryApi {
+            QueryApi { api: self, at: Some(block) }
+          }
+
           pub fn wrap_call(&self, call: types::#call_ty) -> ::sub_api::Result<WrappedCall> {
             Ok(WrappedCall::new(self, call))
           }
         }
 
+        #[async_trait::async_trait]
         impl ::sub_api::ChainApi for Api {
           type RuntimeCall = types::#call_ty;
+
+          async fn get_nonce(&self, account: ::sub_api::AccountId) -> ::sub_api::Result<u32> {
+            let info = self.query().system().account(account).await?;
+            Ok(info.nonce)
+          }
+
           fn client(&self) -> &::sub_api::Client {
             &self.client
           }
@@ -867,15 +1002,15 @@ mod v14 {
           }
         }
 
-        /*
-        #[derive(Clone, Default)]
-        pub struct QueryApi {
+        #[derive(Clone, Debug)]
+        pub struct QueryApi<'api> {
+          api: &'api Api,
+          at: Option<::sub_api::BlockHash>,
         }
 
-        impl QueryApi {
+        impl<'api> QueryApi<'api> {
           #query_fields
         }
-          */
       }
     }
   }

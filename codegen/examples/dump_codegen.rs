@@ -22,6 +22,7 @@ async fn main() -> Result<()> {
   //println!("{version:#?}");
 
   let code = generate(metadata)?;
+  eprintln!("------------- Generated code.  Now formatting.");
   println!("{}", rustfmt_wrapper::rustfmt(code).unwrap());
   //println!("{code}");
 

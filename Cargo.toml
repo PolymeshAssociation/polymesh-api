@@ -47,6 +47,7 @@ frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "2", default-features = false }
 lazy_static = "1.4.0"
+async-trait = "0.1"
 serde-big-array = "0.4.1"
 
 [dev-dependencies]

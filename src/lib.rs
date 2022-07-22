@@ -6,6 +6,7 @@ pub mod basic_types;
 pub mod rpc;
 
 pub mod block;
+pub use block::*;
 
 pub mod client;
 pub use client::*;

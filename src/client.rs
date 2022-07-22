@@ -2,9 +2,10 @@ use jsonrpsee::rpc_params;
 use jsonrpsee::types::ParamsSer;
 use jsonrpsee::core::client::Subscription;
 
-use codec::Encode;
+use codec::{Decode, Encode};
 
 use sp_core::{
+  storage::{StorageData, StorageKey},
   sr25519, Pair,
 };
 use sp_runtime::generic::Era;
@@ -15,12 +16,17 @@ use serde::de::DeserializeOwned;
 use frame_metadata::RuntimeMetadataPrefixed;
 use sp_version::RuntimeVersion;
 
+use async_trait::async_trait;
+
 use crate::rpc::*;
 use crate::block::*;
 use crate::error::*;
 
+#[async_trait]
 pub trait ChainApi {
   type RuntimeCall: Clone + Encode + std::fmt::Debug;
+
+  async fn get_nonce(&self, account: AccountId) -> Result<u32>;
 
   fn client(&self) -> &Client;
 }
@@ -45,7 +51,7 @@ impl SimpleSigner {
     let client = call.api.client();
     // Query account nonce.
     if self.nonce == 0 {
-        self.nonce = client.get_nonce(&self.account).await?.unwrap_or(0);
+        self.nonce = call.api.get_nonce(self.account.clone()).await?;
     }
 
     let encoded_call = call.encoded();
@@ -160,9 +166,27 @@ impl Client {
     )
   }
 
-  pub async fn get_nonce(&self, _account: &AccountId) -> Result<Option<u32>> {
-    // TODO:
-    Ok(Some(0))
+  pub async fn get_system_properties(&self) -> Result<SystemProperties> {
+    Ok(self.request("system_properties", rpc_params!()).await?)
+  }
+
+  pub async fn get_storage_by_key<T: Decode>(
+    &self,
+    key: StorageKey,
+    at: Option<BlockHash>,
+  ) -> Result<Option<T>> {
+    let value = self.get_storage_data_by_key(key, at).await?
+     .map(|data| T::decode(&mut data.0.as_slice())).transpose()?;
+    Ok(value)
+  }
+
+  pub async fn get_storage_data_by_key(
+    &self,
+    key: StorageKey,
+    at: Option<BlockHash>,
+  ) -> Result<Option<StorageData>> {
+    Ok(self
+      .request("state_getStorage", rpc_params!(key, at)).await?)
   }
 
   pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<Subscription<TransactionStatus>> {
