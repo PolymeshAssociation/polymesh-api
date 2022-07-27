@@ -2,6 +2,7 @@ pub mod error;
 pub use error::*;
 
 pub mod basic_types;
+pub use basic_types::*;
 
 pub mod rpc;
 

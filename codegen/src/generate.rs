@@ -182,15 +182,15 @@ mod v14 {
         [
           (
             "sp_core::crypto::AccountId32",
-            quote!(::sub_api::basic_types::sp_core::crypto::AccountId32),
+            quote!(::sub_api::sp_core::crypto::AccountId32),
           ),
           (
             "sp_runtime::multiaddress::MultiAddress",
-            quote!(::sub_api::basic_types::MultiAddress),
+            quote!(::sub_api::MultiAddress),
           ),
           (
             "sp_runtime::generic::era::Era",
-            quote!(::sub_api::basic_types::sp_runtime::generic::Era),
+            quote!(::sub_api::sp_runtime::generic::Era),
           ),
           ("BTreeSet", quote!(std::collections::BTreeSet)),
           ("BTreeMap", quote!(std::collections::BTreeMap)),
@@ -317,7 +317,7 @@ mod v14 {
           TypeDef::Array(ty) => {
             let len = ty.len() as usize;
             if len > 32 {
-              return quote! { #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))] };
+              return quote! { #[cfg_attr(feature = "serde", serde(with = "::serde_big_array::BigArray"))] };
             }
           }
           _ => (),
@@ -496,7 +496,7 @@ mod v14 {
         };
         if let Some(hash) = hash_func {
           hashing.append_all(quote! {
-            buf.extend(::sub_api::basic_types::frame_support::#hash(&#key_ident.encode()));
+            buf.extend(::sub_api::frame_support::#hash(&#key_ident.encode()));
           });
         } else {
           hashing.append_all(quote! {
@@ -527,12 +527,12 @@ mod v14 {
         quote! {
           #(#[doc = #docs])*
           pub async fn #storage_ident(&self, #keys) -> ::sub_api::error::Result<#return_ty> {
-            use ::sub_api::basic_types::frame_support::StorageHasher;
+            use ::sub_api::frame_support::StorageHasher;
             use ::codec::Encode;
             let mut buf = Vec::with_capacity(512);
             buf.extend([#(#key_prefix,)*]);
             #hashing
-            let key = ::sp_core::storage::StorageKey(buf);
+            let key = ::sub_api::sp_core::storage::StorageKey(buf);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
@@ -541,7 +541,7 @@ mod v14 {
         quote! {
           #(#[doc = #docs])*
           pub async fn #storage_ident(&self) -> ::sub_api::error::Result<#return_ty> {
-            let key = ::sp_core::storage::StorageKey(vec![#(#key_prefix,)*]);
+            let key = ::sub_api::sp_core::storage::StorageKey(vec![#(#key_prefix,)*]);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
@@ -916,8 +916,8 @@ mod v14 {
 
         pub const API_METADATA_BYTES: &'static [u8] = &[ #(#metadata_bytes,)* ];
         ::lazy_static::lazy_static! {
-            pub static ref API_METADATA: ::frame_metadata::v14::RuntimeMetadataV14 =
-              ::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
+            pub static ref API_METADATA: ::sub_api::frame_metadata::v14::RuntimeMetadataV14 =
+              ::sub_api::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
                   .expect("Shouldn't be able to fail");
         }
 
