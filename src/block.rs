@@ -80,6 +80,10 @@ pub struct ExtrinsicV4 {
 }
 
 impl ExtrinsicV4 {
+  pub fn tx_hash(tx: &[u8]) -> TxHash {
+    H256(blake2_256(tx))
+  }
+
   pub fn signed(account: AccountId, sig: MultiSignature, extra: Extra, call: Encoded) -> Self {
     Self {
       signature: Some((GenericAddress::from(account), sig, extra)),
@@ -92,6 +96,14 @@ impl ExtrinsicV4 {
       signature: None,
       call,
     }
+  }
+
+  pub fn as_hex_and_hash(&self) -> (String, TxHash) {
+    let tx = self.encode();
+    let mut tx_hex = hex::encode(tx);
+    tx_hex.insert_str(0, "0x");
+    let tx_hash = Self::tx_hash(tx_hex.as_bytes());
+    (tx_hex, tx_hash)
   }
 
   pub fn to_hex(&self) -> String {
@@ -150,8 +162,12 @@ pub struct Block {
 }
 
 impl Block {
-  pub fn find_extrinsic(&self, xthex: &str) -> Option<usize> {
-    self.extrinsics.iter().position(|xt| xt == xthex)
+  pub fn find_extrinsic(&self, xt_hash: TxHash) -> Option<usize> {
+    // TODO: Add caching of blocks with extrinsic hashes.
+    self.extrinsics.iter().position(|xt| {
+      let hash = ExtrinsicV4::tx_hash(xt.as_bytes());
+      hash == xt_hash
+    })
   }
   pub fn parent(&self) -> BlockHash {
     self.header.parent_hash
@@ -171,5 +187,41 @@ impl Block {
 
   pub fn to_string(&self) -> String {
     format!("{:?}", self)
+  }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Decode, PartialEq, Eq)]
+pub enum Phase {
+  ApplyExtrinsic(u32),
+  Finalization,
+  Initialization,
+}
+
+#[derive(Clone, Debug, Decode)]
+pub struct EventRecord<Event: Clone + Decode + std::fmt::Debug> {
+  pub phase: Phase,
+  pub event: Event,
+  pub topics: Vec<BlockHash>,
+}
+
+impl<Event: Clone + Decode + std::fmt::Debug> EventRecord<Event> {
+  pub fn to_string(&self) -> String {
+    format!("{:#?}", self)
+  }
+}
+
+#[derive(Clone, Debug, Decode, Default)]
+pub struct EventRecords<Event: Clone + Decode + std::fmt::Debug>(Vec<EventRecord<Event>>);
+
+impl<Event: Clone + Decode + std::fmt::Debug> EventRecords<Event> {
+  pub fn from_vec(mut events: Vec<EventRecord<Event>>, filter: Option<Phase>) -> Self {
+    if let Some(filter) = filter {
+      events.retain(|ev| ev.phase == filter);
+    }
+    Self(events)
+  }
+
+  pub fn to_string(&self) -> String {
+    format!("{:#?}", self.0)
   }
 }

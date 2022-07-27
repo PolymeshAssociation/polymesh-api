@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
   println!("encoded = {}", hex::encode(call.encode()));
   println!(
     "call_json = {:#?}",
-    serde_json::to_string(call.runtime_call())
+    serde_json::to_string(call.runtime_call())?
   );
   let mut res1 = alice.submit_and_watch(&call).await?;
 
@@ -41,11 +41,13 @@ async fn main() -> Result<()> {
   println!("encoded = {}", hex::encode(call.encode()));
   println!(
     "call_json = {:#?}",
-    serde_json::to_string(call.runtime_call())
+    serde_json::to_string(call.runtime_call())?
   );
   let mut res2 = alice.submit_and_watch(&call).await?;
-  println!("call1 result = {:?}", res1.next().await);
-  println!("call2 result = {:?}", res2.next().await);
+  println!("call1 result = {:?}", res1.wait_in_block().await);
+  println!("call2 result = {:?}", res2.wait_in_block().await);
 
+  println!("call1 events = {:#?}", res1.events().await);
+  println!("call2 events = {:#?}", res2.events().await);
   Ok(())
 }

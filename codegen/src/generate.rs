@@ -163,6 +163,7 @@ mod v14 {
     rename_types: HashMap<String, TokenStream>,
     ord_types: HashSet<String>,
     call: TokenStream,
+    event: TokenStream,
   }
 
   impl Generator {
@@ -173,6 +174,7 @@ mod v14 {
       let runtime_ident = segments_ident(runtime_ns);
 
       let call = quote! { #runtime_ident::Call };
+      let event = quote! { #runtime_ident::Event };
       let external_modules = HashSet::from_iter(
         ["sp_arithmetic", "sp_version"]
           .iter()
@@ -198,6 +200,7 @@ mod v14 {
             "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
             quote!(Vec),
           ),
+          ("frame_system::EventRecord", quote!(::sub_api::EventRecord)),
         ]
         .into_iter()
         .map(|(name, code)| (name.to_string(), code)),
@@ -209,6 +212,7 @@ mod v14 {
         rename_types,
         ord_types: Default::default(),
         call,
+        event,
       };
       // Try a limited number of types to mark all types needing the `Ord` type.
       let mut ord_type_ids = HashSet::new();
@@ -504,7 +508,13 @@ mod v14 {
           });
         }
       }
-      let value_ty = self.type_name(value_ty, false).unwrap();
+      let value_ty = if mod_prefix == "System" && storage_name == "Events" {
+        let event_ty = &self.event;
+        quote!(Vec<::sub_api::EventRecord<#event_ty>>)
+      } else {
+        self.type_name(value_ty, false).unwrap()
+      };
+
       let (return_ty, return_value) = match md.modifier {
         StorageEntryModifier::Optional => (quote! { Option<#value_ty>}, quote! { Ok(value) }),
         StorageEntryModifier::Default => {
@@ -911,6 +921,7 @@ mod v14 {
 
       let metadata_bytes = self.md.encode();
       let call_ty = &self.call;
+      let event_ty = &self.event;
       quote! {
         use ::codec::Decode;
 
@@ -968,10 +979,19 @@ mod v14 {
         #[async_trait::async_trait]
         impl ::sub_api::ChainApi for Api {
           type RuntimeCall = types::#call_ty;
+          type RuntimeEvent = types::#event_ty;
 
           async fn get_nonce(&self, account: ::sub_api::AccountId) -> ::sub_api::Result<u32> {
             let info = self.query().system().account(account).await?;
             Ok(info.nonce)
+          }
+
+          async fn block_events(&self, block: Option<::sub_api::BlockHash>) -> ::sub_api::Result<Vec<::sub_api::EventRecord<Self::RuntimeEvent>>> {
+            let system = match block {
+              Some(block) => self.query_at(block).system(),
+              None => self.query().system(),
+            };
+            Ok(system.events().await?)
           }
 
           fn client(&self) -> &::sub_api::Client {
@@ -988,7 +1008,7 @@ mod v14 {
           #call_fields
         }
 
-        pub type WrappedCall<'api> = ::sub_api::client::WrappedCall<'api, Api>;
+        pub type WrappedCall<'api> = ::sub_api::client::Call<'api, Api>;
 
         impl<'api> From<WrappedCall<'api>> for types::#call_ty {
           fn from(wrapped: WrappedCall<'api>) -> Self {

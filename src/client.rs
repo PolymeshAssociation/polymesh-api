@@ -1,33 +1,40 @@
+use jsonrpsee::core::client::Subscription;
 use jsonrpsee::rpc_params;
 use jsonrpsee::types::ParamsSer;
-use jsonrpsee::core::client::Subscription;
 
 use codec::{Decode, Encode};
 
 use sp_core::{
+  sr25519,
   storage::{StorageData, StorageKey},
-  sr25519, Pair,
+  Pair,
 };
 use sp_runtime::generic::Era;
 
 use hex::FromHex;
-use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 
 use frame_metadata::RuntimeMetadataPrefixed;
 use sp_version::RuntimeVersion;
 
 use async_trait::async_trait;
 
-use crate::rpc::*;
 use crate::block::*;
 use crate::error::*;
+use crate::rpc::*;
 
 #[async_trait]
 pub trait ChainApi {
   type RuntimeCall: Clone + Encode + std::fmt::Debug;
+  type RuntimeEvent: Clone + Decode + std::fmt::Debug;
 
   async fn get_nonce(&self, account: AccountId) -> Result<u32>;
+
+  async fn block_events(
+    &self,
+    block: Option<BlockHash>,
+  ) -> Result<Vec<EventRecord<Self::RuntimeEvent>>>;
 
   fn client(&self) -> &Client;
 }
@@ -48,11 +55,14 @@ impl SimpleSigner {
     }
   }
 
-  pub async fn submit_and_watch<'api, Api: ChainApi>(&mut self, call: &WrappedCall<'api, Api>) -> Result<Subscription<TransactionStatus>> {
+  pub async fn submit_and_watch<'api, Api: ChainApi>(
+    &mut self,
+    call: &Call<'api, Api>,
+  ) -> Result<CallResults<'api, Api>> {
     let client = call.api.client();
     // Query account nonce.
     if self.nonce == 0 {
-        self.nonce = call.api.get_nonce(self.account.clone()).await?;
+      self.nonce = call.api.get_nonce(self.account.clone()).await?;
     }
 
     let encoded_call = call.encoded();
@@ -63,7 +73,7 @@ impl SimpleSigner {
 
     let xt = ExtrinsicV4::signed(self.account.clone(), sig.into(), extra, encoded_call);
 
-    let res = client.submit_and_watch(xt).await?;
+    let res = call.submit_and_watch(xt).await?;
 
     // Update nonce if the call was submitted.
     self.nonce += 1;
@@ -72,12 +82,138 @@ impl SimpleSigner {
   }
 }
 
-pub struct WrappedCall<'api, Api: ChainApi> {
+pub struct CallResults<'api, Api: ChainApi> {
+  api: &'api Api,
+  sub: Option<Subscription<TransactionStatus>>,
+  tx_hash: TxHash,
+  status: Option<TransactionStatus>,
+  block: Option<BlockHash>,
+  events: Option<EventRecords<Api::RuntimeEvent>>,
+  finalized: bool,
+}
+
+impl<'api, Api: ChainApi> CallResults<'api, Api> {
+  pub fn new(api: &'api Api, sub: Subscription<TransactionStatus>, tx_hash: TxHash) -> Self {
+    Self {
+      api,
+      sub: Some(sub),
+      tx_hash,
+      status: None,
+      block: None,
+      events: None,
+      finalized: false,
+    }
+  }
+
+  async fn next_status(&mut self) -> Result<bool> {
+    if let Some(sub) = &mut self.sub {
+      match sub.next().await {
+        None => {
+          // End of stream, no more updates possible.
+          self.sub = None;
+          Ok(false)
+        }
+        Some(Ok(status)) => {
+          use TransactionStatus::*;
+          // Got an update.
+          match status {
+            InBlock(block) => {
+              self.block = Some(block);
+            }
+            Finalized(block) => {
+              self.finalized = true;
+              self.block = Some(block);
+            }
+            Future | Ready | Broadcast(_) => (),
+            Retracted(_) => {
+              // The transaction is back in the pool.  Might be included in a future block.
+              self.block = None;
+            }
+            _ => {
+              // Call failed to be included in a block or finalized.
+              self.block = None;
+              self.sub = None;
+            }
+          }
+          self.status = Some(status);
+          Ok(true)
+        }
+        Some(Err(err)) => {
+          // Error waiting for an update.  Most likely the connection was closed.
+          self.sub = None;
+          Err(err)?
+        }
+      }
+    } else {
+      Ok(false)
+    }
+  }
+
+  pub async fn events(&mut self) -> Result<Option<&EventRecords<Api::RuntimeEvent>>> {
+    self.load_events().await?;
+    Ok(self.events.as_ref())
+  }
+
+  async fn load_events(&mut self) -> Result<bool> {
+    // Do nothing if we already have the events.
+    if self.events.is_some() {
+      return Ok(true);
+    }
+
+    // Make sure the transaction is in a block.
+    let block_hash = if let Some(block) = self.block {
+      block
+    } else {
+      match self.wait_in_block().await? {
+        None => {
+          // Still not in a block.
+          return Ok(false);
+        }
+        Some(block) => block,
+      }
+    };
+
+    // Find the extrinsic index of our transaction.
+    let client = self.api.client();
+    let idx = client
+      .find_extrinsic_block_index(block_hash, self.tx_hash)
+      .await?;
+
+    if let Some(idx) = idx {
+      // Get block events.
+      let events = self.api.block_events(Some(block_hash)).await?;
+      self.events = Some(EventRecords::from_vec(
+        events,
+        Some(Phase::ApplyExtrinsic(idx as u32)),
+      ));
+      Ok(true)
+    } else {
+      Ok(false)
+    }
+  }
+
+  pub fn status(&self) -> Option<&TransactionStatus> {
+    self.status.as_ref()
+  }
+
+  pub async fn wait_in_block(&mut self) -> Result<Option<BlockHash>> {
+    // Wait for call to be included in a block.
+    while self.block.is_none() {
+      if !self.next_status().await? {
+        // No more updates available.
+        return Ok(None);
+      }
+    }
+    return Ok(self.block);
+  }
+}
+
+pub struct Call<'api, Api: ChainApi> {
   api: &'api Api,
   call: Api::RuntimeCall,
 }
 
-impl<'api, Api: ChainApi> WrappedCall<'api, Api> {
+impl<'api, Api: ChainApi> Call<'api, Api> {
   pub fn new(api: &'api Api, call: Api::RuntimeCall) -> Self {
     Self { api, call }
   }
@@ -95,14 +231,22 @@ impl<'api, Api: ChainApi> WrappedCall<'api, Api> {
     call.into()
   }
 
-  pub async fn submit_unsigned_and_watch(&self) -> Result<Subscription<TransactionStatus>> {
-    let xt = ExtrinsicV4::unsigned(self.encoded());
+  pub async fn submit_unsigned_and_watch(&self) -> Result<CallResults<'api, Api>> {
+    Ok(
+      self
+        .submit_and_watch(ExtrinsicV4::unsigned(self.encoded()))
+        .await?,
+    )
+  }
 
-    Ok(self.api.client().submit_and_watch(xt).await?)
+  pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<CallResults<'api, Api>> {
+    let (tx_hex, tx_hash) = xt.as_hex_and_hash();
+    let status = self.api.client().submit_and_watch(tx_hex).await?;
+    Ok(CallResults::new(self.api, status, tx_hash))
   }
 }
 
-impl<'api, Api: ChainApi> Encode for WrappedCall<'api, Api> {
+impl<'api, Api: ChainApi> Encode for Call<'api, Api> {
   fn size_hint(&self) -> usize {
     self.call.size_hint()
   }
@@ -111,7 +255,7 @@ impl<'api, Api: ChainApi> Encode for WrappedCall<'api, Api> {
   }
 }
 
-impl<'api, Api: ChainApi> std::fmt::Debug for WrappedCall<'api, Api> {
+impl<'api, Api: ChainApi> std::fmt::Debug for Call<'api, Api> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     self.call.fmt(f)
   }
@@ -177,8 +321,11 @@ impl Client {
     key: StorageKey,
     at: Option<BlockHash>,
   ) -> Result<Option<T>> {
-    let value = self.get_storage_data_by_key(key, at).await?
-     .map(|data| T::decode(&mut data.0.as_slice())).transpose()?;
+    let value = self
+      .get_storage_data_by_key(key, at)
+      .await?
+      .map(|data| T::decode(&mut data.0.as_slice()))
+      .transpose()?;
     Ok(value)
   }
 
@@ -187,44 +334,57 @@ impl Client {
     key: StorageKey,
     at: Option<BlockHash>,
   ) -> Result<Option<StorageData>> {
-    Ok(self
-      .request("state_getStorage", rpc_params!(key, at)).await?)
+    Ok(
+      self
+        .request("state_getStorage", rpc_params!(key, at))
+        .await?,
+    )
   }
 
   /// Subscribe to new blocks.
   pub async fn subscribe_blocks(&self) -> Result<Subscription<Header>> {
-    Ok(self.rpc.subscribe(
-      "chain_subscribeNewHeads",
-      rpc_params!(),
-      "chain_unsubscribeNewHeads",
-    ).await?)
+    Ok(
+      self
+        .rpc
+        .subscribe(
+          "chain_subscribeNewHeads",
+          rpc_params!(),
+          "chain_unsubscribeNewHeads",
+        )
+        .await?,
+    )
   }
 
   /// Subscribe to new finalized blocks.
   pub async fn subscribe_finalized_blocks(&self) -> Result<Subscription<Header>> {
-    Ok(self.rpc.subscribe(
-      "chain_subscribeFinalizedHeads",
-      rpc_params!(),
-      "chain_unsubscribeFinalizedHeads",
-    ).await?)
+    Ok(
+      self
+        .rpc
+        .subscribe(
+          "chain_subscribeFinalizedHeads",
+          rpc_params!(),
+          "chain_unsubscribeFinalizedHeads",
+        )
+        .await?,
+    )
   }
 
   /// Submit and watch a transaction.
-  pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<Subscription<TransactionStatus>> {
-    let xthex = xt.to_hex();
-    Ok(self.rpc.subscribe(
-      "author_submitAndWatchExtrinsic",
-      rpc_params!(xthex),
-      "author_unwatchExtrinsic",
-    ).await?)
+  pub async fn submit_and_watch(&self, tx_hex: String) -> Result<Subscription<TransactionStatus>> {
+    Ok(
+      self
+        .rpc
+        .subscribe(
+          "author_submitAndWatchExtrinsic",
+          rpc_params!(tx_hex),
+          "author_unwatchExtrinsic",
+        )
+        .await?,
+    )
   }
 
   /// Make a RPC request to the node.
-  pub async fn request<'a, R>(
-    &self,
-    method: &'a str,
-    params: Option<ParamsSer<'a>>,
-  ) -> Result<R>
+  pub async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
   where
     R: DeserializeOwned,
   {
@@ -244,12 +404,22 @@ impl Client {
 
   /// Get the current finalized block hash.
   pub async fn get_finalized_block(&self) -> Result<BlockHash> {
-    Ok(self.rpc.request("chain_getFinalizedHead", rpc_params!()).await?)
+    Ok(
+      self
+        .rpc
+        .request("chain_getFinalizedHead", rpc_params!())
+        .await?,
+    )
   }
 
   /// Get a block.
   pub async fn get_signed_block(&self, block: Option<BlockHash>) -> Result<Option<SignedBlock>> {
-    Ok(self.rpc.request("chain_getBlock", rpc_params!(block)).await?)
+    Ok(
+      self
+        .rpc
+        .request("chain_getBlock", rpc_params!(block))
+        .await?,
+    )
   }
 
   /// Get a block.
@@ -258,9 +428,25 @@ impl Client {
     Ok(block.map(|b| b.block))
   }
 
+  /// Get find extrinsic index in block.
+  /// The extrinsic index is used to filter the block events for that extrinsic.
+  pub async fn find_extrinsic_block_index(
+    &self,
+    block: BlockHash,
+    tx_hash: TxHash,
+  ) -> Result<Option<usize>> {
+    let block = self.get_block(Some(block)).await?;
+    Ok(block.and_then(|b| b.find_extrinsic(tx_hash)))
+  }
+
   /// Get the header of a block.
   pub async fn get_block_header(&self, block: Option<BlockHash>) -> Result<Option<Header>> {
-    Ok(self.rpc.request("chain_getHeader", rpc_params!(block)).await?)
+    Ok(
+      self
+        .rpc
+        .request("chain_getHeader", rpc_params!(block))
+        .await?,
+    )
   }
 
   async fn rpc_get_block_hash(rpc: &RpcClient, block_number: u32) -> Result<BlockHash> {
@@ -275,24 +461,38 @@ impl Client {
 
   /// Subscribe to RuntimeVersion updates.
   pub async fn subscribe_runtime_version(&self) -> Result<Subscription<RuntimeVersion>> {
-    Ok(self.rpc.subscribe(
-      "chain_subscribeRuntimeVersion",
-      rpc_params!(),
-      "chain_unsubscribeRuntimeVersion",
-    ).await?)
+    Ok(
+      self
+        .rpc
+        .subscribe(
+          "chain_subscribeRuntimeVersion",
+          rpc_params!(),
+          "chain_unsubscribeRuntimeVersion",
+        )
+        .await?,
+    )
   }
 
-  async fn rpc_get_runtime_version(rpc: &RpcClient, block: Option<BlockHash>) -> Result<RuntimeVersion> {
+  async fn rpc_get_runtime_version(
+    rpc: &RpcClient,
+    block: Option<BlockHash>,
+  ) -> Result<RuntimeVersion> {
     let params = rpc_params!(block);
     Ok(rpc.request("state_getRuntimeVersion", params).await?)
   }
 
   /// Get the RuntimeVersion of a block.
-  pub async fn get_block_runtime_version(&self, block: Option<BlockHash>) -> Result<RuntimeVersion> {
+  pub async fn get_block_runtime_version(
+    &self,
+    block: Option<BlockHash>,
+  ) -> Result<RuntimeVersion> {
     Ok(Self::rpc_get_runtime_version(&self.rpc, block).await?)
   }
 
-  async fn rpc_get_metadata(rpc: &RpcClient, block: Option<BlockHash>) -> Result<RuntimeMetadataPrefixed> {
+  async fn rpc_get_metadata(
+    rpc: &RpcClient,
+    block: Option<BlockHash>,
+  ) -> Result<RuntimeMetadataPrefixed> {
     let params = rpc_params!(block);
     let hex: String = rpc.request("state_getMetadata", params).await?;
 
@@ -301,7 +501,10 @@ impl Client {
   }
 
   /// Get the RuntimeMetadata of a block.
-  pub async fn get_block_metadata(&self, block: Option<BlockHash>) -> Result<RuntimeMetadataPrefixed> {
+  pub async fn get_block_metadata(
+    &self,
+    block: Option<BlockHash>,
+  ) -> Result<RuntimeMetadataPrefixed> {
     Ok(Self::rpc_get_metadata(&self.rpc, block).await?)
   }
 }
