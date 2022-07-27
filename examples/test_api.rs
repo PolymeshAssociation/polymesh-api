@@ -5,12 +5,9 @@ use anyhow::Result;
 use sp_keyring::AccountKeyring;
 use codec::Encode;
 
-use sub_api_macro::*;
 use sub_api::SimpleSigner;
 
-#[sub_api(metadata_file = "specs/polymesh_dev_spec_5000001.meta")]
-pub mod polymesh {}
-use polymesh::Api;
+use polymesh_api::Api;
 
 #[tokio::main]
 async fn main() -> Result<()> {
