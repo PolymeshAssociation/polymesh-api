@@ -10,6 +10,7 @@ use sp_core::{
 };
 use sp_runtime::generic::Era;
 
+use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 
@@ -94,7 +95,7 @@ impl<'api, Api: ChainApi> WrappedCall<'api, Api> {
     call.into()
   }
 
-  pub async fn submit_and_watch(&self) -> Result<Subscription<TransactionStatus>> {
+  pub async fn submit_unsigned_and_watch(&self) -> Result<Subscription<TransactionStatus>> {
     let xt = ExtrinsicV4::unsigned(self.encoded());
 
     Ok(self.api.client().submit_and_watch(xt).await?)
@@ -135,9 +136,9 @@ pub struct Client {
 impl Client {
   pub async fn new(url: &str) -> Result<Self> {
     let rpc = RpcClient::new(url).await?;
-    let runtime_version = rpc.get_runtime_version(None).await?;
-    let metadata = rpc.get_metadata(None).await?;
-    let genesis_hash = rpc.get_block_hash(0).await?;
+    let runtime_version = Self::rpc_get_runtime_version(&rpc, None).await?;
+    let metadata = Self::rpc_get_metadata(&rpc, None).await?;
+    let genesis_hash = Self::rpc_get_block_hash(&rpc, 0).await?;
     Ok(Self {
       rpc,
       runtime_version,
@@ -166,6 +167,7 @@ impl Client {
     )
   }
 
+  /// Get the `SystemProperties` of the chain.
   pub async fn get_system_properties(&self) -> Result<SystemProperties> {
     Ok(self.request("system_properties", rpc_params!()).await?)
   }
@@ -189,6 +191,25 @@ impl Client {
       .request("state_getStorage", rpc_params!(key, at)).await?)
   }
 
+  /// Subscribe to new blocks.
+  pub async fn subscribe_blocks(&self) -> Result<Subscription<Header>> {
+    Ok(self.rpc.subscribe(
+      "chain_subscribeNewHeads",
+      rpc_params!(),
+      "chain_unsubscribeNewHeads",
+    ).await?)
+  }
+
+  /// Subscribe to new finalized blocks.
+  pub async fn subscribe_finalized_blocks(&self) -> Result<Subscription<Header>> {
+    Ok(self.rpc.subscribe(
+      "chain_subscribeFinalizedHeads",
+      rpc_params!(),
+      "chain_unsubscribeFinalizedHeads",
+    ).await?)
+  }
+
+  /// Submit and watch a transaction.
   pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<Subscription<TransactionStatus>> {
     let xthex = xt.to_hex();
     Ok(self.rpc.subscribe(
@@ -198,6 +219,7 @@ impl Client {
     ).await?)
   }
 
+  /// Make a RPC request to the node.
   pub async fn request<'a, R>(
     &self,
     method: &'a str,
@@ -209,6 +231,7 @@ impl Client {
     Ok(self.rpc.request(method, params).await?)
   }
 
+  /// Make a batch of RPC requests to the node.
   pub async fn batch_request<'a, R>(
     &self,
     batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,
@@ -219,15 +242,66 @@ impl Client {
     Ok(self.rpc.batch_request(batch).await?)
   }
 
+  /// Get the current finalized block hash.
+  pub async fn get_finalized_block(&self) -> Result<BlockHash> {
+    Ok(self.rpc.request("chain_getFinalizedHead", rpc_params!()).await?)
+  }
+
+  /// Get a block.
+  pub async fn get_signed_block(&self, block: Option<BlockHash>) -> Result<Option<SignedBlock>> {
+    Ok(self.rpc.request("chain_getBlock", rpc_params!(block)).await?)
+  }
+
+  /// Get a block.
+  pub async fn get_block(&self, block: Option<BlockHash>) -> Result<Option<Block>> {
+    let block = self.get_signed_block(block).await?;
+    Ok(block.map(|b| b.block))
+  }
+
+  /// Get the header of a block.
+  pub async fn get_block_header(&self, block: Option<BlockHash>) -> Result<Option<Header>> {
+    Ok(self.rpc.request("chain_getHeader", rpc_params!(block)).await?)
+  }
+
+  async fn rpc_get_block_hash(rpc: &RpcClient, block_number: u32) -> Result<BlockHash> {
+    let params = rpc_params!(block_number);
+    Ok(rpc.request("chain_getBlockHash", params).await?)
+  }
+
+  /// Get the block hash for a `block_number`.
   pub async fn get_block_hash(&self, block_number: u32) -> Result<BlockHash> {
-    Ok(self.rpc.get_block_hash(block_number).await?)
+    Ok(Self::rpc_get_block_hash(&self.rpc, block_number).await?)
   }
 
+  /// Subscribe to RuntimeVersion updates.
+  pub async fn subscribe_runtime_version(&self) -> Result<Subscription<RuntimeVersion>> {
+    Ok(self.rpc.subscribe(
+      "chain_subscribeRuntimeVersion",
+      rpc_params!(),
+      "chain_unsubscribeRuntimeVersion",
+    ).await?)
+  }
+
+  async fn rpc_get_runtime_version(rpc: &RpcClient, block: Option<BlockHash>) -> Result<RuntimeVersion> {
+    let params = rpc_params!(block);
+    Ok(rpc.request("state_getRuntimeVersion", params).await?)
+  }
+
+  /// Get the RuntimeVersion of a block.
   pub async fn get_block_runtime_version(&self, block: Option<BlockHash>) -> Result<RuntimeVersion> {
-    Ok(self.rpc.get_runtime_version(block).await?)
+    Ok(Self::rpc_get_runtime_version(&self.rpc, block).await?)
   }
 
+  async fn rpc_get_metadata(rpc: &RpcClient, block: Option<BlockHash>) -> Result<RuntimeMetadataPrefixed> {
+    let params = rpc_params!(block);
+    let hex: String = rpc.request("state_getMetadata", params).await?;
+
+    let bytes = Vec::from_hex(&hex[2..])?;
+    Ok(RuntimeMetadataPrefixed::decode(&mut bytes.as_slice())?)
+  }
+
+  /// Get the RuntimeMetadata of a block.
   pub async fn get_block_metadata(&self, block: Option<BlockHash>) -> Result<RuntimeMetadataPrefixed> {
-    Ok(self.rpc.get_metadata(block).await?)
+    Ok(Self::rpc_get_metadata(&self.rpc, block).await?)
   }
 }

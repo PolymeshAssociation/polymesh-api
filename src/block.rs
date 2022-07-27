@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 pub type TxHash = H256;
 pub type BlockHash = H256;
+pub type Header = generic::Header<u32, traits::BlakeTwo256>;
 
 pub type AccountId = sp_runtime::AccountId32;
 pub type GenericAddress = MultiAddress<AccountId, ()>;
@@ -140,16 +141,12 @@ pub enum TransactionStatus {
   Invalid,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignedBlock {
-  pub block: Block,
-  // Ignore justifications field.
-}
+pub type SignedBlock = generic::SignedBlock<Block>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Block {
   extrinsics: Vec<String>,
-  header: generic::Header<u32, traits::BlakeTwo256>,
+  header: Header,
 }
 
 impl Block {

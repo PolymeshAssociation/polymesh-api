@@ -1,17 +1,10 @@
 use jsonrpsee::core::client::{ClientT, Subscription, SubscriptionClientT};
-use jsonrpsee::rpc_params;
 use jsonrpsee::types::ParamsSer;
 use jsonrpsee::ws_client::{WsClient, WsClientBuilder};
 use jsonrpsee::http_client::{HttpClient, HttpClientBuilder};
 
-use hex::FromHex;
 use serde::de::DeserializeOwned;
 
-use codec::Decode;
-use frame_metadata::RuntimeMetadataPrefixed;
-use sp_version::RuntimeVersion;
-
-use crate::block::BlockHash;
 use crate::error::*;
 
 #[derive(Debug)]
@@ -90,23 +83,5 @@ impl RpcClient {
       InnerRpcClient::Ws(ws) => ws.batch_request(batch).await,
       InnerRpcClient::Http(http) => http.batch_request(batch).await,
     }?)
-  }
-
-  pub async fn get_block_hash(&self, block_number: u32) -> Result<BlockHash> {
-    let params = rpc_params!(block_number);
-    Ok(self.request("chain_getBlockHash", params).await?)
-  }
-
-  pub async fn get_runtime_version(&self, block: Option<BlockHash>) -> Result<RuntimeVersion> {
-    let params = rpc_params!(block);
-    Ok(self.request("state_getRuntimeVersion", params).await?)
-  }
-
-  pub async fn get_metadata(&self, block: Option<BlockHash>) -> Result<RuntimeMetadataPrefixed> {
-    let params = rpc_params!(block);
-    let hex: String = self.request("state_getMetadata", params).await?;
-
-    let bytes = Vec::from_hex(&hex[2..])?;
-    Ok(RuntimeMetadataPrefixed::decode(&mut bytes.as_slice())?)
   }
 }
