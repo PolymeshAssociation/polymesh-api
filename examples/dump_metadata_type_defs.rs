@@ -2,8 +2,8 @@ use std::env;
 
 use anyhow::Result;
 
-use sub_api::schema::*;
 use sub_api::rpc::*;
+use sub_api::schema::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -1,7 +1,7 @@
 use jsonrpsee::core::client::{ClientT, Subscription, SubscriptionClientT};
+use jsonrpsee::http_client::{HttpClient, HttpClientBuilder};
 use jsonrpsee::types::ParamsSer;
 use jsonrpsee::ws_client::{WsClient, WsClientBuilder};
-use jsonrpsee::http_client::{HttpClient, HttpClientBuilder};
 
 use serde::de::DeserializeOwned;
 
@@ -53,16 +53,19 @@ impl RpcClient {
     Notif: DeserializeOwned,
   {
     Ok(match &self.client {
-      InnerRpcClient::Ws(ws) => ws.subscribe(subscribe_method, params, unsubscribe_method).await,
-      InnerRpcClient::Http(http) => http.subscribe(subscribe_method, params, unsubscribe_method).await,
+      InnerRpcClient::Ws(ws) => {
+        ws.subscribe(subscribe_method, params, unsubscribe_method)
+          .await
+      }
+      InnerRpcClient::Http(http) => {
+        http
+          .subscribe(subscribe_method, params, unsubscribe_method)
+          .await
+      }
     }?)
   }
 
-  pub async fn request<'a, R>(
-    &self,
-    method: &'a str,
-    params: Option<ParamsSer<'a>>,
-  ) -> Result<R>
+  pub async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
   where
     R: DeserializeOwned,
   {

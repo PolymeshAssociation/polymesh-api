@@ -2,8 +2,8 @@ use std::env;
 
 use anyhow::Result;
 
-use sp_keyring::AccountKeyring;
 use codec::Encode;
+use sp_keyring::AccountKeyring;
 
 use sub_api::SimpleSigner;
 
@@ -25,7 +25,10 @@ async fn main() -> Result<()> {
   let call = api.call().balances().transfer(dest.into(), 123_012_345)?;
   println!("call = {call:#?}");
   println!("encoded = {}", hex::encode(call.encode()));
-  println!("call_json = {:#?}", serde_json::to_string(call.runtime_call()));
+  println!(
+    "call_json = {:#?}",
+    serde_json::to_string(call.runtime_call())
+  );
   let mut res1 = alice.submit_and_watch(&call).await?;
 
   // Test batches.
@@ -36,7 +39,10 @@ async fn main() -> Result<()> {
   ])?;
   println!("call = {call:#?}");
   println!("encoded = {}", hex::encode(call.encode()));
-  println!("call_json = {:#?}", serde_json::to_string(call.runtime_call()));
+  println!(
+    "call_json = {:#?}",
+    serde_json::to_string(call.runtime_call())
+  );
   let mut res2 = alice.submit_and_watch(&call).await?;
   println!("call1 result = {:?}", res1.next().await);
   println!("call2 result = {:?}", res2.next().await);
