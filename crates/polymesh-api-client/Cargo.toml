@@ -1,24 +1,21 @@
 [package]
-name = "codegen"
+name = "polymesh-api-client"
 version = "0.1.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
-description = "Substrate Rust API Codgen"
+description = "Substrate Rust client API"
 keywords = ["blockchain", "substrate", "codegen"]
-repository = "https://github.com/PolymeshAssociation/sub-api"
-homepage = "https://github.com/PolymeshAssociation/sub-api"
+repository = "https://github.com/PolymeshAssociation/polymesh-api"
+homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
 [dependencies]
 thiserror = "1.0.31"
 log = "0.4"
 hex = "0.4"
 
-anyhow = "1"
-heck = "0.4"
-
-proc-macro2 = "1"
-quote = "1"
+tokio = { version = "1.19", features = ["full"] }
+jsonrpsee = { version = "0.14", features = ["client"] }
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
@@ -27,30 +24,14 @@ serde = "1.0"
 sp-core = { version = "6.0", default-features = false }
 sp-version = { version = "5.0", default-features = false }
 sp-runtime = { version = "6.0", default-features = false }
-sp-api = { version = "4.0.0-dev", default-features = false }
-sp-session = { version = "4.0.0-dev", default-features = false }
 sp-arithmetic = { version = "5.0", default-features = false }
 frame-support = { version = "4.0.0-dev", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "2", default-features = false }
-indexmap = "1.9.1"
-serde-big-array = "0.4.1"
-
-[dev-dependencies]
-anyhow = "1"
-log = "0.4"
-dotenv = "0.15"
-env_logger = "0.9"
-
 lazy_static = "1.4.0"
 async-trait = "0.1"
-
-tokio = { version = "1.19", features = ["full"] }
-sub-api = { version = "0.1", path = "../" }
-rustfmt-wrapper = "0.2.0"
-
-sp-keyring = "6.0.0"
+serde-big-array = "0.4.1"
 
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]
@@ -71,10 +52,8 @@ std = [
 	"frame-support/std",
 	"frame-metadata/std",
 	"sp-core/std",
-	"sp-api/std",
 	"sp-version/std",
 	"sp-runtime/std",
-	"sp-session/std",
 	"sp-arithmetic/std",
 	"scale-info/std",
 ]

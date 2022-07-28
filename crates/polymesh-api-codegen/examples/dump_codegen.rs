@@ -2,9 +2,9 @@ use std::env;
 
 use anyhow::Result;
 
-use sub_api::*;
+use polymesh_api_client::*;
 
-use codegen::*;
+use polymesh_api_codegen::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

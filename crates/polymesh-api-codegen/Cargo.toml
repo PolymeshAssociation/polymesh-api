@@ -1,0 +1,64 @@
+[package]
+name = "polymesh-api-codegen"
+version = "0.1.0"
+edition = "2021"
+authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
+license = "Apache-2.0"
+description = "Substrate Rust API Codgen"
+keywords = ["blockchain", "substrate", "codegen"]
+repository = "https://github.com/PolymeshAssociation/polymesh-api"
+homepage = "https://github.com/PolymeshAssociation/polymesh-api"
+
+[dependencies]
+thiserror = "1.0.31"
+log = "0.4"
+hex = "0.4"
+
+anyhow = "1"
+heck = "0.4"
+
+proc-macro2 = "1"
+quote = "1"
+
+serde = "1.0"
+
+sp-core = { version = "6.0", default-features = false }
+frame-metadata = { version = "15.0.0", default-features = false }
+codec = { version = "3", package = "parity-scale-codec", default-features = false }
+scale-info = { version = "2", default-features = false }
+indexmap = "1.9.1"
+serde-big-array = "0.4.1"
+
+#[dev-dependencies]
+#anyhow = "1"
+#log = "0.4"
+#dotenv = "0.15"
+#env_logger = "0.9"
+#
+#lazy_static = "1.4.0"
+#async-trait = "0.1"
+#
+#tokio = { version = "1.19", features = ["full"] }
+#polymesh-api-client = { version = "0.1", path = "../polymesh-api-client" }
+#rustfmt-wrapper = "0.2.0"
+#
+## substrate
+#sp-arithmetic = { version = "5.0" }
+#sp-keyring = "6.0.0"
+
+[features]
+default = [ "std", "serde", "v12", "v13", "v14" ]
+
+serde = [
+	"sp-core/serde",
+]
+
+v12 = ["frame-metadata/v12"]
+v13 = ["frame-metadata/v13"]
+v14 = ["frame-metadata/v14"]
+
+std = [
+	"frame-metadata/std",
+	"sp-core/std",
+	"scale-info/std",
+]

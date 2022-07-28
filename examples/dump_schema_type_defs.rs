@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use sub_api::schema::*;
+use polymesh_api_client::schema::*;
 
 fn main() -> Result<()> {
   dotenv::dotenv().ok();

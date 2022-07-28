@@ -16,7 +16,7 @@ struct CodegenArgs {
 
 #[proc_macro_attribute]
 #[proc_macro_error]
-pub fn sub_api(args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn codegen_api(args: TokenStream, input: TokenStream) -> TokenStream {
   let args = parse_macro_input!(args as syn::AttributeArgs);
   let item = parse_macro_input!(input as syn::ItemMod);
   let args = CodegenArgs::from_list(&args).unwrap_or_else(|e| abort_call_site!(e));
@@ -29,7 +29,7 @@ pub fn sub_api(args: TokenStream, input: TokenStream) -> TokenStream {
     .read_to_end(&mut buf)
     .unwrap_or_else(|e| abort_call_site!(e));
 
-  match codegen::macro_codegen(&buf, item.ident.into_token_stream().into()) {
+  match polymesh_api_codegen::macro_codegen(&buf, item.ident.into_token_stream().into()) {
     Ok(out) => out.into(),
     Err(err) => abort_call_site!(err),
   }

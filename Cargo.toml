@@ -1,13 +1,20 @@
 [package]
-name = "sub-api"
+name = "polymesh-api"
 version = "0.1.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
-description = "Substrate Rust client API"
-keywords = ["blockchain", "substrate", "codegen"]
-repository = "https://github.com/PolymeshAssociation/sub-api"
-homepage = "https://github.com/PolymeshAssociation/sub-api"
+description = "Polymesh Rust API"
+keywords = ["polymesh", "blockchain", "substrate", "codegen"]
+repository = "https://github.com/PolymeshAssociation/polymesh-api"
+homepage = "https://github.com/PolymeshAssociation/polymesh-api"
+
+[workspace]
+members = [
+	"crates/polymesh-api-codegen-macro",
+	"crates/polymesh-api-codegen",
+	"crates/polymesh-api-client",
+]
 
 [patch.crates-io]
 frame-support = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
@@ -24,28 +31,18 @@ sp-session = { git = "https://github.com/PolymeshAssociation/substrate", branch 
 sp-runtime-interface = { git = "https://github.com/PolymeshAssociation/substrate", branch = "polymesh-monthly-2022-05" }
 
 [dependencies]
-thiserror = "1.0.31"
+thiserror = "1.0"
 log = "0.4"
-hex = "0.4"
 
-tokio = { version = "1.19", features = ["full"] }
-jsonrpsee = { version = "0.14", features = ["client"] }
+polymesh-api-codegen-macro = { version = "0.1", path = "crates/polymesh-api-codegen-macro" }
+polymesh-api-client = { version = "0.1", path = "crates/polymesh-api-client" }
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
 
 # substrate
-sp-core = { version = "6.0", default-features = false }
-sp-version = { version = "5.0", default-features = false }
-sp-runtime = { version = "6.0", default-features = false }
-sp-api = { version = "4.0.0-dev", default-features = false }
-sp-keyring = { version = "6.0.0", default-features = false }
-sp-session = { version = "4.0.0-dev", default-features = false }
 sp-arithmetic = { version = "5.0", default-features = false }
-frame-support = { version = "4.0.0-dev", default-features = false }
-frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
-scale-info = { version = "2", default-features = false }
 lazy_static = "1.4.0"
 async-trait = "0.1"
 serde-big-array = "0.4.1"
@@ -53,41 +50,21 @@ serde-big-array = "0.4.1"
 [dev-dependencies]
 anyhow = "1"
 log = "0.4"
+hex = "0.4"
 dotenv = "0.15"
 env_logger = "0.9"
 
-polymesh-api = { path = "./polymesh-api" }
+tokio = { version = "1.19", features = ["full"] }
+
+sp-keyring = "6.0.0"
 
 [features]
-default = [ "std", "serde", "v12", "v13", "v14" ]
+default = [ "std", "serde" ]
 
 serde = [
-	"frame-support/serde",
-	"sp-core/serde",
-	"sp-version/serde",
-	"sp-runtime/serde",
 	"sp-arithmetic/serde",
 ]
 
-v12 = ["frame-metadata/v12"]
-v13 = ["frame-metadata/v13"]
-v14 = ["frame-metadata/v14"]
-
 std = [
-	"frame-support/std",
-	"frame-metadata/std",
-	"sp-core/std",
-	"sp-api/std",
-	"sp-version/std",
-	"sp-runtime/std",
-	"sp-session/std",
 	"sp-arithmetic/std",
-	"scale-info/std",
-]
-
-[workspace]
-members = [
-	"macro",
-	"codegen",
-	"polymesh-api",
 ]

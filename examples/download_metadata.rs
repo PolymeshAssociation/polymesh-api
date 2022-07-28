@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use anyhow::Result;
 
-use sub_api::rpc::*;
+use polymesh_api_client::rpc::*;
 
 use codec::Encode;
 

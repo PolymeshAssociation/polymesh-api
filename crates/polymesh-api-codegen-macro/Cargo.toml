@@ -1,5 +1,5 @@
 [package]
-name = "sub-api-macro"
+name = "polymesh-api-codegen-macro"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-codegen = { path = "../codegen" }
+polymesh-api-codegen = { version = "0.1", path = "../polymesh-api-codegen" }
 darling = "0.14.1"
 proc-macro-error = "1"
 syn = "=1.0.96"

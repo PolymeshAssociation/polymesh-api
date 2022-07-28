@@ -184,15 +184,15 @@ mod v14 {
         [
           (
             "sp_core::crypto::AccountId32",
-            quote!(::sub_api::sp_core::crypto::AccountId32),
+            quote!(::polymesh_api_client::sp_core::crypto::AccountId32),
           ),
           (
             "sp_runtime::multiaddress::MultiAddress",
-            quote!(::sub_api::MultiAddress),
+            quote!(::polymesh_api_client::MultiAddress),
           ),
           (
             "sp_runtime::generic::era::Era",
-            quote!(::sub_api::sp_runtime::generic::Era),
+            quote!(::polymesh_api_client::sp_runtime::generic::Era),
           ),
           ("BTreeSet", quote!(std::collections::BTreeSet)),
           ("BTreeMap", quote!(std::collections::BTreeMap)),
@@ -200,7 +200,10 @@ mod v14 {
             "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
             quote!(Vec),
           ),
-          ("frame_system::EventRecord", quote!(::sub_api::EventRecord)),
+          (
+            "frame_system::EventRecord",
+            quote!(::polymesh_api_client::EventRecord),
+          ),
         ]
         .into_iter()
         .map(|(name, code)| (name.to_string(), code)),
@@ -500,7 +503,7 @@ mod v14 {
         };
         if let Some(hash) = hash_func {
           hashing.append_all(quote! {
-            buf.extend(::sub_api::frame_support::#hash(&#key_ident.encode()));
+            buf.extend(::polymesh_api_client::frame_support::#hash(&#key_ident.encode()));
           });
         } else {
           hashing.append_all(quote! {
@@ -510,7 +513,7 @@ mod v14 {
       }
       let value_ty = if mod_prefix == "System" && storage_name == "Events" {
         let event_ty = &self.event;
-        quote!(Vec<::sub_api::EventRecord<#event_ty>>)
+        quote!(Vec<::polymesh_api_client::EventRecord<#event_ty>>)
       } else {
         self.type_name(value_ty, false).unwrap()
       };
@@ -536,13 +539,13 @@ mod v14 {
       if keys_len > 0 {
         quote! {
           #(#[doc = #docs])*
-          pub async fn #storage_ident(&self, #keys) -> ::sub_api::error::Result<#return_ty> {
-            use ::sub_api::frame_support::StorageHasher;
+          pub async fn #storage_ident(&self, #keys) -> ::polymesh_api_client::error::Result<#return_ty> {
+            use ::polymesh_api_client::frame_support::StorageHasher;
             use ::codec::Encode;
             let mut buf = Vec::with_capacity(512);
             buf.extend([#(#key_prefix,)*]);
             #hashing
-            let key = ::sub_api::sp_core::storage::StorageKey(buf);
+            let key = ::polymesh_api_client::sp_core::storage::StorageKey(buf);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
@@ -550,8 +553,8 @@ mod v14 {
       } else {
         quote! {
           #(#[doc = #docs])*
-          pub async fn #storage_ident(&self) -> ::sub_api::error::Result<#return_ty> {
-            let key = ::sub_api::sp_core::storage::StorageKey(vec![#(#key_prefix,)*]);
+          pub async fn #storage_ident(&self) -> ::polymesh_api_client::error::Result<#return_ty> {
+            let key = ::polymesh_api_client::sp_core::storage::StorageKey(vec![#(#key_prefix,)*]);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
@@ -594,14 +597,14 @@ mod v14 {
       if md.fields().len() > 0 {
         quote! {
           #(#[doc = #docs])*
-          pub fn #func_ident(&self, #fields) -> ::sub_api::error::Result<super::super::WrappedCall<'api>> {
+          pub fn #func_ident(&self, #fields) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
           }
         }
       } else {
         quote! {
           #(#[doc = #docs])*
-          pub fn #func_ident(&self) -> ::sub_api::error::Result<super::super::WrappedCall<'api>> {
+          pub fn #func_ident(&self) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
           }
         }
@@ -671,7 +674,7 @@ mod v14 {
           #[derive(Clone, Debug)]
           pub struct QueryApi<'api> {
             pub(crate) api: &'api super::super::Api,
-            pub(crate) at: Option<::sub_api::BlockHash>,
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
           }
 
           impl<'api> QueryApi<'api> {
@@ -927,8 +930,8 @@ mod v14 {
 
         pub const API_METADATA_BYTES: &'static [u8] = &[ #(#metadata_bytes,)* ];
         ::lazy_static::lazy_static! {
-            pub static ref API_METADATA: ::sub_api::frame_metadata::v14::RuntimeMetadataV14 =
-              ::sub_api::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
+            pub static ref API_METADATA: ::polymesh_api_client::frame_metadata::v14::RuntimeMetadataV14 =
+              ::polymesh_api_client::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
                   .expect("Shouldn't be able to fail");
         }
 
@@ -949,13 +952,13 @@ mod v14 {
 
         #[derive(Debug)]
         pub struct Api {
-          client: ::sub_api::Client,
+          client: ::polymesh_api_client::Client,
         }
 
         impl Api {
-          pub async fn new(url: &str) -> ::sub_api::error::Result<Self> {
+          pub async fn new(url: &str) -> ::polymesh_api_client::error::Result<Self> {
             Ok(Self {
-              client: ::sub_api::Client::new(url).await?
+              client: ::polymesh_api_client::Client::new(url).await?
             })
           }
 
@@ -967,26 +970,26 @@ mod v14 {
             QueryApi { api: self, at: None }
           }
 
-          pub fn query_at(&self, block: ::sub_api::BlockHash) -> QueryApi {
+          pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi {
             QueryApi { api: self, at: Some(block) }
           }
 
-          pub fn wrap_call(&self, call: types::#call_ty) -> ::sub_api::Result<WrappedCall> {
+          pub fn wrap_call(&self, call: types::#call_ty) -> ::polymesh_api_client::Result<WrappedCall> {
             Ok(WrappedCall::new(self, call))
           }
         }
 
         #[async_trait::async_trait]
-        impl ::sub_api::ChainApi for Api {
+        impl ::polymesh_api_client::ChainApi for Api {
           type RuntimeCall = types::#call_ty;
           type RuntimeEvent = types::#event_ty;
 
-          async fn get_nonce(&self, account: ::sub_api::AccountId) -> ::sub_api::Result<u32> {
+          async fn get_nonce(&self, account: ::polymesh_api_client::AccountId) -> ::polymesh_api_client::Result<u32> {
             let info = self.query().system().account(account).await?;
             Ok(info.nonce)
           }
 
-          async fn block_events(&self, block: Option<::sub_api::BlockHash>) -> ::sub_api::Result<Vec<::sub_api::EventRecord<Self::RuntimeEvent>>> {
+          async fn block_events(&self, block: Option<::polymesh_api_client::BlockHash>) -> ::polymesh_api_client::Result<Vec<::polymesh_api_client::EventRecord<Self::RuntimeEvent>>> {
             let system = match block {
               Some(block) => self.query_at(block).system(),
               None => self.query().system(),
@@ -994,7 +997,7 @@ mod v14 {
             Ok(system.events().await?)
           }
 
-          fn client(&self) -> &::sub_api::Client {
+          fn client(&self) -> &::polymesh_api_client::Client {
             &self.client
           }
         }
@@ -1008,7 +1011,7 @@ mod v14 {
           #call_fields
         }
 
-        pub type WrappedCall<'api> = ::sub_api::Call<'api, Api>;
+        pub type WrappedCall<'api> = ::polymesh_api_client::Call<'api, Api>;
 
         impl<'api> From<WrappedCall<'api>> for types::#call_ty {
           fn from(wrapped: WrappedCall<'api>) -> Self {
@@ -1025,7 +1028,7 @@ mod v14 {
         #[derive(Clone, Debug)]
         pub struct QueryApi<'api> {
           api: &'api Api,
-          at: Option<::sub_api::BlockHash>,
+          at: Option<::polymesh_api_client::BlockHash>,
         }
 
         impl<'api> QueryApi<'api> {

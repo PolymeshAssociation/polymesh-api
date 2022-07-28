@@ -4,7 +4,6 @@ pub use frame_support;
 pub use sp_arithmetic;
 pub use sp_core;
 pub use sp_runtime;
-pub use sp_session;
 pub use sp_version;
 
 // Re-impl MultiAddress to support serde

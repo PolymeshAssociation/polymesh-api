@@ -1,23 +1,6 @@
-pub mod error;
-pub use error::*;
+use polymesh_api_codegen_macro::*;
 
-pub mod basic_types;
-pub use basic_types::*;
+#[codegen_api(metadata_file = "specs/polymesh_dev_spec_5000001.meta")]
+mod polymesh {}
 
-pub mod rpc;
-
-pub mod block;
-pub use block::*;
-
-pub mod signer;
-pub use signer::*;
-
-pub mod transaction;
-pub use transaction::*;
-
-pub mod client;
-pub use client::*;
-
-pub mod type_def;
-
-pub mod schema;
+pub use polymesh::*;

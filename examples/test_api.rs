@@ -5,7 +5,7 @@ use anyhow::Result;
 use codec::Encode;
 use sp_keyring::AccountKeyring;
 
-use sub_api::PairSigner;
+use polymesh_api_client::PairSigner;
 
 use polymesh_api::Api;
 
