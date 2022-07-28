@@ -29,22 +29,22 @@ scale-info = { version = "2", default-features = false }
 indexmap = "1.9.1"
 serde-big-array = "0.4.1"
 
-#[dev-dependencies]
-#anyhow = "1"
-#log = "0.4"
-#dotenv = "0.15"
-#env_logger = "0.9"
-#
-#lazy_static = "1.4.0"
-#async-trait = "0.1"
-#
-#tokio = { version = "1.19", features = ["full"] }
-#polymesh-api-client = { version = "0.1", path = "../polymesh-api-client" }
-#rustfmt-wrapper = "0.2.0"
-#
-## substrate
-#sp-arithmetic = { version = "5.0" }
-#sp-keyring = "6.0.0"
+[dev-dependencies]
+anyhow = "1"
+log = "0.4"
+dotenv = "0.15"
+env_logger = "0.9"
+
+lazy_static = "1.4.0"
+async-trait = "0.1"
+
+tokio = { version = "1.19", features = ["full"] }
+polymesh-api-client = { version = "0.1", path = "../polymesh-api-client" }
+rustfmt-wrapper = "0.2.0"
+
+# substrate
+sp-arithmetic = { version = "5.0" }
+sp-keyring = "6.0.0"
 
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]
