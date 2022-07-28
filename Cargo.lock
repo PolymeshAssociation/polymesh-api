@@ -1575,7 +1575,10 @@ dependencies = [
 name = "polymesh-api-client"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-trait",
+ "dotenv",
+ "env_logger",
  "frame-metadata",
  "hex",
  "jsonrpsee",

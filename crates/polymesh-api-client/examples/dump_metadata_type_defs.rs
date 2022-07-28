@@ -2,7 +2,7 @@ use std::env;
 
 use anyhow::Result;
 
-use polymesh_api_client::rpc::*;
+use polymesh_api_client::*;
 use polymesh_api_client::schema::*;
 
 #[tokio::main]
@@ -12,17 +12,17 @@ async fn main() -> Result<()> {
 
   let url = env::args().nth(1).expect("Missing ws url");
 
-  let client = RpcClient::new(&url).await?;
+  let client = Client::new(&url).await?;
 
   // Get block hash
   let gen_hash = client.get_block_hash(0).await?;
   println!("gen_hash = {gen_hash}");
 
-  let version = client.get_runtime_version(None).await?;
+  let version = client.get_block_runtime_version(None).await?;
   println!("{version:#?}");
 
   // Get current Metadata.
-  let metadata = client.get_metadata(None).await?;
+  let metadata = client.get_block_metadata(None).await?;
   println!("metadata = {metadata:#?}");
 
   let mut types = Types::new();
