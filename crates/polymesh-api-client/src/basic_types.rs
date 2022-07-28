@@ -1,6 +1,5 @@
 // Re-export some basic crates.
 pub use frame_metadata;
-pub use frame_support;
 pub use sp_arithmetic;
 pub use sp_core;
 pub use sp_runtime;

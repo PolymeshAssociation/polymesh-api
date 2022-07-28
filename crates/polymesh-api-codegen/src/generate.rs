@@ -201,6 +201,10 @@ mod v14 {
             quote!(Vec),
           ),
           (
+            "frame_support::storage::bounded_vec::BoundedVec",
+            quote!(Vec),
+          ),
+          (
             "frame_system::EventRecord",
             quote!(::polymesh_api_client::EventRecord),
           ),
@@ -492,24 +496,33 @@ mod v14 {
           .type_name(key.id(), false)
           .expect("Missing Storage key type");
         keys.append_all(quote! {#key_ident: #type_name,});
-        let hash_func = match hasher {
-          StorageHasher::Blake2_128 => Some(quote! { Blake2_128::hash }),
-          StorageHasher::Blake2_256 => Some(quote! { Blake2_256::hash }),
-          StorageHasher::Blake2_128Concat => Some(quote! { Blake2_128Concat::hash }),
-          StorageHasher::Twox128 => Some(quote! { Twox128::hash }),
-          StorageHasher::Twox256 => Some(quote! { Twox256::hash }),
-          StorageHasher::Twox64Concat => Some(quote! { Twox64Concat::hash }),
-          StorageHasher::Identity => None,
-        };
-        if let Some(hash) = hash_func {
-          hashing.append_all(quote! {
-            buf.extend(::polymesh_api_client::frame_support::#hash(&#key_ident.encode()));
-          });
-        } else {
-          hashing.append_all(quote! {
+        hashing.append_all(match hasher {
+          StorageHasher::Blake2_128 => quote! {
+            buf.extend(::polymesh_api_client::sp_core::hashing::blake2_128(&#key_ident.encode()));
+          },
+          StorageHasher::Blake2_256 => quote! {
+            buf.extend(::polymesh_api_client::sp_core::hashing::blake2_256(&#key_ident.encode()));
+          },
+          StorageHasher::Blake2_128Concat => quote! {
+            let key = #key_ident.encode();
+            buf.extend(::polymesh_api_client::sp_core::hashing::blake2_128(&key));
+            buf.extend(key.into_iter());
+          },
+          StorageHasher::Twox128 => quote! {
+            buf.extend(::polymesh_api_client::sp_core::hashing::twox_128(&#key_ident.encode()));
+          },
+          StorageHasher::Twox256 => quote! {
+            buf.extend(::polymesh_api_client::sp_core::hashing::twox_256(&#key_ident.encode()));
+          },
+          StorageHasher::Twox64Concat => quote! {
+            let key = #key_ident.encode();
+            buf.extend(::polymesh_api_client::sp_core::hashing::twox_64(&key));
+            buf.extend(key.into_iter());
+          },
+          StorageHasher::Identity => quote! {
             buf.extend(#key_ident.encode());
-          });
-        }
+          },
+        });
       }
       let value_ty = if mod_prefix == "System" && storage_name == "Events" {
         let event_ty = &self.event;
@@ -540,7 +553,6 @@ mod v14 {
         quote! {
           #(#[doc = #docs])*
           pub async fn #storage_ident(&self, #keys) -> ::polymesh_api_client::error::Result<#return_ty> {
-            use ::polymesh_api_client::frame_support::StorageHasher;
             use ::codec::Encode;
             let mut buf = Vec::with_capacity(512);
             buf.extend([#(#key_prefix,)*]);
