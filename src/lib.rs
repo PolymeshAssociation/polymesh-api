@@ -9,6 +9,12 @@ pub mod rpc;
 pub mod block;
 pub use block::*;
 
+pub mod signer;
+pub use signer::*;
+
+pub mod transaction;
+pub use transaction::*;
+
 pub mod client;
 pub use client::*;
 

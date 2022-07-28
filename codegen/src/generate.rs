@@ -1008,7 +1008,7 @@ mod v14 {
           #call_fields
         }
 
-        pub type WrappedCall<'api> = ::sub_api::client::Call<'api, Api>;
+        pub type WrappedCall<'api> = ::sub_api::Call<'api, Api>;
 
         impl<'api> From<WrappedCall<'api>> for types::#call_ty {
           fn from(wrapped: WrappedCall<'api>) -> Self {
