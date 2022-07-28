@@ -1,9 +1,5 @@
-use sp_core::{
-  Pair,
-};
-use sp_runtime::{
-  MultiSignature,
-};
+use sp_core::Pair;
+use sp_runtime::MultiSignature;
 
 use async_trait::async_trait;
 
@@ -22,13 +18,9 @@ pub trait Signer {
   /// Optional - The signer can manage their `nonce` for improve transaction performance.
   /// If the transaction is accepted by the RPC node, then the `nonce` we be increased, to
   /// allow the next transaction to be signed & submitted without waiting for the next block.
-  fn set_nonce(&mut self, _nonce: u32) {
-  }
+  fn set_nonce(&mut self, _nonce: u32) {}
 
-  async fn sign(
-    &self,
-    msg: &[u8]
-  ) -> Result<MultiSignature>;
+  async fn sign(&self, msg: &[u8]) -> Result<MultiSignature>;
 }
 
 pub struct PairSigner<P: Pair> {
@@ -40,7 +32,7 @@ pub struct PairSigner<P: Pair> {
 impl<P: Pair> PairSigner<P>
 where
   MultiSignature: From<<P as Pair>::Signature>,
-  AccountId: From<<P as Pair>::Public>
+  AccountId: From<<P as Pair>::Public>,
 {
   pub fn new(pair: P) -> Self {
     let account = pair.public().into();
@@ -55,7 +47,7 @@ where
 #[async_trait]
 impl<P: Pair> Signer for PairSigner<P>
 where
-  MultiSignature: From<<P as Pair>::Signature>
+  MultiSignature: From<<P as Pair>::Signature>,
 {
   fn account(&self) -> AccountId {
     self.account.clone()
@@ -73,10 +65,7 @@ where
     self.nonce = nonce;
   }
 
-  async fn sign(
-    &self,
-    msg: &[u8]
-  ) -> Result<MultiSignature> {
+  async fn sign(&self, msg: &[u8]) -> Result<MultiSignature> {
     Ok(self.pair.sign(msg).into())
   }
 }

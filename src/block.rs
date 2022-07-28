@@ -8,6 +8,8 @@ use sp_runtime::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::*;
+
 pub type TxHash = H256;
 pub type BlockHash = H256;
 pub type Header = generic::Header<u32, traits::BlakeTwo256>;
@@ -197,23 +199,23 @@ pub enum Phase {
   Initialization,
 }
 
-#[derive(Clone, Debug, Decode)]
-pub struct EventRecord<Event: Clone + Decode + std::fmt::Debug> {
+#[derive(Clone, Debug, Serialize, Decode)]
+pub struct EventRecord<Event: CodecSerde> {
   pub phase: Phase,
   pub event: Event,
   pub topics: Vec<BlockHash>,
 }
 
-impl<Event: Clone + Decode + std::fmt::Debug> EventRecord<Event> {
+impl<Event: CodecSerde> EventRecord<Event> {
   pub fn to_string(&self) -> String {
     format!("{:#?}", self)
   }
 }
 
-#[derive(Clone, Debug, Decode, Default)]
-pub struct EventRecords<Event: Clone + Decode + std::fmt::Debug>(Vec<EventRecord<Event>>);
+#[derive(Clone, Debug, Serialize, Decode, Default)]
+pub struct EventRecords<Event: CodecSerde>(Vec<EventRecord<Event>>);
 
-impl<Event: Clone + Decode + std::fmt::Debug> EventRecords<Event> {
+impl<Event: CodecSerde> EventRecords<Event> {
   pub fn from_vec(mut events: Vec<EventRecord<Event>>, filter: Option<Phase>) -> Self {
     if let Some(filter) = filter {
       events.retain(|ev| ev.phase == filter);

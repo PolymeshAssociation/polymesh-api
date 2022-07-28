@@ -5,12 +5,24 @@ use sp_runtime::generic::Era;
 
 use async_trait::async_trait;
 
+use serde::{de::DeserializeOwned, ser::Serialize};
+
 use crate::*;
+
+pub trait CodecSerde:
+  Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
+{
+}
+
+impl<T> CodecSerde for T where
+  T: Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
+{
+}
 
 #[async_trait]
 pub trait ChainApi {
-  type RuntimeCall: Clone + Encode + std::fmt::Debug;
-  type RuntimeEvent: Clone + Decode + std::fmt::Debug;
+  type RuntimeCall: CodecSerde;
+  type RuntimeEvent: CodecSerde;
 
   async fn get_nonce(&self, account: AccountId) -> Result<u32>;
 
@@ -179,14 +191,15 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
     )
   }
 
-  pub async fn sign_submit_and_watch(&self, signer: &mut impl Signer) -> Result<TransactionResults<'api, Api>> {
+  pub async fn sign_submit_and_watch(
+    &self,
+    signer: &mut impl Signer,
+  ) -> Result<TransactionResults<'api, Api>> {
     let client = self.api.client();
     let account = signer.account();
     // Query account nonce.
     let nonce = match signer.nonce() {
-      Some(0) | None => {
-        self.api.get_nonce(account.clone()).await?
-      }
+      Some(0) | None => self.api.get_nonce(account.clone()).await?,
       Some(nonce) => nonce,
     };
 
@@ -228,5 +241,3 @@ impl<'api, Api: ChainApi> std::fmt::Debug for Call<'api, Api> {
     self.call.fmt(f)
   }
 }
-
-
