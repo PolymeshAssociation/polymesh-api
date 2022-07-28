@@ -4,3 +4,6 @@ use polymesh_api_codegen_macro::*;
 mod polymesh {}
 
 pub use polymesh::*;
+
+// re-export core client
+pub use polymesh_api_client as client;

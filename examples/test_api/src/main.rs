@@ -2,12 +2,11 @@ use std::env;
 
 use anyhow::Result;
 
-use codec::Encode;
 use sp_keyring::AccountKeyring;
 
-use polymesh_api_client::PairSigner;
-
 use polymesh_api::Api;
+use polymesh_api::client::MultiAddress;
+use polymesh_api::client::PairSigner;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,11 +19,9 @@ async fn main() -> Result<()> {
 
   let api = Api::new(&url).await?;
 
-  let dest_id = AccountKeyring::Bob.to_account_id();
-  let dest = &dest_id;
-  let call = api.call().balances().transfer(dest.into(), 123_012_345)?;
+  let dest: MultiAddress<_, _> = AccountKeyring::Bob.to_account_id().into();
+  let call = api.call().balances().transfer(dest.clone(), 123_012_345)?;
   println!("call = {call:#?}");
-  println!("encoded = {}", hex::encode(call.encode()));
   println!(
     "call_json = {:#?}",
     serde_json::to_string(call.runtime_call())?
@@ -33,12 +30,11 @@ async fn main() -> Result<()> {
 
   // Test batches.
   let call = api.call().utility().batch(vec![
-    api.call().balances().transfer(dest.into(), 1)?.into(),
-    api.call().balances().transfer(dest.into(), 2)?.into(),
-    api.call().balances().transfer(dest.into(), 3)?.into(),
+    api.call().balances().transfer(dest.clone(), 1)?.into(),
+    api.call().balances().transfer(dest.clone(), 2)?.into(),
+    api.call().balances().transfer(dest.clone(), 3)?.into(),
   ])?;
   println!("call = {call:#?}");
-  println!("encoded = {}", hex::encode(call.encode()));
   println!(
     "call_json = {:#?}",
     serde_json::to_string(call.runtime_call())?
@@ -47,7 +43,9 @@ async fn main() -> Result<()> {
   println!("call1 result = {:?}", res1.wait_in_block().await);
   println!("call2 result = {:?}", res2.wait_in_block().await);
 
-  println!("call1 events = {:#?}", res1.events().await);
-  println!("call2 events = {:#?}", res2.events().await);
+  let events = res1.events().await?;
+  println!("call1 events = {:#?}", serde_json::to_string(&events));
+  let events = res2.events().await?;
+  println!("call2 events = {:#?}", serde_json::to_string(&events));
   Ok(())
 }

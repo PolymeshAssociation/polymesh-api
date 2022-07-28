@@ -14,6 +14,9 @@ members = [
 	"crates/polymesh-api-codegen-macro",
 	"crates/polymesh-api-codegen",
 	"crates/polymesh-api-client",
+
+	"examples/simple_transfer",
+	"examples/test_api",
 ]
 
 [dependencies]
