@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use jsonrpsee::core::client::Subscription;
 use jsonrpsee::rpc_params;
 use jsonrpsee::types::ParamsSer;
@@ -7,14 +9,30 @@ use codec::Decode;
 use sp_core::storage::{StorageData, StorageKey};
 
 use hex::FromHex;
+
+use serde_json::Value;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use frame_metadata::RuntimeMetadataPrefixed;
-use sp_version::RuntimeVersion;
 
 use crate::rpc::*;
 use crate::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeVersion {
+  pub spec_name: String,
+  pub impl_name: String,
+  pub authoring_version: u32,
+  pub spec_version: u32,
+  pub impl_version: u32,
+  #[serde(default)]
+  pub transaction_version: u32,
+
+  #[serde(flatten)]
+  pub extra: HashMap<String, Value>,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

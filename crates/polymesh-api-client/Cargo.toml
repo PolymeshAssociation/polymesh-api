@@ -22,7 +22,6 @@ serde = "1.0"
 
 # substrate
 sp-core = { version = "6.0", default-features = false }
-sp-version = { version = "5.0", default-features = false }
 sp-runtime = { version = "6.0", default-features = false }
 sp-arithmetic = { version = "5.0", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
@@ -37,7 +36,6 @@ default = [ "std", "serde", "v12", "v13", "v14" ]
 
 serde = [
 	"sp-core/serde",
-	"sp-version/serde",
 	"sp-runtime/serde",
 	"sp-arithmetic/serde",
 ]
@@ -49,7 +47,6 @@ v14 = ["frame-metadata/v14"]
 std = [
 	"frame-metadata/std",
 	"sp-core/std",
-	"sp-version/std",
 	"sp-runtime/std",
 	"sp-arithmetic/std",
 	"scale-info/std",

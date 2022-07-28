@@ -3,7 +3,6 @@ pub use frame_metadata;
 pub use sp_arithmetic;
 pub use sp_core;
 pub use sp_runtime;
-pub use sp_version;
 
 // Re-impl MultiAddress to support serde
 #[derive(Clone, Debug, codec::Encode, codec::Decode, PartialEq, Eq, PartialOrd, Ord)]
