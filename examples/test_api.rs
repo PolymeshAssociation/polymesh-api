@@ -5,7 +5,7 @@ use anyhow::Result;
 use codec::Encode;
 use sp_keyring::AccountKeyring;
 
-use sub_api::SimpleSigner;
+use sub_api::PairSigner;
 
 use polymesh_api::Api;
 
@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
 
   let url = env::args().nth(1).expect("Missing ws url");
 
-  let mut alice = SimpleSigner::new(AccountKeyring::Alice.pair());
+  let mut alice = PairSigner::new(AccountKeyring::Alice.pair());
 
   let api = Api::new(&url).await?;
 
@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
     "call_json = {:#?}",
     serde_json::to_string(call.runtime_call())?
   );
-  let mut res1 = alice.submit_and_watch(&call).await?;
+  let mut res1 = call.sign_submit_and_watch(&mut alice).await?;
 
   // Test batches.
   let call = api.call().utility().batch(vec![
@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
     "call_json = {:#?}",
     serde_json::to_string(call.runtime_call())?
   );
-  let mut res2 = alice.submit_and_watch(&call).await?;
+  let mut res2 = call.sign_submit_and_watch(&mut alice).await?;
   println!("call1 result = {:?}", res1.wait_in_block().await);
   println!("call2 result = {:?}", res2.wait_in_block().await);
 

@@ -1,6 +1,7 @@
 use jsonrpsee::core::client::Subscription;
 
 use codec::{Decode, Encode};
+use sp_runtime::generic::Era;
 
 use async_trait::async_trait;
 
@@ -176,6 +177,34 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
         .submit_and_watch(ExtrinsicV4::unsigned(self.encoded()))
         .await?,
     )
+  }
+
+  pub async fn sign_submit_and_watch(&self, signer: &mut impl Signer) -> Result<TransactionResults<'api, Api>> {
+    let client = self.api.client();
+    let account = signer.account();
+    // Query account nonce.
+    let nonce = match signer.nonce() {
+      Some(0) | None => {
+        self.api.get_nonce(account.clone()).await?
+      }
+      Some(nonce) => nonce,
+    };
+
+    let encoded_call = self.encoded();
+    let extra = Extra::new(Era::Immortal, nonce);
+    let payload = SignedPayload::new(&encoded_call, &extra, client.get_signed_extra());
+
+    let payload = payload.encode();
+    let sig = signer.sign(&payload[..]).await?;
+
+    let xt = ExtrinsicV4::signed(account, sig, extra, encoded_call);
+
+    let res = self.submit_and_watch(xt).await?;
+
+    // Update nonce if the call was submitted.
+    signer.set_nonce(nonce + 1);
+
+    Ok(res)
   }
 
   pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<TransactionResults<'api, Api>> {

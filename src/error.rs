@@ -23,6 +23,9 @@ pub enum Error {
   #[error("RpcClient: {0}")]
   RpcClient(String),
 
+  #[error("Signing transaction failed: {0}")]
+  SigningTransactionFailed(String),
+
   #[error("Jsonrpsee error: {0}")]
   Jsonrpsee(#[from] jsonrpsee::core::Error),
 }

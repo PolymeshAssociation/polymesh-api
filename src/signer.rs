@@ -1,54 +1,82 @@
-use codec::Encode;
-
 use sp_core::{
-  sr25519,
   Pair,
 };
-use sp_runtime::generic::Era;
+use sp_runtime::{
+  MultiSignature,
+};
+
+use async_trait::async_trait;
 
 use crate::*;
 
-pub struct SimpleSigner {
-  pub pair: sr25519::Pair,
+#[async_trait]
+pub trait Signer {
+  fn account(&self) -> AccountId;
+
+  /// Optional - The signer can manage their `nonce` for improve transaction performance.
+  /// The default implmentation will query the next `nonce` from chain storage.
+  fn nonce(&self) -> Option<u32> {
+    None
+  }
+
+  /// Optional - The signer can manage their `nonce` for improve transaction performance.
+  /// If the transaction is accepted by the RPC node, then the `nonce` we be increased, to
+  /// allow the next transaction to be signed & submitted without waiting for the next block.
+  fn set_nonce(&mut self, _nonce: u32) {
+  }
+
+  async fn sign(
+    &self,
+    msg: &[u8]
+  ) -> Result<MultiSignature>;
+}
+
+pub struct PairSigner<P: Pair> {
+  pub pair: P,
   pub nonce: u32,
   pub account: AccountId,
 }
 
-impl SimpleSigner {
-  pub fn new(pair: sr25519::Pair) -> Self {
-    let account = AccountId::new(pair.public().into());
+impl<P: Pair> PairSigner<P>
+where
+  MultiSignature: From<<P as Pair>::Signature>,
+  AccountId: From<<P as Pair>::Public>
+{
+  pub fn new(pair: P) -> Self {
+    let account = pair.public().into();
     Self {
       pair,
       nonce: 0,
       account,
     }
   }
-
-  pub async fn submit_and_watch<'api, Api: ChainApi>(
-    &mut self,
-    call: &Call<'api, Api>,
-  ) -> Result<TransactionResults<'api, Api>> {
-    let client = call.api.client();
-    // Query account nonce.
-    if self.nonce == 0 {
-      self.nonce = call.api.get_nonce(self.account.clone()).await?;
-    }
-
-    let encoded_call = call.encoded();
-    let extra = Extra::new(Era::Immortal, self.nonce);
-    let payload = SignedPayload::new(&encoded_call, &extra, client.get_signed_extra());
-
-    let sig = payload.using_encoded(|p| self.pair.sign(p));
-
-    let xt = ExtrinsicV4::signed(self.account.clone(), sig.into(), extra, encoded_call);
-
-    let res = call.submit_and_watch(xt).await?;
-
-    // Update nonce if the call was submitted.
-    self.nonce += 1;
-
-    Ok(res)
-  }
 }
 
+#[async_trait]
+impl<P: Pair> Signer for PairSigner<P>
+where
+  MultiSignature: From<<P as Pair>::Signature>
+{
+  fn account(&self) -> AccountId {
+    self.account.clone()
+  }
 
+  fn nonce(&self) -> Option<u32> {
+    if self.nonce > 0 {
+      Some(self.nonce)
+    } else {
+      None
+    }
+  }
+
+  fn set_nonce(&mut self, nonce: u32) {
+    self.nonce = nonce;
+  }
+
+  async fn sign(
+    &self,
+    msg: &[u8]
+  ) -> Result<MultiSignature> {
+    Ok(self.pair.sign(msg).into())
+  }
+}
