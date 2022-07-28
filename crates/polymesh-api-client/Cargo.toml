@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
-description = "Substrate Rust client API"
-keywords = ["blockchain", "substrate", "codegen"]
+description = "Polymesh API client core"
+keywords = ["polymesh", "blockchain", "substrate", "codegen"]
 repository = "https://github.com/PolymeshAssociation/polymesh-api"
 homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
