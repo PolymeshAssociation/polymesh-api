@@ -1,7 +1,7 @@
 use codec::{Compact, Decode, Encode, Output};
 
 use sp_core::{hashing::blake2_256, H256};
-use sp_runtime::MultiSignature;
+use sp_runtime::{ConsensusEngineId, MultiSignature};
 
 use serde::{Deserialize, Serialize};
 
@@ -13,29 +13,124 @@ pub type BlockHash = H256;
 
 pub mod block_number {
   use sp_core::U256;
-  pub fn deserialize<'de, D>(d: D) -> Result<u64, D::Error>
+  pub fn deserialize<'de, D>(d: D) -> Result<u32, D::Error>
   where
     D: serde::Deserializer<'de>,
   {
     let num: U256 = serde::Deserialize::deserialize(d)?;
-    Ok(num.as_u64())
+    Ok(num.as_u32())
   }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Header {
   pub parent_hash: BlockHash,
   #[serde(deserialize_with = "block_number::deserialize")]
-  pub number: u64,
+  #[codec(compact)]
+  pub number: u32,
   pub state_root: BlockHash,
   pub extrinsics_root: BlockHash,
   pub digest: Digest,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+impl Header {
+  pub fn hash(&self) -> BlockHash {
+    H256(self.using_encoded(blake2_256))
+  }
+}
+
+impl From<Header> for sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256> {
+  fn from(header: Header) -> Self {
+    let logs = header
+      .digest
+      .logs
+      .into_iter()
+      .map(|item| item.into())
+      .collect();
+    Self {
+      parent_hash: header.parent_hash,
+      number: header.number,
+      state_root: header.state_root,
+      extrinsics_root: header.extrinsics_root,
+      digest: sp_runtime::generic::Digest { logs },
+    }
+  }
+}
+
+#[derive(Clone, Debug, Encode, Decode, Serialize, Deserialize)]
 pub struct Digest {
-  pub logs: Vec<String>,
+  pub logs: Vec<DigestItem>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(try_from = "RawDigestItem")]
+#[serde(into = "RawDigestItem")]
+pub enum DigestItem {
+  PreRuntime(ConsensusEngineId, Vec<u8>),
+  Consensus(ConsensusEngineId, Vec<u8>),
+  Seal(ConsensusEngineId, Vec<u8>),
+  Other(Vec<u8>),
+  RuntimeEnvironmentUpdated,
+}
+
+impl Encode for DigestItem {
+  fn encode_to<T: Output + ?Sized>(&self, output: &mut T) {
+    let runtime_era: sp_runtime::generic::DigestItem = self.clone().into();
+    runtime_era.encode_to(output)
+  }
+}
+
+impl Decode for DigestItem {
+  fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+    let runtime_era = sp_runtime::generic::DigestItem::decode(input)?;
+    Ok(runtime_era.into())
+  }
+}
+
+impl From<sp_runtime::generic::DigestItem> for DigestItem {
+  fn from(r_item: sp_runtime::generic::DigestItem) -> Self {
+    use sp_runtime::generic::DigestItem::*;
+    match r_item {
+      PreRuntime(id, data) => Self::PreRuntime(id, data),
+      Consensus(id, data) => Self::Consensus(id, data),
+      Seal(id, data) => Self::Seal(id, data),
+      Other(data) => Self::Other(data),
+      RuntimeEnvironmentUpdated => Self::RuntimeEnvironmentUpdated,
+    }
+  }
+}
+
+impl From<DigestItem> for sp_runtime::generic::DigestItem {
+  fn from(item: DigestItem) -> Self {
+    match item {
+      DigestItem::PreRuntime(id, data) => Self::PreRuntime(id, data),
+      DigestItem::Consensus(id, data) => Self::Consensus(id, data),
+      DigestItem::Seal(id, data) => Self::Seal(id, data),
+      DigestItem::Other(data) => Self::Other(data),
+      DigestItem::RuntimeEnvironmentUpdated => Self::RuntimeEnvironmentUpdated,
+    }
+  }
+}
+
+impl TryFrom<RawDigestItem> for DigestItem {
+  type Error = crate::Error;
+
+  fn try_from(raw: RawDigestItem) -> Result<Self, Self::Error> {
+    let item = DigestItem::decode(&mut &raw.0[..])?;
+    Ok(item.into())
+  }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RawDigestItem(
+  #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
+);
+
+impl From<DigestItem> for RawDigestItem {
+  fn from(item: DigestItem) -> Self {
+    Self(item.encode())
+  }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
