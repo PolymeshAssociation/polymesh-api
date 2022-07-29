@@ -5,5 +5,6 @@ mod polymesh {}
 
 pub use polymesh::*;
 
-// re-export core client
+// re-export core client and common types.
 pub use polymesh_api_client as client;
+pub use polymesh_api_client::{ChainApi, Client};

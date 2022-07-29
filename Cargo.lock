@@ -2630,6 +2630,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "subscribe_blocks"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dotenv",
+ "env_logger",
+ "hex",
+ "log",
+ "polymesh-api",
+ "serde",
+ "serde_json",
+ "sp-keyring",
+ "tokio",
+]
+
+[[package]]
 name = "substrate-bip39"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

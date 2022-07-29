@@ -16,6 +16,7 @@ members = [
 	"crates/polymesh-api-client",
 
 	"examples/simple_transfer",
+	"examples/subscribe_blocks",
 	"examples/test_api",
 ]
 
