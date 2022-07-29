@@ -4,9 +4,9 @@ use anyhow::Result;
 
 use sp_keyring::AccountKeyring;
 
-use polymesh_api::Api;
 use polymesh_api::client::MultiAddress;
 use polymesh_api::client::PairSigner;
+use polymesh_api::Api;
 
 #[tokio::main]
 async fn main() -> Result<()> {

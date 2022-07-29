@@ -171,6 +171,7 @@ impl Block {
       hash == xt_hash
     })
   }
+
   pub fn parent(&self) -> BlockHash {
     self.header.parent_hash
   }

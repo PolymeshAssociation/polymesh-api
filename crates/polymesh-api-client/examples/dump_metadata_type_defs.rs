@@ -2,8 +2,8 @@ use std::env;
 
 use anyhow::Result;
 
-use polymesh_api_client::*;
 use polymesh_api_client::schema::*;
+use polymesh_api_client::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
