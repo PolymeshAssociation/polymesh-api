@@ -1,7 +1,6 @@
 use jsonrpsee::core::client::Subscription;
 
 use codec::{Decode, Encode};
-use sp_runtime::generic::Era;
 
 use async_trait::async_trait;
 

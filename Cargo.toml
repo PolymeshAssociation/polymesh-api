@@ -24,11 +24,11 @@ members = [
 thiserror = "1.0"
 log = "0.4"
 
-polymesh-api-codegen-macro = { version = "0.1", path = "crates/polymesh-api-codegen-macro" }
-polymesh-api-client = { version = "0.1", path = "crates/polymesh-api-client" }
-
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
+
+polymesh-api-codegen-macro = { version = "0.1", path = "crates/polymesh-api-codegen-macro", default-features = false }
+polymesh-api-client = { version = "0.1", path = "crates/polymesh-api-client", default-features = false }
 
 # substrate
 sp-arithmetic = { version = "5.0", default-features = false }
@@ -46,15 +46,30 @@ env_logger = "0.9"
 
 tokio = { version = "1.19", features = ["full"] }
 
-sp-keyring = "6.0.0"
+#sp-keyring = { version = "6.0.0", default-features = false }
 
 [features]
-default = [ "std", "serde" ]
+default = [ "std", "serde", "v14" ]
+
+v14 = [
+	"polymesh-api-codegen-macro/v14",
+	"polymesh-api-client/v14",
+]
+
+wasm = [
+	"v14",
+	"serde",
+	"polymesh-api-codegen-macro/no_std",
+	"polymesh-api-client/wasm",
+]
 
 serde = [
 	"sp-arithmetic/serde",
+	"polymesh-api-client/serde",
 ]
 
 std = [
 	"sp-arithmetic/std",
+	"polymesh-api-codegen-macro/std",
+	"polymesh-api-client/std",
 ]

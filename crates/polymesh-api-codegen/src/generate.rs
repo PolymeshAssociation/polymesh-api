@@ -175,16 +175,12 @@ mod v14 {
 
       let call = quote! { #runtime_ident::Call };
       let event = quote! { #runtime_ident::Event };
-      let external_modules = HashSet::from_iter(
-        ["sp_arithmetic", "sp_version"]
-          .iter()
-          .map(|t| t.to_string()),
-      );
+      let external_modules = HashSet::from_iter(["sp_version"].iter().map(|t| t.to_string()));
       let rename_types = HashMap::from_iter(
         [
           (
             "sp_core::crypto::AccountId32",
-            quote!(::polymesh_api_client::sp_core::crypto::AccountId32),
+            quote!(::polymesh_api_client::AccountId),
           ),
           (
             "sp_runtime::multiaddress::MultiAddress",
@@ -192,7 +188,23 @@ mod v14 {
           ),
           (
             "sp_runtime::generic::era::Era",
-            quote!(::polymesh_api_client::sp_runtime::generic::Era),
+            quote!(::polymesh_api_client::Era),
+          ),
+          (
+            "sp_arithmetic::per_things::Perbill",
+            quote!(::polymesh_api_client::per_things::Perbill),
+          ),
+          (
+            "sp_arithmetic::per_things::Permill",
+            quote!(::polymesh_api_client::per_things::Permill),
+          ),
+          (
+            "sp_arithmetic::per_things::PerU16",
+            quote!(::polymesh_api_client::per_things::PerU16),
+          ),
+          (
+            "sp_arithmetic::per_things::Percent",
+            quote!(::polymesh_api_client::per_things::Percent),
           ),
           ("BTreeSet", quote!(std::collections::BTreeSet)),
           ("BTreeMap", quote!(std::collections::BTreeMap)),
@@ -461,8 +473,8 @@ mod v14 {
       let storage_name = &md.name;
       let storage_ident = format_ident!("{}", storage_name.to_snake_case());
       let mut key_prefix = Vec::with_capacity(512);
-      key_prefix.extend(sp_core::twox_128(mod_prefix.as_bytes()));
-      key_prefix.extend(sp_core::twox_128(storage_name.as_bytes()));
+      key_prefix.extend(sp_core_hashing::twox_128(mod_prefix.as_bytes()));
+      key_prefix.extend(sp_core_hashing::twox_128(storage_name.as_bytes()));
 
       let (hashers, value_ty) = match &md.ty {
         StorageEntryType::Plain(value) => (vec![], value.id()),
@@ -557,7 +569,7 @@ mod v14 {
             let mut buf = Vec::with_capacity(512);
             buf.extend([#(#key_prefix,)*]);
             #hashing
-            let key = ::polymesh_api_client::sp_core::storage::StorageKey(buf);
+            let key = ::polymesh_api_client::StorageKey(buf);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
@@ -566,7 +578,7 @@ mod v14 {
         quote! {
           #(#[doc = #docs])*
           pub async fn #storage_ident(&self) -> ::polymesh_api_client::error::Result<#return_ty> {
-            let key = ::polymesh_api_client::sp_core::storage::StorageKey(vec![#(#key_prefix,)*]);
+            let key = ::polymesh_api_client::StorageKey(vec![#(#key_prefix,)*]);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }

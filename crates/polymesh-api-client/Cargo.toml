@@ -14,11 +14,9 @@ thiserror = "1.0.31"
 log = "0.4"
 hex = "0.4"
 
-tokio = { version = "1.19", features = ["full"] }
-jsonrpsee = { version = "0.14", features = ["client"] }
-
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = "1.0"
+impl-serde = { version = "0.3.1", optional = true }
 
 # substrate
 sp-core = { version = "6.0", default-features = false }
@@ -31,6 +29,20 @@ lazy_static = "1.4.0"
 async-trait = "0.1"
 serde-big-array = "0.4.1"
 
+# native:
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.19", features = ["full"] }
+jsonrpsee = { version = "0.14", features = ["client"] }
+
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
+jsonrpsee = { version = "0.14", features = ["wasm-client"] }
+
+primitive-types = { version = "0.11.1", default-features = false, features = ["serde_no_std"] }
+sp-application-crypto = { version = "6.0", default-features = false, features = ["full_crypto", "serde"] }
+sp-io = { version = "6.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
+
 [dev-dependencies]
 anyhow = "1"
 dotenv = "0.15"
@@ -39,7 +51,10 @@ env_logger = "0.9"
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]
 
+wasm = ["serde", "v14"]
+
 serde = [
+	"impl-serde",
 	"sp-core/serde",
 	"sp-runtime/serde",
 	"sp-arithmetic/serde",
@@ -47,9 +62,10 @@ serde = [
 
 v12 = ["frame-metadata/v12"]
 v13 = ["frame-metadata/v13"]
-v14 = ["frame-metadata/v14"]
+v14 = ["frame-metadata/v14", "frame-metadata/std"]
 
 std = [
+	"codec/std",
 	"frame-metadata/std",
 	"sp-core/std",
 	"sp-runtime/std",

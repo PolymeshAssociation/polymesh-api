@@ -1,30 +1,99 @@
 use codec::{Compact, Decode, Encode, Output};
 
 use sp_core::{hashing::blake2_256, H256};
-use sp_runtime::{
-  generic::{self, Era},
-  traits, MultiAddress, MultiSignature,
-};
+use sp_runtime::MultiSignature;
 
 use serde::{Deserialize, Serialize};
 
+use crate::basic_types::{AccountId, GenericAddress};
 use crate::*;
 
 pub type TxHash = H256;
 pub type BlockHash = H256;
-pub type Header = generic::Header<u32, traits::BlakeTwo256>;
 
-pub type AccountId = sp_runtime::AccountId32;
-pub type GenericAddress = MultiAddress<AccountId, ()>;
+pub mod block_number {
+  use sp_core::U256;
+  pub fn deserialize<'de, D>(d: D) -> Result<u64, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    let num: U256 = serde::Deserialize::deserialize(d)?;
+    Ok(num.as_u64())
+  }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Header {
+  pub parent_hash: BlockHash,
+  #[serde(deserialize_with = "block_number::deserialize")]
+  pub number: u64,
+  pub state_root: BlockHash,
+  pub extrinsics_root: BlockHash,
+  pub digest: Digest,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Digest {
+  pub logs: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StorageData(
+  #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
+);
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StorageKey(
+  #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
+);
 
 pub type AdditionalSigned = (u32, u32, BlockHash, BlockHash, (), (), ());
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Era {
+  Immortal,
+  Mortal(u64, u64),
+}
+
+impl Encode for Era {
+  fn encode_to<T: Output + ?Sized>(&self, output: &mut T) {
+    let runtime_era: sp_runtime::generic::Era = self.clone().into();
+    runtime_era.encode_to(output)
+  }
+}
+
+impl Decode for Era {
+  fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+    let runtime_era = sp_runtime::generic::Era::decode(input)?;
+    Ok(runtime_era.into())
+  }
+}
+
+impl From<sp_runtime::generic::Era> for Era {
+  fn from(e: sp_runtime::generic::Era) -> Self {
+    match e {
+      sp_runtime::generic::Era::Immortal => Self::Immortal,
+      sp_runtime::generic::Era::Mortal(period, phase) => Self::Mortal(period, phase),
+    }
+  }
+}
+
+impl From<Era> for sp_runtime::generic::Era {
+  fn from(e: Era) -> Self {
+    match e {
+      Era::Immortal => Self::Immortal,
+      Era::Mortal(period, phase) => Self::Mortal(period, phase),
+    }
+  }
+}
+
 #[derive(Clone, Debug, Encode, Decode)]
-pub struct Extra(Era, Compact<u32>, Compact<u128>);
+pub struct Extra(sp_runtime::generic::Era, Compact<u32>, Compact<u128>);
 
 impl Extra {
   pub fn new(era: Era, nonce: u32) -> Self {
-    Self(era, nonce.into(), 0u128.into())
+    Self(era.into(), nonce.into(), 0u128.into())
   }
 
   pub fn nonce(&self) -> u32 {
@@ -155,7 +224,12 @@ pub enum TransactionStatus {
   Invalid,
 }
 
-pub type SignedBlock = generic::SignedBlock<Block>;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SignedBlock {
+  pub block: Block,
+  // TODO: Add Justifications field.
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Block {

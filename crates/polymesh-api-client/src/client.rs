@@ -6,8 +6,6 @@ use jsonrpsee::types::ParamsSer;
 
 use codec::Decode;
 
-use sp_core::storage::{StorageData, StorageKey};
-
 use hex::FromHex;
 
 use serde::de::DeserializeOwned;

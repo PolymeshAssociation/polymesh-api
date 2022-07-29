@@ -18,6 +18,8 @@ pub use transaction::*;
 pub mod client;
 pub use client::*;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub mod type_def;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub mod schema;

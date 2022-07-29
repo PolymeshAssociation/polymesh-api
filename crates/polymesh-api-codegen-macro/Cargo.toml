@@ -13,7 +13,22 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 proc-macro = true
 
 [dependencies]
-polymesh-api-codegen = { version = "0.1", path = "../polymesh-api-codegen" }
+polymesh-api-codegen = { version = "0.1", path = "../polymesh-api-codegen", default-features = false }
 darling = "0.14.1"
 proc-macro-error = "1"
 syn = "=1.0.96"
+
+[features]
+default = [ "std", "v14" ]
+
+no_std = [
+	"polymesh-api-codegen/no_std",
+]
+
+std = [
+	"polymesh-api-codegen/std",
+]
+
+v14 = [
+	"polymesh-api-codegen/v14",
+]
