@@ -10,10 +10,13 @@ use crate::*;
 
 pub type TxHash = H256;
 pub type BlockHash = H256;
+pub type BlockNumber = u32;
 
 pub mod block_number {
+  use super::BlockNumber;
   use sp_core::U256;
-  pub fn deserialize<'de, D>(d: D) -> Result<u32, D::Error>
+
+  pub fn deserialize<'de, D>(d: D) -> Result<BlockNumber, D::Error>
   where
     D: serde::Deserializer<'de>,
   {
@@ -28,7 +31,7 @@ pub struct Header {
   pub parent_hash: BlockHash,
   #[serde(deserialize_with = "block_number::deserialize")]
   #[codec(compact)]
-  pub number: u32,
+  pub number: BlockNumber,
   pub state_root: BlockHash,
   pub extrinsics_root: BlockHash,
   pub digest: Digest,
@@ -40,7 +43,7 @@ impl Header {
   }
 }
 
-impl From<Header> for sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256> {
+impl From<Header> for sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256> {
   fn from(header: Header) -> Self {
     let logs = header
       .digest
@@ -353,8 +356,8 @@ impl Block {
     self.header.extrinsics_root
   }
 
-  pub fn block_number(&self) -> i64 {
-    self.header.number as i64
+  pub fn block_number(&self) -> BlockNumber {
+    self.header.number
   }
 
   pub fn to_string(&self) -> String {

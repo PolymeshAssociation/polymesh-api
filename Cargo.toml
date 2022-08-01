@@ -24,7 +24,7 @@ members = [
 thiserror = "1.0"
 log = "0.4"
 
-serde_json = { version = "1.0", features = ["preserve_order"] }
+serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
 serde = "1.0"
 
 polymesh-api-codegen-macro = { version = "0.1", path = "crates/polymesh-api-codegen-macro", default-features = false }
