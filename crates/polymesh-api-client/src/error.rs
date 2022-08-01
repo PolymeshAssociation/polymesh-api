@@ -11,6 +11,12 @@ pub enum Error {
   #[error("hex error: {0}")]
   Hex(#[from] hex::FromHexError),
 
+  #[error("http error: {0}")]
+  Http(#[from] http::Error),
+
+  #[error("http uri error: {0}")]
+  HttpUri(#[from] http::uri::InvalidUri),
+
   #[error("parity-scale-codec error: {0}")]
   ParityScaleCodec(#[from] codec::Error),
 

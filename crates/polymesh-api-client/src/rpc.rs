@@ -45,6 +45,26 @@ impl RpcClient {
 
   #[cfg(not(target_arch = "wasm32"))]
   async fn new_ws(url: &str) -> Result<Self> {
+    // Check if url has a `port`.  The websocket backend doesn't support a default port.
+    let url = url.parse::<http::Uri>()?;
+    let url = if url.port().is_none() {
+      // Need to rebuild the url to add the default port `80` (ws) or `443` (wss).
+      let (scheme, port) = match url.scheme().map(|s| s.as_str()) {
+        Some("wss") => ("wss", 443),
+        _ => ("ws", 80),
+      };
+      let host = url.authority().map(|a| a.as_str()).unwrap_or_else(|| "");
+      let authority = format!("{}:{}", host, port);
+      let path = url.path_and_query().map(|p| p.as_str()).unwrap_or_else(|| "");
+      let url = http::Uri::builder()
+        .scheme(scheme)
+        .authority(authority)
+        .path_and_query(path)
+        .build()?;
+      url.to_string()
+    } else {
+      url.to_string()
+    };
     let client = WsClientBuilder::default().build(&url).await?;
     Ok(Self {
       client: InnerRpcClient::Ws(client),

@@ -1580,6 +1580,7 @@ dependencies = [
  "env_logger",
  "frame-metadata",
  "hex",
+ "http",
  "impl-serde",
  "jsonrpsee",
  "lazy_static",
