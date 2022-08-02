@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use jsonrpsee::core::client::Subscription;
+pub use jsonrpsee::core::client::Subscription;
 use jsonrpsee::rpc_params;
 use jsonrpsee::types::ParamsSer;
 
