@@ -69,7 +69,7 @@ mod v14 {
   use frame_metadata::v14::{
     RuntimeMetadataV14, StorageEntryMetadata, StorageEntryModifier, StorageEntryType, StorageHasher,
   };
-  use scale_info::{form::PortableForm, Field, Type, TypeDef, Variant};
+  use scale_info::{form::PortableForm, Field, Path, Type, TypeDef, Variant};
 
   #[derive(Default)]
   struct TypeParameters {
@@ -162,6 +162,7 @@ mod v14 {
     external_modules: HashSet<String>,
     rename_types: HashMap<String, TokenStream>,
     ord_types: HashSet<String>,
+    runtime_namespace: Vec<String>,
     call: TokenStream,
     event: TokenStream,
   }
@@ -170,8 +171,8 @@ mod v14 {
     fn new(md: RuntimeMetadataV14) -> Self {
       // Detect the chain runtime path.
       let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
-      let runtime_ns = runtime_ty.path().namespace();
-      let runtime_ident = segments_ident(runtime_ns);
+      let runtime_namespace = runtime_ty.path().namespace();
+      let runtime_ident = segments_ident(runtime_namespace);
 
       let call = quote! { #runtime_ident::Call };
       let event = quote! { #runtime_ident::Event };
@@ -226,6 +227,7 @@ mod v14 {
       );
 
       let mut gen = Self {
+        runtime_namespace: runtime_namespace.iter().cloned().collect(),
         md,
         external_modules,
         rename_types,
@@ -756,6 +758,34 @@ mod v14 {
       }
     }
 
+    fn gen_enum_match_fields(&self, fields: &[Field<PortableForm>]) -> TokenStream {
+      let mut is_tuple = false;
+      let mut unnamed = Vec::new();
+
+      // Check for unit type (i.e. empty field list).
+      if fields.len() == 0 {
+        return quote!();
+      }
+
+      for field in fields {
+        unnamed.push(quote!(_));
+        if field.name().is_none() {
+          // If there are any unnamed fields, then make it a tuple.
+          is_tuple = true;
+        }
+      }
+
+      if is_tuple {
+        quote! { (#(#unnamed),*) }
+      } else {
+        quote! {
+          {
+            ..
+          }
+        }
+      }
+    }
+
     fn gen_enum_fields(
       &self,
       fields: &[Field<PortableForm>],
@@ -806,8 +836,75 @@ mod v14 {
       }
     }
 
+    fn gen_enum_match_arms_fn<F: Fn(&str, Option<&Variant<PortableForm>>) -> TokenStream>(
+      &self,
+      mod_name: &str,
+      fields: &[Field<PortableForm>],
+      f: F,
+    ) -> Option<TokenStream> {
+      let mod_ident = format_ident!("{}", mod_name);
+      let mut code = TokenStream::new();
+
+      // Only support pallet enum types with a single field.
+      if fields.len() != 1 {
+        let arm_code = f(mod_name, None);
+        return Some(quote! {
+          #mod_ident(_) => {
+            #arm_code
+          },
+        });
+      }
+      let field = &fields[0];
+
+      let field_ty = self.md.types.resolve(field.ty().id()).unwrap();
+      let field_ty_ident = segments_ident(field_ty.path().segments());
+      match field_ty.type_def() {
+        TypeDef::Variant(enum_ty) => {
+          let variants = enum_ty.variants();
+          if variants.len() == 0 {
+            let arm_code = f(mod_name, None);
+            code.append_all(quote! {
+              #mod_ident(_) => {
+                #arm_code
+              },
+            });
+          }
+          for variant in variants {
+            let v_name = variant.name();
+            let v_ident = format_ident!("{}", v_name);
+            let match_fields = self.gen_enum_match_fields(variant.fields());
+            let arm_code = f(mod_name, Some(variant));
+            code.append_all(quote! {
+              #mod_ident(#field_ty_ident :: #v_ident #match_fields) => {
+                #arm_code
+              },
+            });
+          }
+        }
+        _ => {
+          unimplemented!("Only enum types are supported");
+        }
+      }
+
+      Some(code)
+    }
+
+    fn is_runtime_type(&self, path: &Path<PortableForm>) -> Option<&'static str> {
+      if self.runtime_namespace == path.namespace() {
+        let ident = path.ident();
+        match ident.as_deref() {
+          Some("Event") => Some("Event"),
+          Some("Call") => Some("Call"),
+          _ => None,
+        }
+      } else {
+        None
+      }
+    }
+
     fn gen_type(&self, id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
-      let ident = ty.path().ident()?;
+      let path = ty.path();
+      let ident = path.ident()?;
       let ty_ident = format_ident!("{ident}");
       let mut scope = TypeParameters::new(ty);
       let full_name = self.id_to_full_name(id)?;
@@ -819,24 +916,23 @@ mod v14 {
         quote!()
       };
       let docs = ty.docs();
-      Some((
-        ident,
-        match ty.type_def() {
-          TypeDef::Composite(struct_ty) => {
-            let (is_tuple, mut fields) = self.gen_struct_fields(struct_ty.fields(), &mut scope)?;
-            if let Some(unused_params) = scope.get_unused_params() {
-              if is_tuple {
-                fields.append_all(quote! {
-                  , #unused_params
-                });
-              } else {
-                fields.append_all(quote! {
-                  , _phantom_data: #unused_params
-                });
-              }
-            }
-            let params = scope.get_type_params();
+      let (mut code, params) = match ty.type_def() {
+        TypeDef::Composite(struct_ty) => {
+          let (is_tuple, mut fields) = self.gen_struct_fields(struct_ty.fields(), &mut scope)?;
+          if let Some(unused_params) = scope.get_unused_params() {
             if is_tuple {
+              fields.append_all(quote! {
+                , #unused_params
+              });
+            } else {
+              fields.append_all(quote! {
+                , _phantom_data: #unused_params
+              });
+            }
+          }
+          let params = scope.get_type_params();
+          if is_tuple {
+            (
               quote! {
                 #(#[doc = #docs])*
                 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -844,8 +940,11 @@ mod v14 {
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params (#fields);
-              }
-            } else {
+              },
+              params,
+            )
+          } else {
+            (
               quote! {
                 #(#[doc = #docs])*
                 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -853,28 +952,32 @@ mod v14 {
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params { #fields }
-              }
-            }
+              },
+              params,
+            )
           }
-          TypeDef::Variant(enum_ty) => {
-            let mut variants = TokenStream::new();
-            for variant in enum_ty.variants() {
-              let idx = variant.index();
-              let docs = variant.docs();
-              let name = format_ident!("{}", variant.name());
-              let fields = self.gen_enum_fields(variant.fields(), &mut scope)?;
-              variants.append_all(quote! {
-                #(#[doc = #docs])*
-                #[codec(index = #idx)]
-                #name #fields
-              });
-            }
-            if let Some(unused_params) = scope.get_unused_params() {
-              variants.append_all(quote! {
-                PhantomDataVariant(#unused_params)
-              });
-            }
-            let params = scope.get_type_params();
+        }
+        TypeDef::Variant(enum_ty) => {
+          let mut variants = TokenStream::new();
+          for variant in enum_ty.variants() {
+            let idx = variant.index();
+            let docs = variant.docs();
+            let name = variant.name();
+            let ident = format_ident!("{}", name);
+            let fields = self.gen_enum_fields(variant.fields(), &mut scope)?;
+            variants.append_all(quote! {
+              #(#[doc = #docs])*
+              #[codec(index = #idx)]
+              #ident #fields
+            });
+          }
+          if let Some(unused_params) = scope.get_unused_params() {
+            variants.append_all(quote! {
+              PhantomDataVariant(#unused_params)
+            });
+          }
+          let params = scope.get_type_params();
+          (
             quote! {
               #(#[doc = #docs])*
               #[derive(Clone, Debug, PartialEq, Eq)]
@@ -884,13 +987,60 @@ mod v14 {
               pub enum #ty_ident #params {
                 #variants
               }
+            },
+            params,
+          )
+        }
+        _ => {
+          return None;
+        }
+      };
+      match (self.is_runtime_type(path), ty.type_def()) {
+        (Some("Event") | Some("Call"), TypeDef::Variant(enum_ty)) => {
+          let mut as_str_arms = TokenStream::new();
+          for variant in enum_ty.variants() {
+            let mod_name = variant.name();
+            as_str_arms.append_all(self.gen_enum_match_arms_fn(
+              mod_name,
+              variant.fields(),
+              |mod_name, variant| {
+                let name = if let Some(variant) = variant {
+                  format!("{}.{}", mod_name, variant.name())
+                } else {
+                  mod_name.to_string()
+                };
+                quote!(#name)
+              },
+            )?);
+          }
+          code.append_all(quote! {
+            impl #ty_ident #params {
+              pub fn as_static_str(&self) -> &'static str {
+                use #ty_ident #params ::*;
+                #[allow(unreachable_patterns)]
+                match self {
+                  #as_str_arms
+                  _ => "UnknownEvent",
+                }
+              }
             }
-          }
-          _ => {
-            return None;
-          }
-        },
-      ))
+
+            impl From<#ty_ident #params> for &'static str {
+              fn from(v: #ty_ident #params) -> Self {
+                v.as_static_str()
+              }
+            }
+
+            impl From<&#ty_ident #params> for &'static str {
+              fn from(v: &#ty_ident #params) -> Self {
+                v.as_static_str()
+              }
+            }
+          });
+        }
+        _ => (),
+      }
+      Some((ident, code))
     }
 
     fn generate_types(&self) -> TokenStream {
@@ -900,13 +1050,15 @@ mod v14 {
       for ty in self.md.types.types() {
         let ty_id = ty.id();
         let ty = ty.ty();
+        let ty_path = ty.path();
+        let ty_ns = ty_path.namespace();
         // Only generate type code for types with namespaces.  Basic rust types like
         // `Result` and `Option` have no namespace.
-        if let Some(ns_top) = ty.path().namespace().first() {
+        if let Some(ns_top) = ty_ns.first() {
           // Don't generate code for external types.
           if !self.external_modules.contains(ns_top) {
             if let Some((ident, code)) = self.gen_type(ty_id, ty) {
-              modules.add_type(ty.path().namespace(), ident, code);
+              modules.add_type(ty_ns, ident, code);
             }
           }
         }
