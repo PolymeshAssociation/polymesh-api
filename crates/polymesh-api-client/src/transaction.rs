@@ -8,20 +8,20 @@ use serde::{de::DeserializeOwned, ser::Serialize};
 
 use crate::*;
 
-pub trait CodecSerde:
-  Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
+pub trait RuntimeTraits:
+  Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug + Into<&'static str>
 {
 }
 
-impl<T> CodecSerde for T where
-  T: Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
+impl<T> RuntimeTraits for T where
+  T: Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug + Into<&'static str>
 {
 }
 
 #[async_trait]
 pub trait ChainApi {
-  type RuntimeCall: CodecSerde;
-  type RuntimeEvent: CodecSerde;
+  type RuntimeCall: RuntimeTraits;
+  type RuntimeEvent: RuntimeTraits;
 
   async fn get_nonce(&self, account: AccountId) -> Result<u32>;
 

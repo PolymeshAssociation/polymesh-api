@@ -203,7 +203,10 @@ impl Extra {
   }
 }
 
-pub struct Encoded(Vec<u8>);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Encoded(
+  #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
+);
 
 impl<T: Encode> From<&T> for Encoded {
   fn from(other: &T) -> Self {
@@ -217,6 +220,22 @@ impl Encode for Encoded {
   }
   fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
     dest.write(&self.0);
+  }
+}
+
+impl Decode for Encoded {
+  fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+    if let Some(len) = input.remaining_len()? {
+      let mut data = vec![0u8; len];
+      input.read(&mut data.as_mut_slice())?;
+      Ok(Self(data))
+    } else {
+      let mut data = Vec::new();
+      while let Ok(b) = input.read_byte() {
+        data.push(b);
+      }
+      Ok(Self(data))
+    }
   }
 }
 
@@ -243,6 +262,7 @@ impl<'a> Encode for SignedPayload<'a> {
 /// Current version of the `UncheckedExtrinsic` format.
 pub const EXTRINSIC_VERSION: u8 = 4;
 
+#[derive(Clone, Debug)]
 pub struct ExtrinsicV4 {
   pub signature: Option<(GenericAddress, MultiSignature, Extra)>,
   pub call: Encoded,
@@ -269,9 +289,9 @@ impl ExtrinsicV4 {
 
   pub fn as_hex_and_hash(&self) -> (String, TxHash) {
     let tx = self.encode();
+    let tx_hash = Self::tx_hash(tx.as_slice());
     let mut tx_hex = hex::encode(tx);
     tx_hex.insert_str(0, "0x");
-    let tx_hash = Self::tx_hash(tx_hex.as_bytes());
     (tx_hex, tx_hash)
   }
 
@@ -299,6 +319,31 @@ impl Encode for ExtrinsicV4 {
     self.call.encode_to(&mut buf);
 
     buf.encode()
+  }
+}
+
+impl Decode for ExtrinsicV4 {
+  fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+    // Decode Vec length.
+    let _len: Compact<u32> = Decode::decode(input)?;
+    // Version and signed flag.
+    let version = input.read_byte()?;
+    let is_signed = version & 0b1000_0000 != 0;
+    if (version & 0b0111_1111) != EXTRINSIC_VERSION {
+      Err("Invalid EXTRINSIC_VERSION")?;
+    }
+
+    let signature = if is_signed {
+      let sig: (GenericAddress, MultiSignature, Extra) = Decode::decode(input)?;
+      Some(sig)
+    } else {
+      None
+    };
+
+    Ok(Self {
+      signature,
+      call: Decode::decode(input)?,
+    })
   }
 }
 
@@ -331,17 +376,17 @@ pub struct SignedBlock {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Block {
-  extrinsics: Vec<String>,
+  extrinsics: Vec<Encoded>,
   header: Header,
 }
 
 impl Block {
   pub fn find_extrinsic(&self, xt_hash: TxHash) -> Option<usize> {
     // TODO: Add caching of blocks with extrinsic hashes.
-    self.extrinsics.iter().position(|xt| {
-      let hash = ExtrinsicV4::tx_hash(xt.as_bytes());
-      hash == xt_hash
-    })
+    self
+      .extrinsics
+      .iter()
+      .position(|xt| ExtrinsicV4::tx_hash(xt.0.as_slice()) == xt_hash)
   }
 
   pub fn parent(&self) -> BlockHash {
@@ -373,22 +418,22 @@ pub enum Phase {
 }
 
 #[derive(Clone, Debug, Serialize, Decode)]
-pub struct EventRecord<Event: CodecSerde> {
+pub struct EventRecord<Event: RuntimeTraits> {
   pub phase: Phase,
   pub event: Event,
   pub topics: Vec<BlockHash>,
 }
 
-impl<Event: CodecSerde> EventRecord<Event> {
+impl<Event: RuntimeTraits> EventRecord<Event> {
   pub fn to_string(&self) -> String {
     format!("{:#?}", self)
   }
 }
 
 #[derive(Clone, Debug, Serialize, Decode, Default)]
-pub struct EventRecords<Event: CodecSerde>(Vec<EventRecord<Event>>);
+pub struct EventRecords<Event: RuntimeTraits>(Vec<EventRecord<Event>>);
 
-impl<Event: CodecSerde> EventRecords<Event> {
+impl<Event: RuntimeTraits> EventRecords<Event> {
   pub fn from_vec(mut events: Vec<EventRecord<Event>>, filter: Option<Phase>) -> Self {
     if let Some(filter) = filter {
       events.retain(|ev| ev.phase == filter);
