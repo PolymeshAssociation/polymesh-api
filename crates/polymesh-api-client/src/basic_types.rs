@@ -1,13 +1,15 @@
 use codec::{Compact, CompactAs, Decode, Encode};
 
+use std::fmt;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use sp_core::crypto::Ss58Codec;
+
 // Re-export some basic crates.
 pub use frame_metadata;
-pub use sp_arithmetic;
 pub use sp_core;
-pub use sp_runtime;
 
 // Re-impl `per_things` to support serde
 pub mod per_things {
@@ -187,10 +189,91 @@ impl<AccountId: Clone, AccountIndex: Clone> From<&sp_runtime::MultiAddress<Accou
   }
 }
 
-#[derive(
-  Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, Serialize, Deserialize,
-)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 pub struct AccountId(pub [u8; 32]);
+
+// TODO: re-implement ss58 for `no_std`
+#[cfg(not(feature = "std"))]
+impl AccountId {
+  pub fn to_ss58check(&self) -> String {
+    format!("0x{}", hex::encode(&self.0))
+  }
+}
+
+impl Ss58Codec for AccountId {}
+
+impl fmt::Display for AccountId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.to_ss58check())
+  }
+}
+
+impl fmt::Debug for AccountId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let ss58 = self.to_ss58check();
+    let h = hex::encode(&self.0);
+    write!(f, "0x{} ({}...)", h, &ss58[0..8])
+  }
+}
+
+impl Serialize for AccountId {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::ser::Serializer,
+  {
+    let h = format!("0x{}", hex::encode(&self.0));
+    serializer.serialize_str(&h)
+  }
+}
+
+impl<'de> Deserialize<'de> for AccountId {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::de::Deserializer<'de>,
+  {
+    let h: &str = Deserialize::deserialize(deserializer)?;
+    let mut id = AccountId::default();
+    let off = if h.starts_with("0x") { 2 } else { 0 };
+    hex::decode_to_slice(h, &mut id.0[off..]).map_err(|e| serde::de::Error::custom(e))?;
+    Ok(id)
+  }
+}
+
+impl<'a> TryFrom<&'a [u8]> for AccountId {
+  type Error = ();
+
+  fn try_from(x: &'a [u8]) -> Result<Self, ()> {
+    Ok(AccountId(x.try_into().map_err(|_| ())?))
+  }
+}
+
+impl AsMut<[u8; 32]> for AccountId {
+  fn as_mut(&mut self) -> &mut [u8; 32] {
+    &mut self.0
+  }
+}
+
+impl AsMut<[u8]> for AccountId {
+  fn as_mut(&mut self) -> &mut [u8] {
+    &mut self.0[..]
+  }
+}
+
+impl AsRef<[u8; 32]> for AccountId {
+  fn as_ref(&self) -> &[u8; 32] {
+    &self.0
+  }
+}
+
+impl AsRef<[u8]> for AccountId {
+  fn as_ref(&self) -> &[u8] {
+    &self.0[..]
+  }
+}
+
+impl sp_core::ByteArray for AccountId {
+  const LEN: usize = 32;
+}
 
 impl From<[u8; 32]> for AccountId {
   fn from(p: [u8; 32]) -> Self {
@@ -235,3 +318,43 @@ impl From<&AccountId> for sp_runtime::AccountId32 {
 }
 
 pub type GenericAddress = MultiAddress<AccountId, ()>;
+
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+pub struct IdentityId(pub [u8; 32]);
+
+impl fmt::Display for IdentityId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let h = hex::encode(&self.0);
+    write!(f, "0x{}", h)
+  }
+}
+
+impl fmt::Debug for IdentityId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let h = hex::encode(&self.0);
+    write!(f, "0x{}", h)
+  }
+}
+
+impl Serialize for IdentityId {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::ser::Serializer,
+  {
+    let h = format!("0x{}", hex::encode(&self.0));
+    serializer.serialize_str(&h)
+  }
+}
+
+impl<'de> Deserialize<'de> for IdentityId {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::de::Deserializer<'de>,
+  {
+    let h: &str = Deserialize::deserialize(deserializer)?;
+    let mut id = IdentityId::default();
+    let off = if h.starts_with("0x") { 2 } else { 0 };
+    hex::decode_to_slice(h, &mut id.0[off..]).map_err(|e| serde::de::Error::custom(e))?;
+    Ok(id)
+  }
+}

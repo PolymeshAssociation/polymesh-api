@@ -9,19 +9,62 @@ use serde::{de::DeserializeOwned, ser::Serialize};
 use crate::*;
 
 pub trait RuntimeTraits:
-  Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug + Into<&'static str>
+  Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
 {
 }
 
 impl<T> RuntimeTraits for T where
-  T: Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug + Into<&'static str>
+  T: Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
 {
+}
+
+pub trait RuntimeEnumTraits: RuntimeTraits + EnumInfo {}
+
+impl<T> RuntimeEnumTraits for T where T: RuntimeTraits + EnumInfo {}
+
+pub trait EnumInfo: Into<&'static str> {
+  fn as_name(&self) -> &'static str;
+  fn as_docs(&self) -> &'static [&'static str];
+  fn as_short_doc(&self) -> &'static str {
+    self.as_docs()[0]
+  }
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub enum ExtrinsicResult<Api: ChainApi + ?Sized> {
+  Success(Api::DispatchInfo),
+  Failed(Api::DispatchInfo, Api::DispatchError),
+}
+
+impl<Api: ChainApi> ExtrinsicResult<Api> {
+  pub fn is_success(&self) -> bool {
+    match self {
+      Self::Success(_) => true,
+      Self::Failed(_, _) => false,
+    }
+  }
+
+  pub fn is_failed(&self) -> bool {
+    match self {
+      Self::Success(_) => false,
+      Self::Failed(_, _) => true,
+    }
+  }
+
+  pub fn ok(&self) -> Result<()> {
+    match self {
+      Self::Success(_) => Ok(()),
+      Self::Failed(_, err) => Err(Error::ExtrinsicError(format!("{}", err.as_short_doc()))),
+    }
+  }
 }
 
 #[async_trait]
 pub trait ChainApi {
-  type RuntimeCall: RuntimeTraits;
-  type RuntimeEvent: RuntimeTraits;
+  type RuntimeCall: RuntimeEnumTraits;
+  type RuntimeEvent: RuntimeEnumTraits;
+  type DispatchInfo: RuntimeTraits;
+  type DispatchError: RuntimeEnumTraits;
 
   async fn get_nonce(&self, account: AccountId) -> Result<u32>;
 
@@ -29,6 +72,20 @@ pub trait ChainApi {
     &self,
     block: Option<BlockHash>,
   ) -> Result<Vec<EventRecord<Self::RuntimeEvent>>>;
+
+  fn event_to_extrinsic_result(
+    event: &EventRecord<Self::RuntimeEvent>,
+  ) -> Option<ExtrinsicResult<Self>>;
+
+  fn events_to_extrinsic_result(
+    events: &[EventRecord<Self::RuntimeEvent>],
+  ) -> Option<ExtrinsicResult<Self>> {
+    // Search backwards, since the event we want is normally the last.
+    events
+      .iter()
+      .rev()
+      .find_map(Self::event_to_extrinsic_result)
+  }
 
   fn client(&self) -> &Client;
 }
@@ -40,6 +97,7 @@ pub struct TransactionResults<'api, Api: ChainApi> {
   status: Option<TransactionStatus>,
   block: Option<BlockHash>,
   events: Option<EventRecords<Api::RuntimeEvent>>,
+  extrinsic_result: Option<ExtrinsicResult<Api>>,
   finalized: bool,
 }
 
@@ -52,6 +110,7 @@ impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
       status: None,
       block: None,
       events: None,
+      extrinsic_result: None,
       finalized: false,
     }
   }
@@ -105,6 +164,11 @@ impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
     Ok(self.events.as_ref())
   }
 
+  pub async fn extrinsic_result(&mut self) -> Result<Option<&ExtrinsicResult<Api>>> {
+    self.load_events().await?;
+    Ok(self.extrinsic_result.as_ref())
+  }
+
   async fn load_events(&mut self) -> Result<bool> {
     // Do nothing if we already have the events.
     if self.events.is_some() {
@@ -132,11 +196,10 @@ impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
 
     if let Some(idx) = idx {
       // Get block events.
-      let events = self.api.block_events(Some(block_hash)).await?;
-      self.events = Some(EventRecords::from_vec(
-        events,
-        Some(Phase::ApplyExtrinsic(idx as u32)),
-      ));
+      let block_events = self.api.block_events(Some(block_hash)).await?;
+      let events = EventRecords::from_vec(block_events, Some(Phase::ApplyExtrinsic(idx as u32)));
+      self.extrinsic_result = Api::events_to_extrinsic_result(events.0.as_slice());
+      self.events = Some(events);
       Ok(true)
     } else {
       Ok(false)

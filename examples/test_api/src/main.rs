@@ -19,7 +19,8 @@ async fn main() -> Result<()> {
 
   let api = Api::new(&url).await?;
 
-  let dest: MultiAddress<_, _> = AccountKeyring::Bob.to_account_id().into();
+  let dest: MultiAddress<_, _> = AccountKeyring::Eve.to_account_id().into();
+  //let dest: MultiAddress<_, _> = AccountKeyring::Ferdie.to_account_id().into();
   let call = api.call().balances().transfer(dest.clone(), 123_012_345)?;
   println!("call = {call:#?}");
   println!(
@@ -40,12 +41,27 @@ async fn main() -> Result<()> {
     serde_json::to_string(call.runtime_call())?
   );
   let mut res2 = call.sign_submit_and_watch(&mut alice).await?;
-  println!("call1 result = {:?}", res1.wait_in_block().await);
-  println!("call2 result = {:?}", res2.wait_in_block().await);
+  println!("call1 in-block = {:?}", res1.wait_in_block().await);
+  println!("call2 in-block = {:?}", res2.wait_in_block().await);
 
   let events = res1.events().await?;
-  println!("call1 events = {:#?}", serde_json::to_string(&events));
+  println!("call1 events:");
+  if let Some(events) = events {
+    for event in &events.0 {
+      println!(" -- {} = {:#?}", event.name(), event.event);
+    }
+  }
   let events = res2.events().await?;
-  println!("call2 events = {:#?}", serde_json::to_string(&events));
+  println!("call2 events:");
+  if let Some(events) = events {
+    for event in &events.0 {
+      println!(" -- {} = {:#?}", event.name(), event.event);
+    }
+  }
+
+  let result = res1.extrinsic_result().await?;
+  println!("call1 result = {:#?}", result);
+  let result = res2.extrinsic_result().await?;
+  println!("call2 result = {:#?}", result);
   Ok(())
 }

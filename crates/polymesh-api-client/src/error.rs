@@ -26,6 +26,9 @@ pub enum Error {
   #[error("Schema failed to parse: {0}")]
   SchemaParseFailed(String),
 
+  #[error("ExtrinsicError: {0}")]
+  ExtrinsicError(String),
+
   #[error("RpcClient: {0}")]
   RpcClient(String),
 

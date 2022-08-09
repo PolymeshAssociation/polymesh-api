@@ -160,6 +160,8 @@ mod v14 {
   struct Generator {
     md: RuntimeMetadataV14,
     external_modules: HashSet<String>,
+    pallet_types: HashMap<u32, String>,
+    max_error_size: usize,
     rename_types: HashMap<String, TokenStream>,
     ord_types: HashSet<String>,
     runtime_namespace: Vec<String>,
@@ -182,6 +184,10 @@ mod v14 {
           (
             "sp_core::crypto::AccountId32",
             quote!(::polymesh_api_client::AccountId),
+          ),
+          (
+            "polymesh_primitives::identity_id::IdentityId",
+            quote!(::polymesh_api_client::IdentityId),
           ),
           (
             "sp_runtime::multiaddress::MultiAddress",
@@ -226,10 +232,26 @@ mod v14 {
         .map(|(name, code)| (name.to_string(), code)),
       );
 
+      // Collect pallet Call/Event/Error types.
+      let mut pallet_types = HashMap::new();
+      for p in &md.pallets {
+        if let Some(c) = &p.calls {
+          pallet_types.insert(c.ty.id(), p.name.to_string());
+        }
+        if let Some(e) = &p.event {
+          pallet_types.insert(e.ty.id(), p.name.to_string());
+        }
+        if let Some(e) = &p.error {
+          pallet_types.insert(e.ty.id(), p.name.to_string());
+        }
+      }
+
       let mut gen = Self {
         runtime_namespace: runtime_namespace.iter().cloned().collect(),
         md,
         external_modules,
+        pallet_types,
+        max_error_size: 4,
         rename_types,
         ord_types: Default::default(),
         call,
@@ -836,57 +858,109 @@ mod v14 {
       }
     }
 
-    fn gen_enum_match_arms_fn<F: Fn(&str, Option<&Variant<PortableForm>>) -> TokenStream>(
+    fn gen_enum_as_static_str(
       &self,
-      mod_name: &str,
-      fields: &[Field<PortableForm>],
-      f: F,
+      ty_ident: &Ident,
+      params: &TokenStream,
+      ty: &Type<PortableForm>,
+      prefix: Option<&str>,
     ) -> Option<TokenStream> {
-      let mod_ident = format_ident!("{}", mod_name);
-      let mut code = TokenStream::new();
-
-      // Only support pallet enum types with a single field.
-      if fields.len() != 1 {
-        let arm_code = f(mod_name, None);
-        return Some(quote! {
-          #mod_ident(_) => {
-            #arm_code
-          },
-        });
-      }
-      let field = &fields[0];
-
-      let field_ty = self.md.types.resolve(field.ty().id()).unwrap();
-      let field_ty_ident = segments_ident(field_ty.path().segments());
-      match field_ty.type_def() {
-        TypeDef::Variant(enum_ty) => {
-          let variants = enum_ty.variants();
-          if variants.len() == 0 {
-            let arm_code = f(mod_name, None);
-            code.append_all(quote! {
-              #mod_ident(_) => {
-                #arm_code
+      let mut as_str_arms = TokenStream::new();
+      let mut as_docs_arms = TokenStream::new();
+      match (prefix, ty.type_def()) {
+        (None, TypeDef::Variant(enum_ty)) => {
+          for variant in enum_ty.variants() {
+            let top_name = variant.name();
+            let top_ident = format_ident!("{}", top_name);
+            let fields = variant.fields().len();
+            if fields == 1 {
+              as_str_arms.append_all(quote! {
+                Self::#top_ident(val) => {
+                  val.as_static_str()
+                },
+              });
+              as_docs_arms.append_all(quote! {
+                Self::#top_ident(val) => {
+                  val.as_docs()
+                },
+              });
+            } else {
+              as_str_arms.append_all(quote! {
+                Self::#top_ident(_) => {
+                  #top_name
+                },
+              });
+              as_docs_arms.append_all(quote! {
+                Self::#top_ident(_) => {
+                  &[""]
+                },
+              });
+            }
+          }
+        }
+        (Some(prefix), TypeDef::Variant(enum_ty)) => {
+          for variant in enum_ty.variants() {
+            let var_name = variant.name();
+            let var_ident = format_ident!("{}", var_name);
+            let mut docs = variant.docs().to_vec();
+            if docs.len() == 0 {
+              docs.push("".to_string());
+            }
+            let as_str_name = format!("{}.{}", prefix, var_name);
+            let match_fields = self.gen_enum_match_fields(variant.fields());
+            as_str_arms.append_all(quote! {
+              Self:: #var_ident #match_fields => {
+                #as_str_name
               },
             });
-          }
-          for variant in variants {
-            let v_name = variant.name();
-            let v_ident = format_ident!("{}", v_name);
-            let match_fields = self.gen_enum_match_fields(variant.fields());
-            let arm_code = f(mod_name, Some(variant));
-            code.append_all(quote! {
-              #mod_ident(#field_ty_ident :: #v_ident #match_fields) => {
-                #arm_code
+            as_docs_arms.append_all(quote! {
+              Self:: #var_ident #match_fields => {
+                &[#(#docs,)*]
               },
             });
           }
         }
         _ => {
-          unimplemented!("Only enum types are supported");
+          return None;
         }
-      }
+      };
+      Some(quote! {
+        impl #params #ty_ident #params {
+          pub fn as_static_str(&self) -> &'static str {
+            #[allow(unreachable_patterns)]
+            match self {
+              #as_str_arms
+              _ => "Unknown",
+            }
+          }
+        }
 
-      Some(code)
+        impl #params ::polymesh_api_client::EnumInfo for #ty_ident #params {
+          fn as_name(&self) -> &'static str {
+            self.as_static_str()
+          }
+
+          fn as_docs(&self) -> &'static [&'static str] {
+            #[allow(unreachable_patterns)]
+            match self {
+              #as_docs_arms
+              _ => &[""],
+            }
+          }
+        }
+
+        impl #params From<#ty_ident #params> for &'static str {
+          fn from(v: #ty_ident #params) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl #params From<&#ty_ident #params> for &'static str {
+          fn from(v: &#ty_ident #params) -> Self {
+            v.as_static_str()
+          }
+        }
+      })
     }
 
     fn is_runtime_type(&self, path: &Path<PortableForm>) -> Option<&'static str> {
@@ -902,12 +976,279 @@ mod v14 {
       }
     }
 
-    fn gen_type(&self, id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
+    fn gen_module_error(&self, _id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
       let path = ty.path();
       let ident = path.ident()?;
       let ty_ident = format_ident!("{ident}");
       let mut scope = TypeParameters::new(ty);
+
+      let mut variants = TokenStream::new();
+      let mut as_str_arms = TokenStream::new();
+      let mut as_docs_arms = TokenStream::new();
+      for p in &self.md.pallets {
+        let idx = p.index;
+        let mod_ident = format_ident!("{}", p.name);
+        let error_ty = p.error.as_ref().and_then(|e| {
+          self
+            .type_name_scoped(e.ty.id(), &mut scope, false)
+            .map(|ident| quote! { (#ident) })
+        });
+        if let Some(error_ty) = error_ty {
+          variants.append_all(quote! {
+            #[codec(index = #idx)]
+            #mod_ident #error_ty,
+          });
+          as_str_arms.append_all(quote! {
+            RuntimeError:: #mod_ident(err) => err.as_static_str(),
+          });
+          as_docs_arms.append_all(quote! {
+            RuntimeError:: #mod_ident(err) => err.as_docs(),
+          });
+        }
+      }
+
+      let docs = ty.docs();
+      let max_error_size = self.max_error_size + 1;
+      let code = quote! {
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(::codec::Encode, ::codec::Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum RuntimeError {
+          #variants
+        }
+
+        impl RuntimeError {
+          pub fn as_static_str(&self) -> &'static str {
+            match self {
+              #as_str_arms
+            }
+          }
+        }
+
+        impl From<RuntimeError> for &'static str {
+          fn from(v: RuntimeError) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl From<&RuntimeError> for &'static str {
+          fn from(v: &RuntimeError) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl ::polymesh_api_client::EnumInfo for RuntimeError {
+          fn as_name(&self) -> &'static str {
+            self.as_static_str()
+          }
+
+          fn as_docs(&self) -> &'static [&'static str] {
+            match self {
+              #as_docs_arms
+            }
+          }
+        }
+
+        #(#[doc = #docs])*
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct #ty_ident(RuntimeError);
+
+        impl ::codec::Encode for #ty_ident {
+          fn encode_to<T: ::codec::Output + ?Sized>(&self, output: &mut T) {
+            let mut raw = self.0.encode();
+            raw.resize(#max_error_size, 0);
+            output.write(raw.as_slice());
+          }
+        }
+
+        impl ::codec::Decode for #ty_ident {
+          fn decode<I: ::codec::Input>(input: &mut I) -> Result<Self, ::codec::Error> {
+            let raw: [u8; #max_error_size] = ::codec::Decode::decode(input)?;
+            Ok(Self(RuntimeError::decode(&mut &raw[..])?))
+          }
+        }
+
+        impl #ty_ident {
+          pub fn as_static_str(&self) -> &'static str {
+            self.0.as_static_str()
+          }
+        }
+
+        impl From<#ty_ident> for &'static str {
+          fn from(v: #ty_ident) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl From<&#ty_ident> for &'static str {
+          fn from(v: &#ty_ident) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl ::polymesh_api_client::EnumInfo for #ty_ident {
+          fn as_name(&self) -> &'static str {
+            self.as_static_str()
+          }
+
+          fn as_docs(&self) -> &'static [&'static str] {
+            self.0.as_docs()
+          }
+        }
+      };
+      Some((ident, code))
+    }
+
+    fn gen_dispatch_error(
+      &self,
+      _id: u32,
+      ty: &Type<PortableForm>,
+    ) -> Option<(String, TokenStream)> {
+      let path = ty.path();
+      let ident = path.ident()?;
+      let ty_ident = format_ident!("{ident}");
+      let mut scope = TypeParameters::new(ty);
+
+      let mut variants = TokenStream::new();
+      let mut as_str_arms = TokenStream::new();
+      let mut as_docs_arms = TokenStream::new();
+      for p in &self.md.pallets {
+        let idx = p.index;
+        let mod_ident = format_ident!("{}", p.name);
+        let error_ty = p.error.as_ref().and_then(|e| {
+          self
+            .type_name_scoped(e.ty.id(), &mut scope, false)
+            .map(|ident| quote! { (#ident) })
+        });
+        if let Some(error_ty) = error_ty {
+          variants.append_all(quote! {
+            #[codec(index = #idx)]
+            #mod_ident #error_ty,
+          });
+          as_str_arms.append_all(quote! {
+            RuntimeError:: #mod_ident(err) => err.as_static_str(),
+          });
+          as_docs_arms.append_all(quote! {
+            RuntimeError:: #mod_ident(err) => err.as_docs(),
+          });
+        }
+      }
+
+      let docs = ty.docs();
+      let code = quote! {
+        #(#[doc = #docs])*
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(::codec::Encode, ::codec::Decode)]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum #ty_ident {
+          Other,
+          CannotLookup,
+          BadOrigin,
+          Module(ModuleError),
+          ConsumerRemaining,
+          NoProviders,
+          TooManyConsumers,
+          Token(TokenError),
+          Arithmetic(ArithmeticError),
+        }
+
+        impl #ty_ident {
+          pub fn as_static_str(&self) -> &'static str {
+            match self {
+              Self::Other => "Other",
+              Self::CannotLookup => "CannotLookup",
+              Self::BadOrigin => "BadOrigin",
+              Self::Module(err) => err.as_static_str(),
+              Self::ConsumerRemaining => "ConsumerRemaining",
+              Self::NoProviders => "NoProviders",
+              Self::TooManyConsumers => "TooManyConsumers",
+              Self::Token(err) => {
+                match err {
+                  TokenError::NoFunds => "Token::NoFunds",
+                  TokenError::WouldDie => "Token::WouldDie",
+                  TokenError::BelowMinimum => "Token::BelowMinimum",
+                  TokenError::CannotCreate => "Token::CannotCreate",
+                  TokenError::UnknownAsset => "Token::UnknownAsset",
+                  TokenError::Frozen => "Token::Frozen",
+                  TokenError::Unsupported => "Token::Unsupported",
+                }
+              },
+              Self::Arithmetic(err) => {
+                match err {
+                  ArithmeticError::Underflow => "Arithmetic::Underflow",
+                  ArithmeticError::Overflow => "Arithmetic::Overflow",
+                  ArithmeticError::DivisionByZero => "Arithmetic::DivisionByZero",
+                }
+              },
+            }
+          }
+        }
+
+        impl From<#ty_ident> for &'static str {
+          fn from(v: #ty_ident) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl From<&#ty_ident> for &'static str {
+          fn from(v: &#ty_ident) -> Self {
+            v.as_static_str()
+          }
+        }
+
+        impl ::polymesh_api_client::EnumInfo for #ty_ident {
+          fn as_name(&self) -> &'static str {
+            self.as_static_str()
+          }
+
+          fn as_docs(&self) -> &'static [&'static str] {
+            match self {
+              Self::Other => &["Some error occurred."],
+              Self::CannotLookup => &["Failed to lookup some data."],
+              Self::BadOrigin => &["A bad origin."],
+              Self::Module(err) => err.as_docs(),
+              Self::ConsumerRemaining => &["At least one consumer is remaining so the account cannot be destroyed."],
+              Self::NoProviders => &["There are no providers so the account cannot be created."],
+              Self::TooManyConsumers => &["There are too many consumers so the account cannot be created."],
+              Self::Token(err) => {
+                match err {
+                  TokenError::NoFunds => &["Funds are unavailable."],
+                  TokenError::WouldDie => &["Account that must exist would die."],
+                  TokenError::BelowMinimum => &["Account cannot exist with the funds that would be given."],
+                  TokenError::CannotCreate => &["Account cannot be created."],
+                  TokenError::UnknownAsset => &["The asset in question is unknown."],
+                  TokenError::Frozen => &["Funds exist but are frozen."],
+                  TokenError::Unsupported => &["Operation is not supported by the asset."],
+                }
+              },
+              Self::Arithmetic(err) => {
+                match err {
+                  ArithmeticError::Underflow => &["Arithmetic underflow"],
+                  ArithmeticError::Overflow => &["Arithmetic overflow"],
+                  ArithmeticError::DivisionByZero => &["Arithmetic divide by zero"],
+                }
+              },
+            }
+          }
+        }
+      };
+      Some((ident, code))
+    }
+
+    fn gen_type(&self, id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
       let full_name = self.id_to_full_name(id)?;
+      if full_name == "sp_runtime::ModuleError" {
+        return self.gen_module_error(id, ty);
+      }
+      if full_name == "sp_runtime::DispatchError" {
+        return self.gen_dispatch_error(id, ty);
+      }
+      let path = ty.path();
+      let ident = path.ident()?;
+      let ty_ident = format_ident!("{ident}");
+
+      let mut scope = TypeParameters::new(ty);
       let derive_ord = if self.ord_types.contains(&full_name) {
         quote! {
           #[derive(PartialOrd, Ord)]
@@ -915,6 +1256,7 @@ mod v14 {
       } else {
         quote!()
       };
+
       let docs = ty.docs();
       let (mut code, params) = match ty.type_def() {
         TypeDef::Composite(struct_ty) => {
@@ -995,48 +1337,21 @@ mod v14 {
           return None;
         }
       };
-      match (self.is_runtime_type(path), ty.type_def()) {
-        (Some("Event") | Some("Call"), TypeDef::Variant(enum_ty)) => {
-          let mut as_str_arms = TokenStream::new();
-          for variant in enum_ty.variants() {
-            let mod_name = variant.name();
-            as_str_arms.append_all(self.gen_enum_match_arms_fn(
-              mod_name,
-              variant.fields(),
-              |mod_name, variant| {
-                let name = if let Some(variant) = variant {
-                  format!("{}.{}", mod_name, variant.name())
-                } else {
-                  mod_name.to_string()
-                };
-                quote!(#name)
-              },
-            )?);
+
+      // Special handling for pallet types.
+      if let Some(pallet_name) = self.pallet_types.get(&id) {
+        if let Some(as_static_str) =
+          self.gen_enum_as_static_str(&ty_ident, &params, ty, Some(pallet_name))
+        {
+          code.append_all(as_static_str);
+        }
+      }
+
+      match self.is_runtime_type(path) {
+        Some("Event") | Some("Call") => {
+          if let Some(as_static_str) = self.gen_enum_as_static_str(&ty_ident, &params, ty, None) {
+            code.append_all(as_static_str);
           }
-          code.append_all(quote! {
-            impl #ty_ident #params {
-              pub fn as_static_str(&self) -> &'static str {
-                use #ty_ident #params ::*;
-                #[allow(unreachable_patterns)]
-                match self {
-                  #as_str_arms
-                  _ => "UnknownEvent",
-                }
-              }
-            }
-
-            impl From<#ty_ident #params> for &'static str {
-              fn from(v: #ty_ident #params) -> Self {
-                v.as_static_str()
-              }
-            }
-
-            impl From<&#ty_ident #params> for &'static str {
-              fn from(v: &#ty_ident #params) -> Self {
-                v.as_static_str()
-              }
-            }
-          });
         }
         _ => (),
       }
@@ -1159,6 +1474,8 @@ mod v14 {
         impl ::polymesh_api_client::ChainApi for Api {
           type RuntimeCall = types::#call_ty;
           type RuntimeEvent = types::#event_ty;
+          type DispatchInfo = types::frame_support::weights::DispatchInfo;
+          type DispatchError = types::sp_runtime::DispatchError;
 
           async fn get_nonce(&self, account: ::polymesh_api_client::AccountId) -> ::polymesh_api_client::Result<u32> {
             let info = self.query().system().account(account).await?;
@@ -1171,6 +1488,16 @@ mod v14 {
               None => self.query().system(),
             };
             Ok(system.events().await?)
+          }
+
+          fn event_to_extrinsic_result(event: &::polymesh_api_client::EventRecord<Self::RuntimeEvent>) -> Option<::polymesh_api_client::ExtrinsicResult<Self>> {
+            match &event.event {
+              types::#event_ty::System(types::frame_system::pallet::Event::ExtrinsicSuccess { dispatch_info }) =>
+                Some(::polymesh_api_client::ExtrinsicResult::Success(dispatch_info.clone())),
+              types::#event_ty::System(types::frame_system::pallet::Event::ExtrinsicFailed { dispatch_info, dispatch_error }) =>
+                Some(::polymesh_api_client::ExtrinsicResult::Failed(dispatch_info.clone(), dispatch_error.clone())),
+              _ => None,
+            }
           }
 
           fn client(&self) -> &::polymesh_api_client::Client {

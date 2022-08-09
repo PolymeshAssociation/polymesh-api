@@ -418,22 +418,34 @@ pub enum Phase {
 }
 
 #[derive(Clone, Debug, Serialize, Decode)]
-pub struct EventRecord<Event: RuntimeTraits> {
+pub struct EventRecord<Event: RuntimeEnumTraits> {
   pub phase: Phase,
   pub event: Event,
   pub topics: Vec<BlockHash>,
 }
 
-impl<Event: RuntimeTraits> EventRecord<Event> {
+impl<Event: RuntimeEnumTraits> EventRecord<Event> {
+  pub fn name(&self) -> &'static str {
+    self.event.as_name()
+  }
+
+  pub fn short_doc(&self) -> &'static str {
+    self.event.as_short_doc()
+  }
+
+  pub fn docs(&self) -> &'static [&'static str] {
+    self.event.as_docs()
+  }
+
   pub fn to_string(&self) -> String {
     format!("{:#?}", self)
   }
 }
 
 #[derive(Clone, Debug, Serialize, Decode, Default)]
-pub struct EventRecords<Event: RuntimeTraits>(Vec<EventRecord<Event>>);
+pub struct EventRecords<Event: RuntimeEnumTraits>(pub Vec<EventRecord<Event>>);
 
-impl<Event: RuntimeTraits> EventRecords<Event> {
+impl<Event: RuntimeEnumTraits> EventRecords<Event> {
   pub fn from_vec(mut events: Vec<EventRecord<Event>>, filter: Option<Phase>) -> Self {
     if let Some(filter) = filter {
       events.retain(|ev| ev.phase == filter);

@@ -55,7 +55,10 @@ impl RpcClient {
       };
       let host = url.authority().map(|a| a.as_str()).unwrap_or_else(|| "");
       let authority = format!("{}:{}", host, port);
-      let path = url.path_and_query().map(|p| p.as_str()).unwrap_or_else(|| "");
+      let path = url
+        .path_and_query()
+        .map(|p| p.as_str())
+        .unwrap_or_else(|| "");
       let url = http::Uri::builder()
         .scheme(scheme)
         .authority(authority)
