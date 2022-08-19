@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
 
   // Get block hash
   let gen_hash = client.get_block_hash(0).await?;
-  println!("gen_hash = {gen_hash}");
+  println!("gen_hash = {gen_hash:?}");
 
   let version = client.get_block_runtime_version(None).await?;
   println!("{version:#?}");
