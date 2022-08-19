@@ -51,9 +51,12 @@ pub struct Client {
 impl Client {
   pub async fn new(url: &str) -> Result<Self> {
     let rpc = RpcClient::new(url).await?;
-    let runtime_version = Self::rpc_get_runtime_version(&rpc, None).await?;
-    let metadata = Self::rpc_get_metadata(&rpc, None).await?;
-    let genesis_hash = Self::rpc_get_block_hash(&rpc, 0).await?;
+    let runtime_version = Self::rpc_get_runtime_version(&rpc, None).await?
+      .ok_or_else(|| Error::RpcClient(format!("Failed to get RuntimeVersion")))?;
+    let metadata = Self::rpc_get_metadata(&rpc, None).await?
+      .ok_or_else(|| Error::RpcClient(format!("Failed to get chain metadata")))?;
+    let genesis_hash = Self::rpc_get_block_hash(&rpc, 0).await?
+      .ok_or_else(|| Error::RpcClient(format!("Failed to get chain Genesis hash")))?;
     Ok(Self {
       rpc,
       runtime_version,
@@ -220,13 +223,13 @@ impl Client {
     )
   }
 
-  async fn rpc_get_block_hash(rpc: &RpcClient, block_number: u32) -> Result<BlockHash> {
+  async fn rpc_get_block_hash(rpc: &RpcClient, block_number: u32) -> Result<Option<BlockHash>> {
     let params = rpc_params!(block_number);
     Ok(rpc.request("chain_getBlockHash", params).await?)
   }
 
   /// Get the block hash for a `block_number`.
-  pub async fn get_block_hash(&self, block_number: u32) -> Result<BlockHash> {
+  pub async fn get_block_hash(&self, block_number: u32) -> Result<Option<BlockHash>> {
     Ok(Self::rpc_get_block_hash(&self.rpc, block_number).await?)
   }
 
@@ -247,7 +250,7 @@ impl Client {
   async fn rpc_get_runtime_version(
     rpc: &RpcClient,
     block: Option<BlockHash>,
-  ) -> Result<RuntimeVersion> {
+  ) -> Result<Option<RuntimeVersion>> {
     let params = rpc_params!(block);
     Ok(rpc.request("state_getRuntimeVersion", params).await?)
   }
@@ -256,26 +259,26 @@ impl Client {
   pub async fn get_block_runtime_version(
     &self,
     block: Option<BlockHash>,
-  ) -> Result<RuntimeVersion> {
+  ) -> Result<Option<RuntimeVersion>> {
     Ok(Self::rpc_get_runtime_version(&self.rpc, block).await?)
   }
 
   async fn rpc_get_metadata(
     rpc: &RpcClient,
     block: Option<BlockHash>,
-  ) -> Result<RuntimeMetadataPrefixed> {
+  ) -> Result<Option<RuntimeMetadataPrefixed>> {
     let params = rpc_params!(block);
     let hex: String = rpc.request("state_getMetadata", params).await?;
 
     let bytes = Vec::from_hex(&hex[2..])?;
-    Ok(RuntimeMetadataPrefixed::decode(&mut bytes.as_slice())?)
+    Ok(Some(RuntimeMetadataPrefixed::decode(&mut bytes.as_slice())?))
   }
 
   /// Get the RuntimeMetadata of a block.
   pub async fn get_block_metadata(
     &self,
     block: Option<BlockHash>,
-  ) -> Result<RuntimeMetadataPrefixed> {
+  ) -> Result<Option<RuntimeMetadataPrefixed>> {
     Ok(Self::rpc_get_metadata(&self.rpc, block).await?)
   }
 }

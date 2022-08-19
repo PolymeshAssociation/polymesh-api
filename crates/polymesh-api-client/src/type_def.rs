@@ -1,8 +1,10 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode};
 
-pub use scale_info::{TypeDefPrimitive, TypeParameter};
+pub use scale_info::{form::PortableForm, TypeDefPrimitive, TypeParameter};
 
 #[derive(Clone, Debug, Default)]
 pub struct TypeForm;
@@ -15,6 +17,12 @@ impl scale_info::form::Form for TypeForm {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Decode, Encode)]
 pub struct Path {
   pub segments: Vec<String>,
+}
+
+impl fmt::Display for Path {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.segments.join("::"))
+  }
 }
 
 impl Path {
@@ -60,6 +68,18 @@ impl Type {
       type_params: Default::default(),
       docs: Default::default(),
     }
+  }
+
+  pub fn path(&self) -> &Path {
+    &self.path
+  }
+
+  pub fn type_params(&self) -> &[TypeParameter<TypeForm>] {
+    self.type_params.as_slice()
+  }
+
+  pub fn type_def(&self) -> &TypeDef {
+    &self.type_def
   }
 }
 
@@ -123,7 +143,11 @@ pub struct TypeDefVariant {
 }
 
 impl TypeDefVariant {
-  pub fn new(variants: Vec<Variant>) -> Self {
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  pub fn new_variants(variants: Vec<Variant>) -> Self {
     Self { variants }
   }
 
@@ -143,6 +167,15 @@ impl TypeDefVariant {
         Variant::new("Err", vec![Field::new(err_ty)], 1),
       ],
     }
+  }
+
+  pub fn insert(&mut self, index: u8, name: &str, field: Option<TypeId>) {
+    self.variants.push(Variant {
+      name: name.into(),
+      index,
+      fields: field.into_iter().map(|id| Field::new(id)).collect(),
+      docs: vec![],
+    })
   }
 }
 
@@ -182,6 +215,10 @@ impl TypeDefTuple {
   pub fn is_unit(&self) -> bool {
     self.fields.is_empty()
   }
+
+  pub fn fields(&self) -> &[TypeId] {
+    self.fields.as_slice()
+  }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
@@ -193,6 +230,10 @@ pub struct TypeDefSequence {
 impl TypeDefSequence {
   pub fn new(type_param: TypeId) -> Self {
     Self { type_param }
+  }
+
+  pub fn type_param(&self) -> TypeId {
+    self.type_param
   }
 }
 
@@ -207,6 +248,14 @@ impl TypeDefArray {
   pub fn new(len: u32, type_param: TypeId) -> Self {
     Self { len, type_param }
   }
+
+  pub fn type_param(&self) -> TypeId {
+    self.type_param
+  }
+
+  pub fn len(&self) -> u32 {
+    self.len
+  }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
@@ -219,9 +268,52 @@ impl TypeDefCompact {
   pub fn new(type_param: TypeId) -> Self {
     Self { type_param }
   }
+
+  pub fn type_param(&self) -> TypeId {
+    self.type_param
+  }
 }
 
-pub type TypeId = u32;
+#[derive(
+  Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Decode, Encode,
+)]
+pub struct TypeId(#[codec(compact)] pub u32);
+
+impl TypeId {
+  pub fn id(&self) -> u32 {
+    self.0
+  }
+
+  pub fn inc(&mut self) {
+    self.0 += 1;
+  }
+}
+
+impl From<u32> for TypeId {
+  fn from(id: u32) -> Self {
+    Self(id)
+  }
+}
+
+impl From<usize> for TypeId {
+  fn from(id: usize) -> Self {
+    Self(id as u32)
+  }
+}
+
+impl From<TypeId> for usize {
+  fn from(id: TypeId) -> Self {
+    id.0 as Self
+  }
+}
+
+impl std::ops::Deref for TypeId {
+  type Target = u32;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
 #[serde(rename_all = "lowercase")]
@@ -250,6 +342,10 @@ impl TypeDef {
 
   pub fn new_type(ty: TypeId) -> Self {
     Self::Tuple(TypeDefTuple::new_type(ty))
+  }
+
+  pub fn new_tuple(fields: Vec<TypeId>) -> Self {
+    Self::Tuple(TypeDefTuple::new(fields))
   }
 }
 
@@ -292,5 +388,164 @@ impl From<TypeDefPrimitive> for TypeDef {
 impl From<TypeDefCompact> for TypeDef {
   fn from(def: TypeDefCompact) -> Self {
     Self::Compact(def)
+  }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
+pub struct PortableType {
+  pub id: TypeId,
+  #[serde(rename = "type")]
+  pub ty: Type,
+}
+
+impl PortableType {
+  pub fn id(&self) -> TypeId {
+    self.id
+  }
+
+  pub fn ty(&self) -> &Type {
+    &self.ty
+  }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
+pub struct PortableRegistry {
+  pub types: Vec<PortableType>,
+}
+
+impl PortableRegistry {
+  pub fn resolve<T: Into<TypeId>>(&self, id: T) -> Option<&Type> {
+    let id = id.into();
+    self.types.get(id.0 as usize).map(|t| t.ty())
+  }
+
+  pub fn types(&self) -> &[PortableType] {
+    self.types.as_slice()
+  }
+}
+
+impl From<&scale_info::PortableRegistry> for PortableRegistry {
+  fn from(other: &scale_info::PortableRegistry) -> Self {
+    Self {
+      types: other
+        .types()
+        .iter()
+        .map(|t| PortableType {
+          id: t.id().into(),
+          ty: t.ty().into(),
+        })
+        .collect(),
+    }
+  }
+}
+
+impl From<&scale_info::Type<PortableForm>> for Type {
+  fn from(other: &scale_info::Type<PortableForm>) -> Self {
+    Self {
+      path: other.path().into(),
+      type_params: other
+        .type_params()
+        .iter()
+        .map(|p| TypeParameter::new(p.name().clone(), p.ty().map(|t| t.id().into())))
+        .collect(),
+      type_def: other.type_def().into(),
+      docs: other.docs().into(),
+    }
+  }
+}
+
+impl From<&scale_info::Path<PortableForm>> for Path {
+  fn from(other: &scale_info::Path<PortableForm>) -> Self {
+    Self {
+      segments: other.segments().iter().cloned().collect(),
+    }
+  }
+}
+
+impl From<&scale_info::Field<PortableForm>> for Field {
+  fn from(other: &scale_info::Field<PortableForm>) -> Self {
+    Self {
+      name: other.name().cloned().into(),
+      ty: other.ty().id().into(),
+      type_name: other.type_name().cloned().into(),
+      docs: other.docs().into(),
+    }
+  }
+}
+
+impl From<&scale_info::Variant<PortableForm>> for Variant {
+  fn from(other: &scale_info::Variant<PortableForm>) -> Self {
+    Self {
+      name: other.name().into(),
+      fields: other.fields().iter().map(|f| f.into()).collect(),
+      index: other.index().into(),
+      docs: other.docs().into(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDefComposite<PortableForm>> for TypeDefComposite {
+  fn from(other: &scale_info::TypeDefComposite<PortableForm>) -> Self {
+    Self {
+      fields: other.fields().iter().map(|v| v.into()).collect(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDefVariant<PortableForm>> for TypeDefVariant {
+  fn from(other: &scale_info::TypeDefVariant<PortableForm>) -> Self {
+    Self {
+      variants: other.variants().iter().map(|v| v.into()).collect(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDefSequence<PortableForm>> for TypeDefSequence {
+  fn from(other: &scale_info::TypeDefSequence<PortableForm>) -> Self {
+    Self {
+      type_param: other.type_param().id().into(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDefArray<PortableForm>> for TypeDefArray {
+  fn from(other: &scale_info::TypeDefArray<PortableForm>) -> Self {
+    Self {
+      len: other.len(),
+      type_param: other.type_param().id().into(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDefTuple<PortableForm>> for TypeDefTuple {
+  fn from(other: &scale_info::TypeDefTuple<PortableForm>) -> Self {
+    Self {
+      fields: other.fields().iter().map(|v| v.id().into()).collect(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDefCompact<PortableForm>> for TypeDefCompact {
+  fn from(other: &scale_info::TypeDefCompact<PortableForm>) -> Self {
+    Self {
+      type_param: other.type_param().id().into(),
+    }
+  }
+}
+
+impl From<&scale_info::TypeDef<PortableForm>> for TypeDef {
+  fn from(other: &scale_info::TypeDef<PortableForm>) -> Self {
+    match other {
+      scale_info::TypeDef::Composite(c) => TypeDef::Composite(c.into()),
+      scale_info::TypeDef::Variant(v) => TypeDef::Variant(v.into()),
+      scale_info::TypeDef::Sequence(s) => TypeDef::Sequence(s.into()),
+      scale_info::TypeDef::Array(a) => TypeDef::Array(a.into()),
+      scale_info::TypeDef::Tuple(t) => TypeDef::Tuple(t.into()),
+      scale_info::TypeDef::Primitive(p) => TypeDef::Primitive(p.clone()),
+      scale_info::TypeDef::Compact(ty) => TypeDef::Compact(ty.into()),
+      _ => {
+        todo!();
+      }
+    }
   }
 }

@@ -7,11 +7,103 @@ use serde_json::{Map, Value};
 
 use crate::error::*;
 use crate::type_def::*;
+use crate::metadata::*;
+use crate::*;
 
 macro_rules! parse_error {
   ($fmt:expr, $($arg:tt)*) => {
     Error::SchemaParseFailed(format!($fmt, $($arg)*))
   };
+}
+
+#[cfg(feature = "v14")]
+pub fn is_type_compact(ty: &Type) -> bool {
+  match ty.type_def() {
+    TypeDef::Compact(_) => true,
+    _ => false,
+  }
+}
+
+#[cfg(feature = "v14")]
+pub fn get_type_name(ty: &Type, types: &PortableRegistry, full: bool) -> String {
+  let name = match ty.type_def() {
+    TypeDef::Sequence(s) => {
+      let elm_ty = types
+        .resolve(s.type_param())
+        .expect("Failed to resolve sequence element type");
+      format!("Vec<{}>", get_type_name(elm_ty, types, full))
+    }
+    TypeDef::Array(a) => {
+      let elm_ty = types
+        .resolve(a.type_param())
+        .expect("Failed to resolve array element type");
+      format!("[{}; {}]", get_type_name(elm_ty, types, full), a.len())
+    }
+    TypeDef::Tuple(t) => {
+      let fields = t
+        .fields()
+        .iter()
+        .map(|f| {
+          let f_ty = types
+            .resolve(*f)
+            .expect("Failed to resolve tuple element type");
+          get_type_name(f_ty, types, full)
+        })
+        .collect::<Vec<_>>();
+      format!("({})", fields.join(","))
+    }
+    TypeDef::Primitive(p) => {
+      use TypeDefPrimitive::*;
+      match p {
+        Bool => "bool".into(),
+        Char => "char".into(),
+        Str => "Text".into(),
+        U8 => "u8".into(),
+        U16 => "u16".into(),
+        U32 => "u32".into(),
+        U64 => "u64".into(),
+        U128 => "u128".into(),
+        U256 => "u256".into(),
+        I8 => "i8".into(),
+        I16 => "i16".into(),
+        I32 => "i32".into(),
+        I64 => "i64".into(),
+        I128 => "i128".into(),
+        I256 => "i256".into(),
+      }
+    }
+    TypeDef::Compact(c) => {
+      let elm_ty = types
+        .resolve(c.type_param())
+        .expect("Failed to resolve Compact type");
+      format!("Compact<{}>", get_type_name(elm_ty, types, full))
+    }
+    _ => {
+      if full {
+        format!("{}", ty.path())
+      } else {
+        ty.path().ident().expect("Missing type name").into()
+      }
+    }
+  };
+  let ty_params = ty.type_params();
+  if ty_params.len() > 0 {
+    let params = ty_params
+      .iter()
+      .map(|p| match p.ty() {
+        Some(ty) => {
+          let p_ty = types
+            .resolve(*ty)
+            .expect("Failed to resolve type parameter");
+          get_type_name(p_ty, types, full)
+        }
+        None => p.name().clone(),
+      })
+      .collect::<Vec<_>>();
+    format!("{}<{}>", name, params.join(","))
+  } else {
+    name
+  }
 }
 
 #[derive(Clone, Debug)]
@@ -26,22 +118,38 @@ impl TypeRef {
   }
 
   pub fn to_string(&mut self) -> String {
-    format!("TypeRef[{}]: {:?}", self.id, self.ty)
+    format!("TypeRef[{:?}]: {:?}", self.id, self.ty)
   }
 }
 
 #[derive(Clone)]
 pub struct Types {
-  next_id: u32,
+  next_id: TypeId,
   types: HashMap<String, TypeRef>,
+  runtime_version: RuntimeVersion,
+  metadata: Option<Metadata>,
 }
 
 impl Types {
-  pub fn new() -> Self {
+  pub fn new(runtime_version: RuntimeVersion) -> Self {
     Self {
-      next_id: 0,
+      next_id: TypeId(0),
       types: HashMap::new(),
+      runtime_version,
+      metadata: None,
     }
+  }
+
+  pub fn get_runtime_version(&self) -> RuntimeVersion {
+    self.runtime_version.clone()
+  }
+
+  pub fn set_metadata(&mut self, metadata: Metadata) {
+    self.metadata = Some(metadata);
+  }
+
+  pub fn get_metadata(&self) -> Option<Metadata> {
+    self.metadata.as_ref().cloned()
   }
 
   pub fn load_schema(&mut self, filename: &str) -> Result<()> {
@@ -140,7 +248,7 @@ impl Types {
         return Err(parse_error!("Invalid json for `_enum`: {:?}", variants));
       }
     };
-    self.insert_type(name, TypeDefVariant::new(variants).into());
+    self.insert_type(name, TypeDefVariant::new_variants(variants).into());
     Ok(())
   }
 
@@ -173,7 +281,7 @@ impl Types {
   pub fn parse_named_type(&mut self, name: &str, def: &str) -> Result<TypeId> {
     let type_id = self.parse_type(def)?;
 
-    Ok(self.insert_type(name, TypeDef::new_type(type_id)))
+    Ok(self.insert_new_type(name, type_id))
   }
 
   pub fn parse_type(&mut self, def: &str) -> Result<TypeId> {
@@ -182,6 +290,7 @@ impl Types {
       .replace("\r", "")
       .replace("\n", "")
       .replace("T::", "");
+    log::trace!("-- parse_type: {def} -> {name}");
     // Try to resolve the type.
     let type_ref = self.resolve(&name);
     // Check if type is unresolved.
@@ -191,7 +300,7 @@ impl Types {
         log::trace!("Parse Unresolved: name={name}, def={def}");
         if let Some(type_def) = self.parse(def)? {
           // Insert TypeDef for unresolved type.
-          self.insert_type(def, type_def);
+          self.insert_type(&name, type_def);
         }
       }
       _ => (),
@@ -223,6 +332,7 @@ impl Types {
   }
 
   fn parse(&mut self, def: &str) -> Result<Option<TypeDef>> {
+    log::trace!("-- parse: {def}");
     match def.chars().last() {
       Some('>') => {
         // Handle: Vec<T>, Option<T>, Compact<T>
@@ -264,9 +374,9 @@ impl Types {
             Ok(Some(TypeDefVariant::new_result(ok_ref, err_ref).into()))
           }
           "PhantomData" | "sp_std::marker::PhantomData" => Ok(Some(TypeDefTuple::unit().into())),
-          _ => {
-            // Unresolved type.
-            Ok(None)
+          generic_type => {
+            let type_ref = self.parse_type(generic_type)?;
+            Ok(Some(TypeDefTuple::new_type(type_ref).into()))
           }
         }
       }
@@ -322,7 +432,7 @@ impl Types {
 
   fn new_type(&mut self, ty: Option<Type>) -> TypeRef {
     let id = self.next_id;
-    self.next_id += 1;
+    self.next_id.inc();
     TypeRef::new(id, ty)
   }
 
@@ -340,9 +450,14 @@ impl Types {
     }
   }
 
+  pub fn insert_new_type(&mut self, name: &str, ty_id: TypeId) -> TypeId {
+    self.insert_type(name, TypeDef::new_type(ty_id))
+  }
+
   pub fn insert_type(&mut self, name: &str, type_def: TypeDef) -> TypeId {
     let ty = Type::new(name, type_def);
     let type_ref = self.new_type(Some(ty));
+    log::trace!("insert_type: {name} => {type_ref:?}");
     self.insert(name, type_ref)
   }
 
@@ -383,6 +498,91 @@ impl Types {
         eprintln!("--------- Unresolved: {}", key);
       }
     }
+  }
+}
+
+#[cfg(feature = "v14")]
+impl Types {
+  fn import_v14_type(
+    &mut self,
+    id: TypeId,
+    mut ty: Type,
+    id_to_name: &HashMap<TypeId, String>,
+    id_remap: &HashMap<TypeId, TypeId>,
+  ) -> Result<()> {
+    let name = id_to_name.get(&id).unwrap();
+    let new_id = id_remap.get(&id).unwrap();
+    log::debug!("import_v14_type: {}", ty.path());
+    match &mut ty.type_def {
+      TypeDef::Composite(s) => {
+        for f in &mut s.fields {
+          let new_id = id_remap
+            .get(&f.ty)
+            .expect("Failed to resolve Composite field type");
+          f.ty = *new_id;
+        }
+      }
+      TypeDef::Variant(v) => {
+        for var in &mut v.variants {
+          for f in &mut var.fields {
+            let new_id = id_remap
+              .get(&f.ty)
+              .expect("Failed to resolve Variant field type");
+            f.ty = *new_id;
+          }
+        }
+      }
+      TypeDef::Sequence(s) => {
+        let new_id = id_remap
+          .get(&s.type_param)
+          .expect("Failed to resolve Sequence element type");
+        s.type_param = *new_id;
+      }
+      TypeDef::Array(a) => {
+        let new_id = id_remap
+          .get(&a.type_param)
+          .expect("Failed to resolve Array element type");
+        a.type_param = *new_id;
+      }
+      TypeDef::Tuple(t) => {
+        for f in &mut t.fields {
+          let new_id = id_remap
+            .get(f)
+            .expect("Failed to resolve Tuple field type");
+          *f = *new_id;
+        }
+      }
+      TypeDef::Compact(ref mut c) => {
+        let new_id = id_remap
+          .get(&c.type_param)
+          .expect("Failed to resolve Compact type");
+        c.type_param = *new_id;
+      }
+      _ => (),
+    };
+    // Resolve type.
+    self.insert(name, TypeRef {
+      id: *new_id,
+      ty: Some(ty),
+    });
+    Ok(())
+  }
+
+  pub fn import_v14_types(&mut self, types: &PortableRegistry) -> Result<()> {
+    let mut id_to_name = HashMap::new();
+    let mut id_remap = HashMap::new();
+    for ty in types.types() {
+      let name = get_type_name(ty.ty(), &types, true);
+      log::debug!("import_v14_type: {:?} => {}", ty.id(), name);
+      let type_ref = self.resolve(&name);
+      id_to_name.insert(ty.id(), name);
+      id_remap.insert(ty.id(), type_ref.id);
+    }
+
+    for ty in types.types() {
+      self.import_v14_type(ty.id(), ty.ty().clone(), &id_to_name, &id_remap)?;
+    }
+    Ok(())
   }
 }
 
@@ -429,5 +629,162 @@ impl TypeLookup {
 
   pub fn dump_unresolved(&mut self) {
     self.types.read().unwrap().dump_unresolved();
+  }
+}
+
+pub struct InitRegistryFn(
+  Box<
+    dyn Fn(&mut Types) -> Result<()>
+      + Send
+      + Sync
+      + 'static,
+  >,
+);
+
+impl InitRegistryFn {
+  pub fn init_types(
+    &self,
+    types: &mut Types,
+  ) -> Result<()> {
+    self.0(types)
+  }
+}
+
+#[derive(Eq, PartialEq, Hash)]
+struct SpecVersionKey(String, u32);
+
+impl From<&RuntimeVersion> for SpecVersionKey {
+  fn from(version: &RuntimeVersion) -> Self {
+    Self(version.spec_name.to_string(), version.spec_version)
+  }
+}
+
+pub struct InnerTypesRegistry {
+  block_types: HashMap<Option<SpecVersionKey>, TypeLookup>,
+  initializers: Vec<InitRegistryFn>,
+  substrate_types: String,
+  custom_types: String,
+}
+
+impl InnerTypesRegistry {
+  pub fn new(substrate_types: String, custom_types: String) -> Self {
+    Self {
+      block_types: HashMap::new(),
+      initializers: Vec::new(),
+      substrate_types,
+      custom_types,
+    }
+  }
+
+  async fn build_types(
+    &self,
+    client: &Client,
+    version: Option<RuntimeVersion>,
+    hash: Option<BlockHash>,
+  ) -> Result<TypeLookup> {
+    let runtime_version = match version {
+      Some(version) => version,
+      None => client.get_block_runtime_version(hash).await?
+        .ok_or_else(|| Error::RpcClient(format!("Failed to get block RuntimeVersion")))?,
+    };
+    // build schema path.
+    let spec_name = runtime_version.spec_name.to_string();
+    let spec_version = runtime_version.spec_version;
+    let name = if let Some((spec_name, _chain_type)) = spec_name.split_once("_") {
+      spec_name
+    } else {
+      &spec_name
+    };
+    let schema_prefix = format!("./schemas/{}", name);
+    log::debug!("schema_prefix = {}", schema_prefix);
+
+    let mut types = Types::new(runtime_version);
+    // Load standard substrate types.
+    if types
+      .load_schema(&format!("{}/init_{}.json", schema_prefix, spec_version))
+      .is_err()
+    {
+      types.load_schema(&self.substrate_types)?;
+    }
+    // Load custom chain types.
+    if types
+      .load_schema(&format!("{}/{}.json", schema_prefix, spec_version))
+      .is_err()
+    {
+      types.load_schema(&self.custom_types)?;
+    }
+
+    // Load chain metadata.
+    let runtime_metadata = client.get_block_metadata(hash).await?
+        .ok_or_else(|| Error::RpcClient(format!("Failed to get block Metadata")))?;
+    let metadata = Metadata::from_runtime_metadata(runtime_metadata, &mut types)?;
+    types.set_metadata(metadata);
+
+    for init in &self.initializers {
+      init.init_types(&mut types)?;
+    }
+    let lookup = TypeLookup::from_types(types);
+    Ok(lookup)
+  }
+
+  pub async fn get_block_types(
+    &mut self,
+    client: &Client,
+    version: Option<RuntimeVersion>,
+    hash: Option<BlockHash>,
+  ) -> Result<TypeLookup> {
+    let spec_key: Option<SpecVersionKey> = version.as_ref().map(|v| v.into());
+    if let Some(types) = self.block_types.get(&spec_key) {
+      return Ok(types.clone());
+    }
+
+    log::info!(
+      "Spec version not found: load schema/metadata.  RuntimeVersion={:?}",
+      version
+    );
+    // Need to build/initialize new Types.
+    let lookup = self.build_types(client, version, hash).await?;
+    self.block_types.insert(spec_key, lookup.clone());
+    Ok(lookup)
+  }
+
+  pub fn add_init(&mut self, func: InitRegistryFn) {
+    self.initializers.push(func);
+  }
+}
+
+#[derive(Clone)]
+pub struct TypesRegistry(Arc<RwLock<InnerTypesRegistry>>);
+
+impl TypesRegistry {
+  pub fn new(substrate_types: String, custom_types: String) -> Self {
+    Self(Arc::new(RwLock::new(InnerTypesRegistry::new(
+      substrate_types,
+      custom_types,
+    ))))
+  }
+
+  pub async fn get_block_types(
+    &self,
+    client: &Client,
+    version: Option<RuntimeVersion>,
+    hash: Option<BlockHash>,
+  ) -> Result<TypeLookup> {
+    let mut inner = self.0.write().unwrap();
+    Ok(inner.get_block_types(client, version, hash).await?)
+  }
+
+  pub fn add_init<F>(&self, func: F)
+  where
+    F: 'static
+      + Send
+      + Sync
+      + Fn(&mut Types) -> Result<()>,
+  {
+    self
+      .0
+      .write()
+      .unwrap()
+      .add_init(InitRegistryFn(Box::new(func)))
   }
 }

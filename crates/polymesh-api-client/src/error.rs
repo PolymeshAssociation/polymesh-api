@@ -29,6 +29,9 @@ pub enum Error {
   #[error("Schema failed to parse: {0}")]
   SchemaParseFailed(String),
 
+  #[error("Metadata failed to parse: {0}")]
+  MetadataParseFailed(String),
+
   #[error("ExtrinsicError: {0}")]
   ExtrinsicError(String),
 
