@@ -431,7 +431,7 @@
         "Custom": "Vec<u8>"
       }
     },
-    "InvestorZKProofData": "Signature",
+    "InvestorZKProofData": "[u8; 64]",
     "Scalar": "[u8; 32]",
     "RistrettoPoint": "[u8; 32]",
     "ZkProofData": {
@@ -650,13 +650,7 @@
         "Proposal": "Vec<u8>"
       }
     },
-    "OffChainSignature": {
-      "_enum": {
-        "Ed25519": "H512",
-        "Sr25519": "H512",
-        "Ecdsa": "H512"
-      }
-    },
+		"OffChainSignature": "MultiSignature",
     "Authorization": {
       "authorization_data": "AuthorizationData",
       "authorized_by": "IdentityId",
@@ -676,37 +670,6 @@
         "AddRelayerPayingKey": "(AccountId, AccountId, Balance)",
         "RotatePrimaryKeyToSecondary": "Permissions"
       }
-    },
-    "SmartExtensionType": {
-      "_enum": {
-        "TransferManager": "",
-        "Offerings": "",
-        "SmartWallet": "",
-        "Custom": "Vec<u8>"
-      }
-    },
-    "SmartExtensionName": "Text",
-    "SmartExtension": {
-      "extension_type": "SmartExtensionType",
-      "extension_name": "SmartExtensionName",
-      "extension_id": "AccountId",
-      "is_archive": "bool"
-    },
-    "MetaUrl": "Text",
-    "MetaDescription": "Text",
-    "MetaVersion": "u32",
-    "ExtVersion": "u32",
-    "TemplateMetadata": {
-      "url": "Option<MetaUrl>",
-      "se_type": "SmartExtensionType",
-      "usage_fee": "Balance",
-      "description": "MetaDescription",
-      "version": "MetaVersion"
-    },
-    "TemplateDetails": {
-      "instantiation_fee": "Balance",
-      "owner": "IdentityId",
-      "frozen": "bool"
     },
     "AuthorizationNonce": "u64",
     "Counter": "u64",
@@ -1021,10 +984,6 @@
     "VenueId": "u64",
     "VenueType": {
       "_enum": ["Other", "Distribution", "Sto", "Exchange"]
-    },
-    "ExtensionAttributes": {
-      "usage_fee": "Balance",
-      "version": "MetaVersion"
     },
     "Tax": "Permill",
     "TargetIdentities": {

@@ -1058,10 +1058,6 @@
     "VenueType": {
       "_enum": ["Other", "Distribution", "Sto", "Exchange"]
     },
-    "ExtensionAttributes": {
-      "usage_fee": "Balance",
-      "version": "MetaVersion"
-    },
     "Tax": "Permill",
     "TargetIdentities": {
       "identities": "Vec<IdentityId>",
