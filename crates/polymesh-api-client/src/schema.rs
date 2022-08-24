@@ -10,6 +10,10 @@ use crate::type_def::*;
 use crate::metadata::*;
 use crate::*;
 
+/// Use large type ids for old schema and metadata (v12-v13) types.
+/// The newer v14 metadata uses small ids.
+pub const SCHEMA_TYPE_ID_BASE: u32 = 10_000_000;
+
 macro_rules! parse_error {
   ($fmt:expr, $($arg:tt)*) => {
     Error::SchemaParseFailed(format!($fmt, $($arg)*))
@@ -125,7 +129,8 @@ impl TypeRef {
 #[derive(Clone)]
 pub struct Types {
   next_id: TypeId,
-  types: HashMap<String, TypeRef>,
+  types: HashMap<TypeId, Option<Type>>,
+  name_to_id: HashMap<String, TypeId>,
   runtime_version: RuntimeVersion,
   metadata: Option<Metadata>,
 }
@@ -133,8 +138,9 @@ pub struct Types {
 impl Types {
   pub fn new(runtime_version: RuntimeVersion) -> Self {
     Self {
-      next_id: TypeId(0),
+      next_id: TypeId(SCHEMA_TYPE_ID_BASE),
       types: HashMap::new(),
+      name_to_id: HashMap::new(),
       runtime_version,
       metadata: None,
     }
@@ -279,9 +285,8 @@ impl Types {
   }
 
   pub fn parse_named_type(&mut self, name: &str, def: &str) -> Result<TypeId> {
-    let type_id = self.parse_type(def)?;
-
-    Ok(self.insert_new_type(name, type_id))
+    let id = self.parse_type(def)?;
+    Ok(self.insert_new_type(name, id))
   }
 
   pub fn parse_type(&mut self, def: &str) -> Result<TypeId> {
@@ -332,41 +337,42 @@ impl Types {
   }
 
   fn parse(&mut self, def: &str) -> Result<Option<TypeDef>> {
-    log::trace!("-- parse: {def}");
+    log::trace!("-- parse: {def}, last ch={:?}", def.chars().last());
     match def.chars().last() {
       Some('>') => {
         // Handle: Vec<T>, Option<T>, Compact<T>
-        let (wrap, ty) = def
+        let (ty, param) = def
           .strip_suffix('>')
           .and_then(|s| s.split_once('<'))
-          .map(|(wrap, ty)| (wrap.trim(), ty.trim()))
+          .map(|(ty, param)| (ty.trim(), param.trim()))
           .ok_or_else(|| parse_error!("Failed to parse Vec/Option/Compact: {}", def))?;
-        match wrap {
+        log::trace!("-- GENERIC type: {ty}, param: {param}");
+        match ty {
           "Vec" => {
-            let wrap_ref = self.parse_type(ty)?;
-            Ok(Some(TypeDefSequence::new(wrap_ref).into()))
+            let param_ref = self.parse_type(param)?;
+            Ok(Some(TypeDefSequence::new(param_ref).into()))
           }
           "Option" => {
-            let wrap_ref = self.parse_type(ty)?;
-            Ok(Some(TypeDefVariant::new_option(wrap_ref).into()))
+            let param_ref = self.parse_type(param)?;
+            Ok(Some(TypeDefVariant::new_option(param_ref).into()))
           }
           "Compact" => {
-            let wrap_ref = self.parse_type(ty)?;
-            Ok(Some(TypeDefCompact::new(wrap_ref).into()))
+            let param_ref = self.parse_type(param)?;
+            Ok(Some(TypeDefCompact::new(param_ref).into()))
           }
           "Box" => {
-            let wrap_ref = self.parse_type(ty)?;
-            Ok(Some(TypeDefTuple::new_type(wrap_ref).into()))
+            let param_ref = self.parse_type(param)?;
+            Ok(Some(TypeDefTuple::new_type(param_ref).into()))
           }
           "Result" => {
-            let (ok_ref, err_ref) = match ty.split_once(',') {
+            let (ok_ref, err_ref) = match param.split_once(',') {
               Some((ok_ty, err_ty)) => {
                 let ok_ref = self.parse_type(ok_ty)?;
                 let err_ref = self.parse_type(err_ty)?;
                 (ok_ref, err_ref)
               }
               None => {
-                let ok_ref = self.parse_type(ty)?;
+                let ok_ref = self.parse_type(param)?;
                 let err_ref = self.parse_type("Error")?;
                 (ok_ref, err_ref)
               }
@@ -374,9 +380,10 @@ impl Types {
             Ok(Some(TypeDefVariant::new_result(ok_ref, err_ref).into()))
           }
           "PhantomData" | "sp_std::marker::PhantomData" => Ok(Some(TypeDefTuple::unit().into())),
-          generic_type => {
-            let type_ref = self.parse_type(generic_type)?;
-            Ok(Some(TypeDefTuple::new_type(type_ref).into()))
+          ty => {
+            Ok(self.name_to_id.get(ty).map(|id| {
+              TypeDefTuple::new_type(*id).into()
+            }))
           }
         }
       }
@@ -430,24 +437,30 @@ impl Types {
     }
   }
 
-  fn new_type(&mut self, ty: Option<Type>) -> TypeRef {
+  fn new_type(&mut self, ty: Option<Type>) -> TypeId {
     let id = self.next_id;
     self.next_id.inc();
-    TypeRef::new(id, ty)
+    self.types.insert(id, ty);
+    id
+  }
+
+  pub fn get_type(&self, id: TypeId) -> Option<&Type> {
+    self.types.get(&id).and_then(|t| t.as_ref())
   }
 
   pub fn resolve(&mut self, name: &str) -> TypeRef {
-    if let Some(type_ref) = self.types.get(name) {
-      type_ref.clone()
+    let id = if let Some(id) = self.name_to_id.get(name) {
+      *id
     } else if let Some(prim) = Self::is_primitive(name) {
-      let type_ref = self.new_type(Some(Type::new("", prim.into())));
-      self.types.insert(name.into(), type_ref.clone());
-      type_ref
+      let id = self.new_type(Some(Type::new("", prim.into())));
+      self.name_to_id.insert(name.into(), id);
+      id
     } else {
-      let type_ref = self.new_type(None);
-      self.types.insert(name.into(), type_ref.clone());
-      type_ref
-    }
+      let id = self.new_type(None);
+      self.name_to_id.insert(name.into(), id);
+      id
+    };
+    TypeRef::new(id, self.get_type(id).cloned())
   }
 
   pub fn insert_new_type(&mut self, name: &str, ty_id: TypeId) -> TypeId {
@@ -456,46 +469,69 @@ impl Types {
 
   pub fn insert_type(&mut self, name: &str, type_def: TypeDef) -> TypeId {
     let ty = Type::new(name, type_def);
-    let type_ref = self.new_type(Some(ty));
-    log::trace!("insert_type: {name} => {type_ref:?}");
-    self.insert(name, type_ref)
+    log::trace!("insert_type: {name} => {ty:?}");
+    self.insert(name, ty)
   }
 
-  pub fn insert(&mut self, name: &str, type_ref: TypeRef) -> TypeId {
-    use std::collections::hash_map::Entry;
-    let entry = self.types.entry(name.into());
-    match entry {
-      Entry::Occupied(mut entry) => {
-        let old_ref = entry.get_mut();
-        // Already exists.  Check that it is a `TypeDef::Unresolved`.
-        if old_ref.ty.is_none() {
-          let ty = Type::new(name, TypeDef::new_type(type_ref.id));
-          old_ref.ty = Some(ty);
+  pub fn import_type(&mut self, name: &str, id: TypeId, ty: Type) -> Result<()> {
+    if id.0 >= SCHEMA_TYPE_ID_BASE {
+      Err(Error::SchemaParseFailed(format!("Imported type ids must be below schema type base: {:?} >= {}", id, SCHEMA_TYPE_ID_BASE)))?;
+    }
+    // insert type.
+    if self.types.insert(id, Some(ty)).is_some() {
+      Err(Error::SchemaParseFailed(format!("Imported type id {:?} already exists", id)))?;
+    }
+
+    if self.name_to_id.get(name).is_some() {
+      self.insert_new_type(name, id);
+    } else {
+      self.name_to_id.insert(name.into(), id);
+    }
+
+    Ok(())
+  }
+
+  pub fn insert(&mut self, name: &str, ty: Type) -> TypeId {
+    if let Some(id) = self.name_to_id.get(name) {
+      if let Some(old_type) = self.types.get_mut(id) {
+        // Already exists.  Check if it has a type defined yet.
+        if old_type.is_none() {
+          *old_type = Some(ty);
         } else {
           log::warn!("REDEFINE TYPE: {}", name);
         }
-        old_ref.id
+      } else {
+        log::warn!("TYPE_ID MISSING: {} -> {:?}", name, id);
+        self.types.insert(*id, Some(ty));
       }
-      Entry::Vacant(entry) => {
-        let id = type_ref.id;
-        entry.insert(type_ref);
-        id
-      }
+      *id
+    } else {
+      let id = self.new_type(Some(ty));
+      self.name_to_id.insert(name.into(), id);
+      id
     }
   }
 
   /// Dump types.
   pub fn dump_types(&self) {
-    for (idx, (key, type_ref)) in self.types.iter().enumerate() {
-      eprintln!("Type[{}]: {} => {:#?}", idx, key, type_ref);
+    for (id, ty) in self.types.iter() {
+      eprintln!("Type[{:?}] => {:#?}", id, ty);
     }
   }
 
   /// Dump unresolved types.
   pub fn dump_unresolved(&self) {
-    for (key, type_ref) in self.types.iter() {
-      if type_ref.ty.is_none() {
-        eprintln!("--------- Unresolved: {}", key);
+    for (name, id) in self.name_to_id.iter() {
+      match self.types.get(id) {
+        None => {
+          eprintln!("--------- type name maps to invalid type id: {name}");
+        }
+        Some(None) => {
+          eprintln!("--------- Unresolved[{:?}]: {}", id, name);
+        }
+        Some(Some(_)) => {
+          // Defined type.
+        }
       }
     }
   }
@@ -503,84 +539,11 @@ impl Types {
 
 #[cfg(feature = "v14")]
 impl Types {
-  fn import_v14_type(
-    &mut self,
-    id: TypeId,
-    mut ty: Type,
-    id_to_name: &HashMap<TypeId, String>,
-    id_remap: &HashMap<TypeId, TypeId>,
-  ) -> Result<()> {
-    let name = id_to_name.get(&id).unwrap();
-    let new_id = id_remap.get(&id).unwrap();
-    log::debug!("import_v14_type: {}", ty.path());
-    match &mut ty.type_def {
-      TypeDef::Composite(s) => {
-        for f in &mut s.fields {
-          let new_id = id_remap
-            .get(&f.ty)
-            .expect("Failed to resolve Composite field type");
-          f.ty = *new_id;
-        }
-      }
-      TypeDef::Variant(v) => {
-        for var in &mut v.variants {
-          for f in &mut var.fields {
-            let new_id = id_remap
-              .get(&f.ty)
-              .expect("Failed to resolve Variant field type");
-            f.ty = *new_id;
-          }
-        }
-      }
-      TypeDef::Sequence(s) => {
-        let new_id = id_remap
-          .get(&s.type_param)
-          .expect("Failed to resolve Sequence element type");
-        s.type_param = *new_id;
-      }
-      TypeDef::Array(a) => {
-        let new_id = id_remap
-          .get(&a.type_param)
-          .expect("Failed to resolve Array element type");
-        a.type_param = *new_id;
-      }
-      TypeDef::Tuple(t) => {
-        for f in &mut t.fields {
-          let new_id = id_remap
-            .get(f)
-            .expect("Failed to resolve Tuple field type");
-          *f = *new_id;
-        }
-      }
-      TypeDef::Compact(ref mut c) => {
-        let new_id = id_remap
-          .get(&c.type_param)
-          .expect("Failed to resolve Compact type");
-        c.type_param = *new_id;
-      }
-      _ => (),
-    };
-    // Resolve type.
-    self.insert(name, TypeRef {
-      id: *new_id,
-      ty: Some(ty),
-    });
-    Ok(())
-  }
-
   pub fn import_v14_types(&mut self, types: &PortableRegistry) -> Result<()> {
-    let mut id_to_name = HashMap::new();
-    let mut id_remap = HashMap::new();
     for ty in types.types() {
       let name = get_type_name(ty.ty(), &types, true);
       log::debug!("import_v14_type: {:?} => {}", ty.id(), name);
-      let type_ref = self.resolve(&name);
-      id_to_name.insert(ty.id(), name);
-      id_remap.insert(ty.id(), type_ref.id);
-    }
-
-    for ty in types.types() {
-      self.import_v14_type(ty.id(), ty.ty().clone(), &id_to_name, &id_remap)?;
+      self.import_type(&name, ty.id(), ty.ty().clone())?;
     }
     Ok(())
   }
@@ -608,6 +571,11 @@ impl TypeLookup {
     t.parse_type(def)
   }
 
+  pub fn get_type(&self, id: TypeId) -> Option<Type> {
+    let t = self.types.read().unwrap();
+    t.get_type(id).cloned()
+  }
+
   pub fn resolve(&self, name: &str) -> TypeRef {
     let mut t = self.types.write().unwrap();
     t.resolve(name)
@@ -618,16 +586,11 @@ impl TypeLookup {
     t.insert_type(name, type_meta)
   }
 
-  pub fn insert(&self, name: &str, type_def: TypeRef) -> TypeId {
-    let mut t = self.types.write().unwrap();
-    t.insert(name, type_def)
-  }
-
-  pub fn dump_types(&mut self) {
+  pub fn dump_types(&self) {
     self.types.read().unwrap().dump_types();
   }
 
-  pub fn dump_unresolved(&mut self) {
+  pub fn dump_unresolved(&self) {
     self.types.read().unwrap().dump_unresolved();
   }
 }

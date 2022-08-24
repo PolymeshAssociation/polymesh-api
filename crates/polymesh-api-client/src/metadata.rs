@@ -165,15 +165,7 @@ impl Metadata {
       idx_map: HashMap::new(),
     };
 
-    use codec::Encode;
-    let scale_reg = md.types.encode();
     let types = PortableRegistry::from(&md.types);
-    let no_scale_reg = types.encode();
-    eprintln!(
-      "scale_reg.len={}, no_scale_reg.len={}",
-      scale_reg.len(),
-      no_scale_reg.len()
-    );
 
     // Import types from registry.
     lookup.import_v14_types(&types)?;
@@ -550,7 +542,8 @@ impl NamedType {
           &ty_name[6..end]
         } else {
           &ty_name[..]
-        };
+        }
+        .trim();
         if is_type_compact(ty) {
           format!("Compact<{}>", name)
         } else {
