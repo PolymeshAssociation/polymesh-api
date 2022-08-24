@@ -1,4 +1,5 @@
 use std::env;
+use std::str::FromStr;
 
 use anyhow::Result;
 
@@ -13,23 +14,21 @@ async fn main() -> Result<()> {
   let url = env::args().nth(1).expect("Missing ws url");
 
   let client = Client::new(&url).await?;
+  let types_registry = TypesRegistry::new("./schemas/init_types.json".into(), "schema.json".into());
 
   // Get block hash
   let gen_hash = client.get_block_hash(0).await?;
   println!("gen_hash = {gen_hash:?}");
 
-  let version = client.get_block_runtime_version(None).await?;
-  println!("{version:#?}");
+  //let hash = Some(BlockHash::from_str("0x921e3fec73cfa1ad468da31eaa5ea012ecc32bf1a68acd254ea804efa248bd7f")?);
+  let hash = None;
+  // Get current block runtime version.
+  let version = client.get_block_runtime_version(hash).await?.unwrap();
+  println!("spec: {} - {}", version.spec_name, version.spec_version);
 
-  // Get current Metadata.
-  let metadata = client.get_block_metadata(None).await?;
-  println!("metadata = {metadata:#?}");
+  let types = types_registry.get_block_types(&client, Some(version), hash).await?;
 
-  let mut types = Types::new();
-  types.load_schema("./schemas/init_types.json")?;
-  types.load_schema("./schemas/polymesh/5000001.json")?;
-
-  //types.dump_types();
+  types.dump_types();
   types.dump_unresolved();
   Ok(())
 }
