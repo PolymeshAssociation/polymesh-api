@@ -18,6 +18,7 @@ members = [
 	"examples/simple_transfer",
 	"examples/subscribe_blocks",
 	"examples/test_api",
+	"examples/creating_asset",
 ]
 
 [dependencies]
