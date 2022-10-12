@@ -5,7 +5,6 @@ use std::sync::{Arc, RwLock};
 
 use serde_json::{Map, Value};
 
-use crate::error::*;
 use crate::type_def::*;
 
 macro_rules! parse_error {

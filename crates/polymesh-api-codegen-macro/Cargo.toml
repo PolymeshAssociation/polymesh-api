@@ -21,6 +21,10 @@ syn = "=1.0.96"
 [features]
 default = [ "std", "v14" ]
 
+ink = [
+	"polymesh-api-codegen/ink",
+]
+
 no_std = [
 	"polymesh-api-codegen/no_std",
 ]

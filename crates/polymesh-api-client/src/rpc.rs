@@ -31,7 +31,7 @@ impl RpcClient {
   pub async fn new(url: &str) -> Result<Self> {
     #[cfg(not(target_arch = "wasm32"))]
     {
-      if url.starts_with("Http") {
+      if url.starts_with("http") {
         Self::new_http(url)
       } else if url.starts_with("ws") {
         Self::new_ws(url).await
@@ -68,7 +68,9 @@ impl RpcClient {
     } else {
       url.to_string()
     };
-    let client = WsClientBuilder::default().build(&url).await?;
+    let client = WsClientBuilder::default()
+      .max_request_body_size(1024 * 1024 * 1024)
+      .build(&url).await?;
     Ok(Self {
       client: InnerRpcClient::Ws(client),
     })
@@ -76,7 +78,9 @@ impl RpcClient {
 
   #[cfg(not(target_arch = "wasm32"))]
   fn new_http(url: &str) -> Result<Self> {
-    let client = HttpClientBuilder::default().build(&url)?;
+    let client = HttpClientBuilder::default()
+      .max_request_body_size(1024 * 1024 * 1024)
+      .build(&url)?;
     Ok(Self {
       client: InnerRpcClient::Http(client),
     })

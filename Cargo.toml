@@ -14,28 +14,37 @@ members = [
 	"crates/polymesh-api-codegen-macro",
 	"crates/polymesh-api-codegen",
 	"crates/polymesh-api-client",
+	"crates/polymesh-api-ink",
 
 	"examples/simple_transfer",
 	"examples/subscribe_blocks",
 	"examples/test_api",
+	"examples/dump_blocks",
 ]
 
 [dependencies]
 thiserror = "1.0"
 log = "0.4"
 
-serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
-serde = "1.0"
+serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"], optional = true }
+serde = { version = "1.0", optional = true }
 
 polymesh-api-codegen-macro = { version = "0.2", path = "crates/polymesh-api-codegen-macro", default-features = false }
-polymesh-api-client = { version = "0.2", path = "crates/polymesh-api-client", default-features = false }
+polymesh-api-client = { version = "0.2", path = "crates/polymesh-api-client", optional = true, default-features = false }
+polymesh-api-ink = { version = "0.1", path = "crates/polymesh-api-ink", optional = true, default-features = false }
+
+# For Ink! Smart Contract support.
+polymesh-extension = { version = "0.1", path = "../polymesh-extension/", optional = true, default-features = false }
 
 # substrate
 sp-arithmetic = { version = "5.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
-lazy_static = "1.4.0"
-async-trait = "0.1"
-serde-big-array = "0.4.1"
+scale-info = { version = "2", default-features = false, optional = true }
+
+# RPC Client needs these.
+lazy_static = { version = "1.4.0", optional = true }
+async-trait = { version = "0.1", optional = true }
+serde-big-array = { version = "0.4.1", optional = true }
 
 [dev-dependencies]
 anyhow = "1"
@@ -49,11 +58,25 @@ tokio = { version = "1.19", features = ["full"] }
 #sp-keyring = { version = "6.0.0", default-features = false }
 
 [features]
-default = [ "std", "serde", "v14" ]
+default = [ "std", "rpc", "serde", "v14" ]
+
+rpc = [
+	"async-trait",
+	"lazy_static",
+	"polymesh-api-client",
+]
 
 v14 = [
 	"polymesh-api-codegen-macro/v14",
 	"polymesh-api-client/v14",
+]
+
+ink = [
+	"polymesh-api-codegen-macro/v14",
+	"polymesh-api-ink",
+	"polymesh-api-codegen-macro/ink",
+	"polymesh-api-codegen-macro/no_std",
+	"polymesh-extension",
 ]
 
 wasm = [
@@ -64,12 +87,16 @@ wasm = [
 ]
 
 serde = [
+	"dep:serde",
 	"sp-arithmetic/serde",
 	"polymesh-api-client/serde",
+	"serde-big-array",
 ]
 
 std = [
 	"sp-arithmetic/std",
 	"polymesh-api-codegen-macro/std",
-	"polymesh-api-client/std",
+	"polymesh-api-client?/std",
+	"polymesh-api-ink?/std",
+	"scale-info/std",
 ]

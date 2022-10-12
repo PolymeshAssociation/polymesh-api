@@ -12,13 +12,14 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 [dependencies]
 thiserror = "1.0.31"
 log = "0.4"
-hex = "0.4"
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
-http = "0.2.8"
+http = { version = "0.2.8" }
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
-serde = "1.0"
-impl-serde = { version = "0.3.1", optional = true }
+serde = { version = "1.0" }
+impl-serde = { version = "0.3.1", default-features = false, optional = true }
+serde-big-array = { version = "0.4.1", optional = true }
 
 # substrate
 sp-core = { version = "6.0", default-features = false }
@@ -26,23 +27,24 @@ sp-runtime = { version = "6.0", default-features = false }
 sp-arithmetic = { version = "5.0", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
-scale-info = { version = "2", default-features = false }
-lazy_static = "1.4.0"
-async-trait = "0.1"
-serde-big-array = "0.4.1"
+scale-info = { version = "2", default-features = false, optional = true }
+lazy_static = { version = "1.4.0" }
+async-trait = { version = "0.1" }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.19", features = ["full"] }
 jsonrpsee = { version = "0.14", features = ["client"] }
 
+primitive-types = { version = "0.11.1", default-features = false }
+
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
 jsonrpsee = { version = "0.14", features = ["wasm-client"] }
 
-primitive-types = { version = "0.11.1", default-features = false, features = ["serde_no_std"] }
-sp-application-crypto = { version = "6.0", default-features = false, features = ["full_crypto", "serde"] }
+primitive-types = { version = "0.11.1", default-features = false }
+sp-application-crypto = { version = "6.0", default-features = false }
 sp-io = { version = "6.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
 
 [dev-dependencies]
@@ -53,18 +55,24 @@ env_logger = "0.9"
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]
 
-wasm = ["serde", "v14"]
+wasm = [
+	"v14",
+	"sp-application-crypto/full_crypto",
+]
 
 serde = [
 	"impl-serde",
+	"primitive-types/serde_no_std",
+	"serde-big-array",
 	"sp-core/serde",
 	"sp-runtime/serde",
 	"sp-arithmetic/serde",
+	"sp-application-crypto/serde"
 ]
 
 v12 = ["frame-metadata/v12"]
 v13 = ["frame-metadata/v13"]
-v14 = ["frame-metadata/v14", "frame-metadata/std"]
+v14 = ["frame-metadata/v14"]
 
 std = [
 	"codec/std",

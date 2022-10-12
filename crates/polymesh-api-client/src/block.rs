@@ -1,5 +1,8 @@
 use codec::{Compact, Decode, Encode, Output};
 
+#[cfg(feature = "std")]
+use scale_info::TypeInfo;
+
 use sp_core::{hashing::blake2_256, H256};
 use sp_runtime::{ConsensusEngineId, MultiSignature};
 
@@ -149,6 +152,7 @@ pub struct StorageKey(
 pub type AdditionalSigned = (u32, u32, BlockHash, BlockHash, (), (), ());
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "std", derive(TypeInfo))]
 pub enum Era {
   Immortal,
   Mortal(u64, u64),

@@ -39,7 +39,7 @@ lazy_static = "1.4.0"
 async-trait = "0.1"
 
 tokio = { version = "1.19", features = ["full"] }
-polymesh-api-client = { version = "0.2", path = "../polymesh-api-client" }
+polymesh-api-client = { version = "0.2", path = "../polymesh-api-client", default-features = false }
 rustfmt-wrapper = "0.2.0"
 
 # substrate
@@ -48,19 +48,24 @@ sp-keyring = { version = "6.0.0", default-features = false }
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]
 
-serde = []
+serde = [
+	"polymesh-api-client/serde",
+]
+
+ink = []
 
 no_std = [
 	"scale-info/decode",
 	"frame-metadata/std",
 ]
 
-v12 = ["frame-metadata/v12"]
-v13 = ["frame-metadata/v13"]
-v14 = ["frame-metadata/v14"]
+v12 = [ "frame-metadata/v12", "polymesh-api-client/v12"]
+v13 = [ "frame-metadata/v13", "polymesh-api-client/v13"]
+v14 = [ "frame-metadata/v14", "polymesh-api-client/v14"]
 
 std = [
 	"frame-metadata/std",
 	"sp-core-hashing/std",
 	"scale-info/std",
+	"polymesh-api-client/std",
 ]

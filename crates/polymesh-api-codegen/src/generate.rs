@@ -167,6 +167,7 @@ mod v14 {
     runtime_namespace: Vec<String>,
     call: TokenStream,
     event: TokenStream,
+    api_interface: TokenStream,
   }
 
   impl Generator {
@@ -175,6 +176,10 @@ mod v14 {
       let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
       let runtime_namespace = runtime_ty.path().namespace();
       let runtime_ident = segments_ident(runtime_namespace);
+      #[cfg(feature = "ink")]
+      let api_interface = quote!(::polymesh_api_ink);
+      #[cfg(not(feature = "ink"))]
+      let api_interface = quote!(::polymesh_api_client);
 
       let call = quote! { #runtime_ident::Call };
       let event = quote! { #runtime_ident::Event };
@@ -183,49 +188,48 @@ mod v14 {
         [
           (
             "sp_core::crypto::AccountId32",
-            quote!(::polymesh_api_client::AccountId),
+            quote!(#api_interface::AccountId),
           ),
           (
             "polymesh_primitives::identity_id::IdentityId",
-            quote!(::polymesh_api_client::IdentityId),
+            quote!(#api_interface::IdentityId),
           ),
           (
             "sp_runtime::multiaddress::MultiAddress",
-            quote!(::polymesh_api_client::MultiAddress),
+            quote!(#api_interface::MultiAddress),
           ),
-          (
-            "sp_runtime::generic::era::Era",
-            quote!(::polymesh_api_client::Era),
-          ),
+          ("sp_runtime::generic::era::Era", quote!(#api_interface::Era)),
           (
             "sp_arithmetic::per_things::Perbill",
-            quote!(::polymesh_api_client::per_things::Perbill),
+            quote!(#api_interface::per_things::Perbill),
           ),
           (
             "sp_arithmetic::per_things::Permill",
-            quote!(::polymesh_api_client::per_things::Permill),
+            quote!(#api_interface::per_things::Permill),
           ),
           (
             "sp_arithmetic::per_things::PerU16",
-            quote!(::polymesh_api_client::per_things::PerU16),
+            quote!(#api_interface::per_things::PerU16),
           ),
           (
             "sp_arithmetic::per_things::Percent",
-            quote!(::polymesh_api_client::per_things::Percent),
+            quote!(#api_interface::per_things::Percent),
           ),
-          ("BTreeSet", quote!(std::collections::BTreeSet)),
-          ("BTreeMap", quote!(std::collections::BTreeMap)),
+          ("BTreeSet", quote!(::alloc::collections::BTreeSet)),
+          ("BTreeMap", quote!(::alloc::collections::BTreeMap)),
+          ("String", quote!(::alloc::string::String)),
+          ("Vec", quote!(::alloc::vec::Vec)),
           (
             "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
-            quote!(Vec),
+            quote!(::alloc::vec::Vec),
           ),
           (
             "frame_support::storage::bounded_vec::BoundedVec",
-            quote!(Vec),
+            quote!(::alloc::vec::Vec),
           ),
           (
             "frame_system::EventRecord",
-            quote!(::polymesh_api_client::EventRecord),
+            quote!(#api_interface::EventRecord),
           ),
         ]
         .into_iter()
@@ -256,6 +260,7 @@ mod v14 {
         ord_types: Default::default(),
         call,
         event,
+        api_interface,
       };
       // Try a limited number of types to mark all types needing the `Ord` type.
       let mut ord_type_ids = HashSet::new();
@@ -405,7 +410,7 @@ mod v14 {
           return self
             .type_name_scoped(ty.type_param().id(), scope, true)
             .map(|elem_ty| {
-              quote! { Vec<#elem_ty> }
+              quote! { ::alloc::vec::Vec<#elem_ty> }
             });
         }
         TypeDef::Array(ty) => {
@@ -431,7 +436,7 @@ mod v14 {
             match prim {
               Bool => "bool",
               Char => "char",
-              Str => "String",
+              Str => return Some(quote!(::alloc::string::String)),
               U8 => "u8",
               U16 => "u16",
               U32 => "u32",
@@ -496,6 +501,7 @@ mod v14 {
     ) -> TokenStream {
       let storage_name = &md.name;
       let storage_ident = format_ident!("{}", storage_name.to_snake_case());
+      let api_interface = &self.api_interface;
       let mut key_prefix = Vec::with_capacity(512);
       key_prefix.extend(sp_core_hashing::twox_128(mod_prefix.as_bytes()));
       key_prefix.extend(sp_core_hashing::twox_128(storage_name.as_bytes()));
@@ -534,25 +540,25 @@ mod v14 {
         keys.append_all(quote! {#key_ident: #type_name,});
         hashing.append_all(match hasher {
           StorageHasher::Blake2_128 => quote! {
-            buf.extend(::polymesh_api_client::sp_core::hashing::blake2_128(&#key_ident.encode()));
+            buf.extend(#api_interface::hashing::blake2_128(&#key_ident.encode()));
           },
           StorageHasher::Blake2_256 => quote! {
-            buf.extend(::polymesh_api_client::sp_core::hashing::blake2_256(&#key_ident.encode()));
+            buf.extend(#api_interface::hashing::blake2_256(&#key_ident.encode()));
           },
           StorageHasher::Blake2_128Concat => quote! {
             let key = #key_ident.encode();
-            buf.extend(::polymesh_api_client::sp_core::hashing::blake2_128(&key));
+            buf.extend(#api_interface::hashing::blake2_128(&key));
             buf.extend(key.into_iter());
           },
           StorageHasher::Twox128 => quote! {
-            buf.extend(::polymesh_api_client::sp_core::hashing::twox_128(&#key_ident.encode()));
+            buf.extend(#api_interface::hashing::twox_128(&#key_ident.encode()));
           },
           StorageHasher::Twox256 => quote! {
-            buf.extend(::polymesh_api_client::sp_core::hashing::twox_256(&#key_ident.encode()));
+            buf.extend(#api_interface::hashing::twox_256(&#key_ident.encode()));
           },
           StorageHasher::Twox64Concat => quote! {
             let key = #key_ident.encode();
-            buf.extend(::polymesh_api_client::sp_core::hashing::twox_64(&key));
+            buf.extend(#api_interface::hashing::twox_64(&key));
             buf.extend(key.into_iter());
           },
           StorageHasher::Identity => quote! {
@@ -562,7 +568,7 @@ mod v14 {
       }
       let value_ty = if mod_prefix == "System" && storage_name == "Events" {
         let event_ty = &self.event;
-        quote!(Vec<::polymesh_api_client::EventRecord<#event_ty>>)
+        quote!(::alloc::vec::Vec<#api_interface::EventRecord<#event_ty>>)
       } else {
         self.type_name(value_ty, false).unwrap()
       };
@@ -588,22 +594,40 @@ mod v14 {
       if keys_len > 0 {
         quote! {
           #(#[doc = #docs])*
+          #[cfg(not(feature = "ink"))]
           pub async fn #storage_ident(&self, #keys) -> ::polymesh_api_client::error::Result<#return_ty> {
             use ::codec::Encode;
-            let mut buf = Vec::with_capacity(512);
+            let mut buf = ::alloc::vec::Vec::with_capacity(512);
             buf.extend([#(#key_prefix,)*]);
             #hashing
             let key = ::polymesh_api_client::StorageKey(buf);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
+
+          #[cfg(feature = "ink")]
+          pub fn #storage_ident(&self, #keys) -> ::polymesh_api_ink::error::Result<#return_ty> {
+            use ::codec::Encode;
+            let mut buf = ::alloc::vec::Vec::with_capacity(512);
+            buf.extend([#(#key_prefix,)*]);
+            #hashing
+            let value = self.api.read_storage(buf)?;
+            #return_value
+          }
         }
       } else {
         quote! {
           #(#[doc = #docs])*
+          #[cfg(not(feature = "ink"))]
           pub async fn #storage_ident(&self) -> ::polymesh_api_client::error::Result<#return_ty> {
             let key = ::polymesh_api_client::StorageKey(vec![#(#key_prefix,)*]);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
+            #return_value
+          }
+
+          #[cfg(feature = "ink")]
+          pub fn #storage_ident(&self) -> ::polymesh_api_ink::error::Result<#return_ty> {
+            let value = self.api.read_storage(::alloc::vec![#(#key_prefix,)*])?;
             #return_value
           }
         }
@@ -613,17 +637,19 @@ mod v14 {
     fn gen_func(
       &self,
       mod_name: &str,
-      _mod_idx: u8,
+      mod_idx: u8,
       mod_call_ty: u32,
       md: &Variant<PortableForm>,
     ) -> TokenStream {
       let mod_call_ident = format_ident!("{mod_name}");
       let mod_call = self.type_name(mod_call_ty, false).unwrap();
       let func_name = md.name();
+      let func_idx = md.index();
       let func_ident = format_ident!("{}", func_name.to_snake_case());
 
       let mut fields = TokenStream::new();
       let mut field_names = TokenStream::new();
+      let mut fields_encode = TokenStream::new();
       for (idx, field) in md.fields().iter().enumerate() {
         let name = field
           .name()
@@ -634,10 +660,13 @@ mod v14 {
           .expect("Missing Extrinsic param type");
         fields.append_all(quote! {#name: #type_name,});
         if Self::is_boxed(field) {
-          field_names.append_all(quote! {#name: ::std::boxed::Box::new(#name),});
+          field_names.append_all(quote! {#name: ::alloc::boxed::Box::new(#name),});
         } else {
           field_names.append_all(quote! {#name,});
         }
+        fields_encode.append_all(quote! {
+          #name.encode_to(&mut buf);
+        });
       }
 
       let docs = md.docs();
@@ -645,15 +674,30 @@ mod v14 {
       if md.fields().len() > 0 {
         quote! {
           #(#[doc = #docs])*
+          #[cfg(not(feature = "ink"))]
           pub fn #func_ident(&self, #fields) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
+          }
+
+          #[cfg(feature = "ink")]
+          pub fn #func_ident(&self, #fields) -> super::super::WrappedCall {
+            use ::codec::Encode;
+            let mut buf = ::alloc::vec![#mod_idx, #func_idx];
+            #fields_encode
+            self.api.wrap_call(buf)
           }
         }
       } else {
         quote! {
           #(#[doc = #docs])*
+          #[cfg(not(feature = "ink"))]
           pub fn #func_ident(&self) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
+          }
+
+          #[cfg(feature = "ink")]
+          pub fn #func_ident(&self) -> super::super::WrappedCall {
+            self.api.wrap_call(::alloc::vec![#mod_idx, #func_idx])
           }
         }
       }
@@ -704,7 +748,7 @@ mod v14 {
         pub mod #mod_ident {
           use super::*;
 
-          #[derive(Clone, Debug)]
+          #[derive(Clone)]
           pub struct CallApi<'api> {
             api: &'api super::super::Api,
           }
@@ -719,9 +763,10 @@ mod v14 {
             }
           }
 
-          #[derive(Clone, Debug)]
+          #[derive(Clone)]
           pub struct QueryApi<'api> {
             pub(crate) api: &'api super::super::Api,
+            #[cfg(not(feature = "ink"))]
             pub(crate) at: Option<::polymesh_api_client::BlockHash>,
           }
 
@@ -750,7 +795,7 @@ mod v14 {
       for field in fields {
         let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false)?;
         if Self::is_boxed(field) {
-          field_ty = quote!(::std::boxed::Box<#field_ty>);
+          field_ty = quote!(::alloc::boxed::Box<#field_ty>);
         }
         let attr = self.need_field_attributes(field);
         unnamed.push(quote! { #attr pub #field_ty });
@@ -825,7 +870,7 @@ mod v14 {
       for field in fields {
         let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false)?;
         if Self::is_boxed(field) {
-          field_ty = quote!(::std::boxed::Box<#field_ty>);
+          field_ty = quote!(::alloc::boxed::Box<#field_ty>);
         }
         let docs = field.docs();
         let attr = self.need_field_attributes(field);
@@ -935,6 +980,7 @@ mod v14 {
           }
         }
 
+        #[cfg(not(feature = "ink"))]
         impl #params ::polymesh_api_client::EnumInfo for #ty_ident #params {
           fn as_name(&self) -> &'static str {
             self.as_static_str()
@@ -1012,6 +1058,7 @@ mod v14 {
       let code = quote! {
         #[derive(Clone, Debug, PartialEq, Eq)]
         #[derive(::codec::Encode, ::codec::Decode)]
+        #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum RuntimeError {
           #variants
@@ -1037,6 +1084,7 @@ mod v14 {
           }
         }
 
+        #[cfg(not(feature = "ink"))]
         impl ::polymesh_api_client::EnumInfo for RuntimeError {
           fn as_name(&self) -> &'static str {
             self.as_static_str()
@@ -1051,6 +1099,7 @@ mod v14 {
 
         #(#[doc = #docs])*
         #[derive(Clone, Debug, PartialEq, Eq)]
+        #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct #ty_ident(RuntimeError);
 
@@ -1087,6 +1136,7 @@ mod v14 {
           }
         }
 
+        #[cfg(not(feature = "ink"))]
         impl ::polymesh_api_client::EnumInfo for #ty_ident {
           fn as_name(&self) -> &'static str {
             self.as_static_str()
@@ -1140,6 +1190,7 @@ mod v14 {
         #(#[doc = #docs])*
         #[derive(Clone, Debug, PartialEq, Eq)]
         #[derive(::codec::Encode, ::codec::Decode)]
+        #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum #ty_ident {
           Other,
@@ -1197,6 +1248,7 @@ mod v14 {
           }
         }
 
+        #[cfg(not(feature = "ink"))]
         impl ::polymesh_api_client::EnumInfo for #ty_ident {
           fn as_name(&self) -> &'static str {
             self.as_static_str()
@@ -1280,6 +1332,7 @@ mod v14 {
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 #derive_ord
                 #[derive(::codec::Encode, ::codec::Decode)]
+                #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params (#fields);
               },
@@ -1292,6 +1345,7 @@ mod v14 {
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 #derive_ord
                 #[derive(::codec::Encode, ::codec::Decode)]
+                #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params { #fields }
               },
@@ -1325,6 +1379,7 @@ mod v14 {
               #[derive(Clone, Debug, PartialEq, Eq)]
               #derive_ord
               #[derive(::codec::Encode, ::codec::Decode)]
+              #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
               #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
               pub enum #ty_ident #params {
                 #variants
@@ -1402,6 +1457,7 @@ mod v14 {
             pub fn #ident(&self) -> api::#ident::QueryApi<'api> {
               api::#ident::QueryApi {
                 api: self.api,
+                #[cfg(not(feature = "ink"))]
                 at: self.at,
               }
             }
@@ -1419,7 +1475,9 @@ mod v14 {
       quote! {
         use ::codec::Decode;
 
+        #[cfg(not(feature = "ink"))]
         pub const API_METADATA_BYTES: &'static [u8] = &[ #(#metadata_bytes,)* ];
+        #[cfg(not(feature = "ink"))]
         ::lazy_static::lazy_static! {
             pub static ref API_METADATA: ::polymesh_api_client::frame_metadata::v14::RuntimeMetadataV14 =
               ::polymesh_api_client::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
@@ -1441,12 +1499,32 @@ mod v14 {
           #( #modules )*
         }
 
-        #[derive(Debug)]
         pub struct Api {
+          #[cfg(not(feature = "ink"))]
           client: ::polymesh_api_client::Client,
         }
 
         impl Api {
+          #[cfg(feature = "ink")]
+          pub fn new() -> Self {
+            Self {}
+          }
+
+          #[cfg(feature = "ink")]
+          pub fn runtime(&self) -> ::polymesh_extension::PolymeshRuntimeInstance {
+            ::polymesh_extension::new_instance()
+          }
+
+          #[cfg(feature = "ink")]
+          pub fn read_storage<T: ::codec::Decode>(&self, key: ::alloc::vec::Vec<u8>) -> ::polymesh_api_ink::error::Result<Option<T>> {
+            let runtime = self.runtime();
+            let value = runtime.read_storage(key)?
+              .map(|data| T::decode(&mut data.as_slice()))
+              .transpose()?;
+            Ok(value)
+          }
+
+          #[cfg(not(feature = "ink"))]
           pub async fn new(url: &str) -> ::polymesh_api_client::error::Result<Self> {
             Ok(Self {
               client: ::polymesh_api_client::Client::new(url).await?
@@ -1457,20 +1535,42 @@ mod v14 {
             CallApi { api: self }
           }
 
+          #[cfg(not(feature = "ink"))]
           pub fn query(&self) -> QueryApi {
             QueryApi { api: self, at: None }
           }
 
+          #[cfg(feature = "ink")]
+          pub fn query(&self) -> QueryApi {
+            QueryApi { api: self }
+          }
+
+          #[cfg(not(feature = "ink"))]
           pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi {
             QueryApi { api: self, at: Some(block) }
           }
 
+          #[cfg(not(feature = "ink"))]
           pub fn wrap_call(&self, call: types::#call_ty) -> ::polymesh_api_client::Result<WrappedCall> {
             Ok(WrappedCall::new(self, call))
           }
+
+          #[cfg(feature = "ink")]
+          pub fn wrap_call(&self, call: ::alloc::vec::Vec<u8>) -> WrappedCall {
+            WrappedCall::new(call)
+          }
+        }
+
+        #[cfg(feature = "ink")]
+        impl ::polymesh_api_ink::ChainApi for Api {
+          type RuntimeCall = types::#call_ty;
+          type RuntimeEvent = types::#event_ty;
+          type DispatchInfo = types::frame_support::weights::DispatchInfo;
+          type DispatchError = types::sp_runtime::DispatchError;
         }
 
         #[async_trait::async_trait]
+        #[cfg(not(feature = "ink"))]
         impl ::polymesh_api_client::ChainApi for Api {
           type RuntimeCall = types::#call_ty;
           type RuntimeEvent = types::#event_ty;
@@ -1482,7 +1582,7 @@ mod v14 {
             Ok(info.nonce)
           }
 
-          async fn block_events(&self, block: Option<::polymesh_api_client::BlockHash>) -> ::polymesh_api_client::Result<Vec<::polymesh_api_client::EventRecord<Self::RuntimeEvent>>> {
+          async fn block_events(&self, block: Option<::polymesh_api_client::BlockHash>) -> ::polymesh_api_client::Result<::alloc::vec::Vec<::polymesh_api_client::EventRecord<Self::RuntimeEvent>>> {
             let system = match block {
               Some(block) => self.query_at(block).system(),
               None => self.query().system(),
@@ -1505,7 +1605,7 @@ mod v14 {
           }
         }
 
-        #[derive(Clone, Debug)]
+        #[derive(Clone)]
         pub struct CallApi<'api> {
           api: &'api Api,
         }
@@ -1514,23 +1614,29 @@ mod v14 {
           #call_fields
         }
 
+        #[cfg(not(feature = "ink"))]
         pub type WrappedCall<'api> = ::polymesh_api_client::Call<'api, Api>;
+        #[cfg(feature = "ink")]
+        pub type WrappedCall = ::polymesh_api_ink::Call;
 
+        #[cfg(not(feature = "ink"))]
         impl<'api> From<WrappedCall<'api>> for types::#call_ty {
           fn from(wrapped: WrappedCall<'api>) -> Self {
             wrapped.into_runtime_call()
           }
         }
 
+        #[cfg(not(feature = "ink"))]
         impl<'api> From<&WrappedCall<'api>> for types::#call_ty {
           fn from(wrapped: &WrappedCall<'api>) -> Self {
             wrapped.runtime_call().clone()
           }
         }
 
-        #[derive(Clone, Debug)]
+        #[derive(Clone)]
         pub struct QueryApi<'api> {
           api: &'api Api,
+          #[cfg(not(feature = "ink"))]
           at: Option<::polymesh_api_client::BlockHash>,
         }
 

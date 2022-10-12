@@ -1,0 +1,42 @@
+[package]
+name = "polymesh-api-ink"
+version = "0.1.0"
+edition = "2021"
+authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
+license = "Apache-2.0"
+description = "Polymesh Ink! API core"
+keywords = ["polymesh", "ink", "blockchain", "substrate", "codegen"]
+repository = "https://github.com/PolymeshAssociation/polymesh-api"
+homepage = "https://github.com/PolymeshAssociation/polymesh-api"
+
+[dependencies]
+thiserror = "1.0.31"
+log = "0.4"
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+
+# substrate
+sp-arithmetic = { version = "5.0", default-features = false }
+codec = { version = "3", package = "parity-scale-codec", default-features = false, features = ["full"] }
+scale-info = { version = "2", default-features = false, optional = true }
+primitive-types = { version = "0.11.1", default-features = false, features = ["codec"] }
+
+# For Ink! Smart Contract support.
+polymesh-extension = { version = "0.1", path = "../../../polymesh-extension/", default-features = false }
+ink_env = { version = "=3.0", default-features = false }
+
+# wasm:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+sp-application-crypto = { version = "6.0", default-features = false }
+sp-io = { version = "6.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
+
+[features]
+default = [ "std" ]
+
+std = [
+	"sp-arithmetic/std",
+	"codec/std",
+	"scale-info/std",
+	"primitive-types/std",
+	"ink_env/std",
+	"polymesh-extension/std",
+]

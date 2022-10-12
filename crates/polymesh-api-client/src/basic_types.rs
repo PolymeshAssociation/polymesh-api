@@ -5,11 +5,17 @@ use std::fmt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "std")]
+use scale_info::TypeInfo;
+
 use sp_core::crypto::Ss58Codec;
 
 // Re-export some basic crates.
 pub use frame_metadata;
+
 pub use sp_core;
+
+pub use sp_core::hashing as hashing;
 
 // Re-impl `per_things` to support serde
 pub mod per_things {
@@ -17,6 +23,7 @@ pub mod per_things {
 
   #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
   #[cfg_attr(feature = "std", derive(Hash))]
+  #[cfg_attr(feature = "std", derive(TypeInfo))]
   #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
   pub struct Perbill(pub u32);
 
@@ -46,6 +53,7 @@ pub mod per_things {
 
   #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
   #[cfg_attr(feature = "std", derive(Hash))]
+  #[cfg_attr(feature = "std", derive(TypeInfo))]
   #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
   pub struct PerU16(pub u16);
 
@@ -75,6 +83,7 @@ pub mod per_things {
 
   #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
   #[cfg_attr(feature = "std", derive(Hash))]
+  #[cfg_attr(feature = "std", derive(TypeInfo))]
   #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
   pub struct Permill(pub u32);
 
@@ -104,6 +113,7 @@ pub mod per_things {
 
   #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
   #[cfg_attr(feature = "std", derive(Hash))]
+  #[cfg_attr(feature = "std", derive(TypeInfo))]
   #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
   pub struct Percent(pub u8);
 
@@ -135,6 +145,7 @@ pub mod per_things {
 // Re-impl MultiAddress to support serde
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Hash))]
+#[cfg_attr(feature = "std", derive(TypeInfo))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum MultiAddress<AccountId, AccountIndex> {
   /// It's an account ID (pubkey).
@@ -190,6 +201,7 @@ impl<AccountId: Clone, AccountIndex: Clone> From<&sp_runtime::MultiAddress<Accou
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(TypeInfo))]
 pub struct AccountId(pub [u8; 32]);
 
 // TODO: re-implement ss58 for `no_std`
@@ -216,6 +228,7 @@ impl fmt::Debug for AccountId {
   }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for AccountId {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -226,6 +239,7 @@ impl Serialize for AccountId {
   }
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for AccountId {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
@@ -320,6 +334,7 @@ impl From<&AccountId> for sp_runtime::AccountId32 {
 pub type GenericAddress = MultiAddress<AccountId, ()>;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(TypeInfo))]
 pub struct IdentityId(pub [u8; 32]);
 
 impl fmt::Display for IdentityId {
@@ -336,6 +351,7 @@ impl fmt::Debug for IdentityId {
   }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for IdentityId {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -346,6 +362,7 @@ impl Serialize for IdentityId {
   }
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for IdentityId {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
