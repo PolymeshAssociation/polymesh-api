@@ -8,37 +8,6 @@ use alloc::fmt;
 #[cfg(feature = "std")]
 use scale_info::TypeInfo;
 
-pub mod hashing {
-  use ink_env::hash::*;
-
-  pub fn blake2_128(data: &[u8]) -> [u8; 16] {
-    let mut hash = <Blake2x128 as HashOutput>::Type::default(); // 128-bit buffer
-    ink_env::hash_bytes::<Blake2x128>(data, &mut hash);
-    hash
-  }
-
-  pub fn blake2_256(data: &[u8]) -> [u8; 32] {
-    let mut hash = <Blake2x256 as HashOutput>::Type::default(); // 256-bit buffer
-    ink_env::hash_bytes::<Blake2x256>(data, &mut hash);
-    hash
-  }
-
-  pub fn twox_64(_data: &[u8]) -> [u8; 8] {
-    // TODO:
-    Default::default()
-  }
-
-  pub fn twox_128(_data: &[u8]) -> [u8; 16] {
-    // TODO:
-    Default::default()
-  }
-
-  pub fn twox_256(_data: &[u8]) -> [u8; 32] {
-    // TODO:
-    Default::default()
-  }
-}
-
 pub use sp_arithmetic::per_things;
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]

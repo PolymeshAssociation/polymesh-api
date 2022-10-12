@@ -5,6 +5,9 @@ extern crate alloc;
 pub mod basic_types;
 pub use basic_types::*;
 
+pub mod hashing;
+pub use hashing::*;
+
 pub mod error;
 pub use error::*;
 
