@@ -605,6 +605,7 @@ mod v14 {
             #return_value
           }
 
+          #(#[doc = #docs])*
           #[cfg(feature = "ink")]
           pub fn #storage_ident(&self, #keys) -> ::polymesh_api_ink::error::Result<#return_ty> {
             use ::codec::Encode;
@@ -625,6 +626,7 @@ mod v14 {
             #return_value
           }
 
+          #(#[doc = #docs])*
           #[cfg(feature = "ink")]
           pub fn #storage_ident(&self) -> ::polymesh_api_ink::error::Result<#return_ty> {
             let value = self.api.read_storage(::alloc::vec![#(#key_prefix,)*])?;
@@ -679,6 +681,7 @@ mod v14 {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
           }
 
+          #(#[doc = #docs])*
           #[cfg(feature = "ink")]
           pub fn #func_ident(&self, #fields) -> super::super::WrappedCall {
             use ::codec::Encode;
@@ -695,6 +698,7 @@ mod v14 {
             self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
           }
 
+          #(#[doc = #docs])*
           #[cfg(feature = "ink")]
           pub fn #func_ident(&self) -> super::super::WrappedCall {
             self.api.wrap_call(::alloc::vec![#mod_idx, #func_idx])
