@@ -1518,7 +1518,7 @@ mod v14 {
           #[cfg(feature = "ink")]
           pub fn read_storage<T: ::codec::Decode>(&self, key: ::alloc::vec::Vec<u8>) -> ::polymesh_api_ink::error::Result<Option<T>> {
             let runtime = self.runtime();
-            let value = runtime.read_storage(key)?
+            let value = runtime.read_storage(key.into())?
               .map(|data| T::decode(&mut data.as_slice()))
               .transpose()?;
             Ok(value)
