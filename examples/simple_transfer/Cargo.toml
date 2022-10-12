@@ -13,4 +13,4 @@ tokio = { version = "1.19", features = ["full"] }
 
 sp-keyring = "6.0.0"
 
-polymesh-api = { version = "0.2", path = "../../" }
+polymesh-api = { version = "0.3", path = "../../" }

@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -39,7 +39,7 @@ lazy_static = "1.4.0"
 async-trait = "0.1"
 
 tokio = { version = "1.19", features = ["full"] }
-polymesh-api-client = { version = "0.2", path = "../polymesh-api-client", default-features = false }
+polymesh-api-client = { version = "0.3", path = "../polymesh-api-client", default-features = false }
 rustfmt-wrapper = "0.2.0"
 
 # substrate
