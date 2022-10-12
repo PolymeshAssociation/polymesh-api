@@ -1822,7 +1822,6 @@ dependencies = [
  "polymesh-api-client",
  "polymesh-api-codegen-macro",
  "polymesh-api-ink",
- "polymesh-extension",
  "scale-info",
  "serde",
  "serde-big-array",
@@ -1902,7 +1901,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hex",
  "ink_env",
@@ -1920,7 +1919,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-extension"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ink_env",
  "ink_lang",

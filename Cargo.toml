@@ -31,10 +31,9 @@ serde = { version = "1.0", optional = true }
 
 polymesh-api-codegen-macro = { version = "0.2", path = "crates/polymesh-api-codegen-macro", default-features = false }
 polymesh-api-client = { version = "0.2", path = "crates/polymesh-api-client", optional = true, default-features = false }
-polymesh-api-ink = { version = "0.1", path = "crates/polymesh-api-ink", optional = true, default-features = false }
 
 # For Ink! Smart Contract support.
-polymesh-extension = { version = "0.1", path = "../polymesh-extension/", optional = true, default-features = false }
+polymesh-api-ink = { version = "0.2", path = "crates/polymesh-api-ink", optional = true, default-features = false }
 
 # substrate
 sp-arithmetic = { version = "5.0", default-features = false }
@@ -76,7 +75,6 @@ ink = [
 	"polymesh-api-ink",
 	"polymesh-api-codegen-macro/ink",
 	"polymesh-api-codegen-macro/no_std",
-	"polymesh-extension",
 ]
 
 wasm = [

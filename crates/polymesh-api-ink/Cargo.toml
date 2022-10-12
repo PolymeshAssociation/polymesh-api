@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -23,7 +23,7 @@ scale-info = { version = "2", default-features = false, optional = true }
 primitive-types = { version = "0.11.1", default-features = false, features = ["codec"] }
 
 # For Ink! Smart Contract support.
-polymesh-extension = { version = "0.1", path = "../../../polymesh-extension/", default-features = false }
+polymesh-extension = { version = "0.2", path = "../../../polymesh-extension/", default-features = false }
 ink_env = { version = "=3.0", default-features = false }
 
 # wasm:

@@ -1511,8 +1511,8 @@ mod v14 {
           }
 
           #[cfg(feature = "ink")]
-          pub fn runtime(&self) -> ::polymesh_extension::PolymeshRuntimeInstance {
-            ::polymesh_extension::new_instance()
+          pub fn runtime(&self) -> ::polymesh_api_ink::extension::PolymeshRuntimeInstance {
+            ::polymesh_api_ink::extension::new_instance()
           }
 
           #[cfg(feature = "ink")]

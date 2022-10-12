@@ -2,6 +2,9 @@
 
 extern crate alloc;
 
+/// Re-export Polymesh ChainExtension.
+pub use polymesh_extension as extension;
+
 pub mod basic_types;
 pub use basic_types::*;
 
