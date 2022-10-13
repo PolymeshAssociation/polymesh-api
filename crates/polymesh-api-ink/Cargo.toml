@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -24,7 +24,12 @@ primitive-types = { version = "0.11.1", default-features = false, features = ["c
 
 # For Ink! Smart Contract support.
 polymesh-extension = { version = "0.2", path = "../../../polymesh-extension/", default-features = false }
+ink_primitives = { version = "=3.0", default-features = false }
+ink_metadata = { version = "=3.0", default-features = false, features = ["derive"], optional = true }
 ink_env = { version = "=3.0", default-features = false }
+ink_storage = { version = "=3.0", default-features = false }
+ink_lang = { version = "=3.0", default-features = false }
+ink_lang_codegen = { version = "=3.0", default-features = false }
 
 # wasm:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -35,11 +40,14 @@ sp-io = { version = "6.0", default-features = false, features = ["disable_oom", 
 default = [ "std" ]
 
 std = [
-	"sp-arithmetic/std",
-	"codec/std",
-	"scale-info/std",
-	"primitive-types/std",
-	"ink_env/std",
-	"twox-hash/std",
-	"polymesh-extension/std",
+  "sp-arithmetic/std",
+  "codec/std",
+  "scale-info/std",
+  "primitive-types/std",
+  "ink_metadata/std",
+  "ink_env/std",
+  "ink_storage/std",
+  "ink_primitives/std",
+  "twox-hash/std",
+  "polymesh-extension/std",
 ]

@@ -262,7 +262,7 @@ mod v14 {
         event,
         api_interface,
       };
-      // Try a limited number of types to mark all types needing the `Ord` type.
+      // Try a limited number of times to mark all types needing the `Ord` type.
       let mut ord_type_ids = HashSet::new();
       for _ in 0..10 {
         if !gen.check_for_ord_types(&mut ord_type_ids) {
