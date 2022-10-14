@@ -14,8 +14,6 @@ thiserror = "1.0.31"
 log = "0.4"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
-twox-hash = { version = "1.6.3", default-features = false }
-
 # substrate
 sp-arithmetic = { version = "5.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false, features = ["full"] }
@@ -48,6 +46,5 @@ std = [
   "ink_env/std",
   "ink_storage/std",
   "ink_primitives/std",
-  "twox-hash/std",
   "polymesh-extension/std",
 ]

@@ -66,3 +66,9 @@ impl fmt::Debug for IdentityId {
     write!(f, "0x{}", h)
   }
 }
+
+impl From<[u8; 32]> for IdentityId {
+  fn from(raw: [u8; 32]) -> Self {
+    Self(raw)
+  }
+}
