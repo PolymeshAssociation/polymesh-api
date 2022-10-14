@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -33,7 +33,13 @@ polymesh-api-codegen-macro = { version = "0.3", path = "crates/polymesh-api-code
 polymesh-api-client = { version = "0.3", path = "crates/polymesh-api-client", optional = true, default-features = false }
 
 # For Ink! Smart Contract support.
-polymesh-api-ink = { version = "0.3.1", path = "crates/polymesh-api-ink", optional = true, default-features = false }
+polymesh-api-ink = { version = "0.3", path = "crates/polymesh-api-ink", optional = true, default-features = false }
+ink_primitives = { version = "=3.0", optional = true, default-features = false }
+ink_metadata = { version = "=3.0", optional = true, default-features = false, features = ["derive"] }
+ink_env = { version = "=3.0", optional = true, default-features = false }
+ink_storage = { version = "=3.0", optional = true, default-features = false }
+ink_lang = { version = "=3.0", optional = true, default-features = false }
+ink_lang_codegen = { version = "=3.0", optional = true, default-features = false }
 
 # substrate
 sp-arithmetic = { version = "5.0", default-features = false }
@@ -75,6 +81,11 @@ ink = [
 	"polymesh-api-ink",
 	"polymesh-api-codegen-macro/ink",
 	"polymesh-api-codegen-macro/no_std",
+  "ink_primitives",
+  "ink_env",
+  "ink_storage",
+  "ink_lang",
+  "ink_lang_codegen",
 ]
 
 wasm = [
@@ -97,4 +108,8 @@ std = [
 	"polymesh-api-client?/std",
 	"polymesh-api-ink?/std",
 	"scale-info/std",
+  "ink_primitives?/std",
+  "ink_metadata/std",
+  "ink_env?/std",
+  "ink_storage?/std",
 ]

@@ -1809,13 +1809,19 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "polymesh-api"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "async-trait",
  "dotenv",
  "env_logger",
  "hex",
+ "ink_env",
+ "ink_lang",
+ "ink_lang_codegen",
+ "ink_metadata",
+ "ink_primitives",
+ "ink_storage",
  "lazy_static",
  "log",
  "parity-scale-codec",
@@ -1863,7 +1869,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "async-trait",

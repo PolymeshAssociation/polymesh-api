@@ -164,6 +164,7 @@ mod v14 {
     max_error_size: usize,
     rename_types: HashMap<String, TokenStream>,
     ord_types: HashSet<String>,
+    custom_derives: HashMap<String, TokenStream>,
     runtime_namespace: Vec<String>,
     call: TokenStream,
     event: TokenStream,
@@ -235,6 +236,61 @@ mod v14 {
         .into_iter()
         .map(|(name, code)| (name.to_string(), code)),
       );
+      let ink_derives = quote! {
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+      };
+      let ink_enum_derives = quote! {
+        #[derive(Copy)]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+      };
+      let ink_extra_derives = quote! {
+        #[derive(Default)]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadAllocate))]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+      };
+      let ink_id_derives = quote! {
+        #[derive(Copy, Default)]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadAllocate))]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
+        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+      };
+      let custom_derives = HashMap::from_iter(
+        [
+          // Asset types.
+          ("AssetName", &ink_extra_derives),
+          ("AssetType", &ink_enum_derives),
+          ("AssetIdentifier", &ink_enum_derives),
+          ("CustomAssetTypeId", &ink_id_derives),
+          ("FundingRoundName", &ink_extra_derives),
+          ("Ticker", &ink_id_derives),
+          // Portfolio
+          ("PortfolioId", &ink_enum_derives),
+          ("PortfolioKind", &ink_enum_derives),
+          ("PortfolioNumber", &ink_id_derives),
+          ("MovePortfolioItem", &ink_derives),
+          ("Memo", &ink_derives),
+          // Settlement types.
+          ("VenueId", &ink_id_derives),
+          ("VenueDetails", &ink_extra_derives),
+          ("VenueType", &ink_enum_derives),
+          ("Leg", &ink_derives),
+          ("LegId", &ink_id_derives),
+          ("InstructionId", &ink_id_derives),
+          ("AffirmationStatus", &ink_enum_derives),
+          ("InstructionStatus", &ink_enum_derives),
+          ("LegStatus", &ink_enum_derives),
+          ("SettlementType", &ink_enum_derives),
+        ]
+        .into_iter()
+        .map(|(name, code)| (name.to_string(), code.clone())),
+      );
 
       // Collect pallet Call/Event/Error types.
       let mut pallet_types = HashMap::new();
@@ -258,6 +314,7 @@ mod v14 {
         max_error_size: 4,
         rename_types,
         ord_types: Default::default(),
+        custom_derives,
         call,
         event,
         api_interface,
@@ -1312,6 +1369,11 @@ mod v14 {
       } else {
         quote!()
       };
+      let custom_derive = self
+        .custom_derives
+        .get(&ident)
+        .cloned()
+        .unwrap_or_else(|| quote!());
 
       let docs = ty.docs();
       let (mut code, params) = match ty.type_def() {
@@ -1335,6 +1397,7 @@ mod v14 {
                 #(#[doc = #docs])*
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 #derive_ord
+                #custom_derive
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -1348,6 +1411,7 @@ mod v14 {
                 #(#[doc = #docs])*
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 #derive_ord
+                #custom_derive
                 #[derive(::codec::Encode, ::codec::Decode)]
                 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -1382,6 +1446,7 @@ mod v14 {
               #(#[doc = #docs])*
               #[derive(Clone, Debug, PartialEq, Eq)]
               #derive_ord
+              #custom_derive
               #[derive(::codec::Encode, ::codec::Decode)]
               #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
               #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
