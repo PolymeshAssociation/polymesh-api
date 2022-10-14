@@ -11,11 +11,9 @@ use scale_info::TypeInfo;
 pub use sp_arithmetic::per_things;
 
 pub use ink_env::AccountId;
-use ink_storage::traits::{
-  SpreadAllocate, SpreadLayout, PackedLayout,
-};
 #[cfg(feature = "std")]
 use ink_storage::traits::StorageLayout;
+use ink_storage::traits::{PackedLayout, SpreadAllocate, SpreadLayout};
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Hash))]
@@ -45,8 +43,20 @@ impl<AccountId, AccountIndex> From<AccountId> for MultiAddress<AccountId, Accoun
   }
 }
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
-#[derive(SpreadAllocate, SpreadLayout, PackedLayout)]
+#[derive(
+  Clone,
+  Copy,
+  Default,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Encode,
+  Decode,
+  SpreadAllocate,
+  SpreadLayout,
+  PackedLayout,
+)]
 #[cfg_attr(feature = "std", derive(TypeInfo, StorageLayout))]
 pub struct IdentityId(pub [u8; 32]);
 

@@ -15,7 +15,7 @@ pub use frame_metadata;
 
 pub use sp_core;
 
-pub use sp_core::hashing as hashing;
+pub use sp_core::hashing;
 
 // Re-impl `per_things` to support serde
 pub mod per_things {

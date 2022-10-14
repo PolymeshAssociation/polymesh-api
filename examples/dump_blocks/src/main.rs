@@ -11,14 +11,17 @@ async fn main() -> Result<()> {
   env_logger::init();
 
   let url = env::args().nth(1).expect("Missing ws url");
-  let start_block = env::args().nth(2)
+  let start_block = env::args()
+    .nth(2)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 0);
-  let count = env::args().nth(3)
+  let count = env::args()
+    .nth(3)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 10);
   let end_block = start_block + count;
-  let skip = env::args().nth(4)
+  let skip = env::args()
+    .nth(4)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 1);
 

@@ -5,8 +5,8 @@ use std::sync::{Arc, RwLock};
 
 use serde_json::{Map, Value};
 
-use crate::type_def::*;
 use crate::error::*;
+use crate::type_def::*;
 
 macro_rules! parse_error {
   ($fmt:expr, $($arg:tt)*) => {

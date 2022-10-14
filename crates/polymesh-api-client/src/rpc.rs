@@ -70,7 +70,8 @@ impl RpcClient {
     };
     let client = WsClientBuilder::default()
       .max_request_body_size(1024 * 1024 * 1024)
-      .build(&url).await?;
+      .build(&url)
+      .await?;
     Ok(Self {
       client: InnerRpcClient::Ws(client),
     })
