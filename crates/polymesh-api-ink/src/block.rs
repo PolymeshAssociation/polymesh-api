@@ -1,10 +1,8 @@
 #[cfg(not(feature = "std"))]
 use alloc::{format, string::String, vec, vec::Vec};
+use alloc::fmt;
 
 use codec::{Decode, Encode, Output};
-
-#[cfg(feature = "std")]
-use scale_info::TypeInfo;
 
 use primitive_types::H256;
 
@@ -20,21 +18,20 @@ pub struct StorageData(pub Vec<u8>);
 #[derive(Clone, Debug)]
 pub struct StorageKey(pub Vec<u8>);
 
-// TODO: Fix Encode/Decode
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(TypeInfo))]
-pub enum Era {
-  Immortal,
-  Mortal(u64, u64),
-}
-
+/// `Encoded` is used to avoid encoding an extra length that isn't needed.
 #[derive(Clone, Debug)]
 pub struct Encoded(pub Vec<u8>);
 
+impl From<Vec<u8>> for Encoded {
+    fn from(data: Vec<u8>) -> Self {
+        Self(data)
+    }
+}
+
 impl<T: Encode> From<&T> for Encoded {
-  fn from(other: &T) -> Self {
-    Self(other.encode())
-  }
+    fn from(v: &T) -> Self {
+        Self(v.encode())
+    }
 }
 
 impl Encode for Encoded {
@@ -62,7 +59,43 @@ impl Decode for Encoded {
   }
 }
 
-#[derive(Clone, Debug)]
+pub trait RuntimeTraits: Clone + Encode + Decode + fmt::Debug {}
+
+impl<T> RuntimeTraits for T where T: Clone + Encode + Decode + fmt::Debug {}
+
+pub struct Call {
+  call: Vec<u8>,
+}
+
+impl Call {
+  pub fn new(call: Vec<u8>) -> Self {
+    Self { call }
+  }
+
+  pub fn encoded(&self) -> Encoded {
+    Encoded(self.call.clone())
+  }
+
+  pub fn submit(&self) -> Result<()> {
+    let runtime = crate::extension::new_instance();
+    Ok(runtime.call_runtime(self.into())?)
+  }
+}
+
+impl Encode for Call {
+  fn size_hint(&self) -> usize {
+    self.call.len()
+  }
+  fn encode_to<T: ::codec::Output + ?Sized>(&self, dest: &mut T) {
+    dest.write(&self.call);
+  }
+}
+
+impl fmt::Debug for Call {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.call.fmt(f)
+  }
+}#[derive(Clone, Debug)]
 pub struct AccountInfo {
   pub nonce: u32,
 }

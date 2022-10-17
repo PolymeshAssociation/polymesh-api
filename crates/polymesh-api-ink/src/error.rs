@@ -1,6 +1,6 @@
 use alloc::{format, string::String};
 
-use polymesh_extension::PolymeshRuntimeErr;
+use crate::extension::PolymeshRuntimeErr;
 
 use codec::{Decode, Encode};
 

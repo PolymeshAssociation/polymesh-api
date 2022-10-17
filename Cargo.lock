@@ -1869,7 +1869,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1907,7 +1907,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "hex",
  "ink_env",
@@ -1918,27 +1918,10 @@ dependencies = [
  "ink_storage",
  "log",
  "parity-scale-codec",
- "polymesh-extension",
  "primitive-types",
  "scale-info",
- "sp-application-crypto",
  "sp-arithmetic",
- "sp-io",
  "thiserror",
-]
-
-[[package]]
-name = "polymesh-extension"
-version = "0.2.0"
-dependencies = [
- "ink_env",
- "ink_lang",
- "ink_lang_codegen",
- "ink_metadata",
- "ink_primitives",
- "ink_storage",
- "parity-scale-codec",
- "scale-info",
 ]
 
 [[package]]

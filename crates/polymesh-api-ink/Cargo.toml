@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -20,19 +20,13 @@ codec = { version = "3", package = "parity-scale-codec", default-features = fals
 scale-info = { version = "2", default-features = false, optional = true }
 primitive-types = { version = "0.11.1", default-features = false, features = ["codec"] }
 
-# For Ink! Smart Contract support.
-polymesh-extension = { version = "0.2", path = "../../../polymesh-extension/", default-features = false }
+# Ink!
 ink_primitives = { version = "=3.0", default-features = false }
 ink_metadata = { version = "=3.0", default-features = false, features = ["derive"], optional = true }
 ink_env = { version = "=3.0", default-features = false }
 ink_storage = { version = "=3.0", default-features = false }
 ink_lang = { version = "=3.0", default-features = false }
 ink_lang_codegen = { version = "=3.0", default-features = false }
-
-# wasm:
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-sp-application-crypto = { version = "6.0", default-features = false }
-sp-io = { version = "6.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
 
 [features]
 default = [ "std" ]
@@ -46,5 +40,4 @@ std = [
   "ink_env/std",
   "ink_storage/std",
   "ink_primitives/std",
-  "polymesh-extension/std",
 ]

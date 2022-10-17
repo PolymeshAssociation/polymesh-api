@@ -199,6 +199,7 @@ mod v14 {
             "sp_runtime::multiaddress::MultiAddress",
             quote!(#api_interface::MultiAddress),
           ),
+          #[cfg(not(feature = "ink"))]
           ("sp_runtime::generic::era::Era", quote!(#api_interface::Era)),
           (
             "sp_arithmetic::per_things::Perbill",
@@ -1628,14 +1629,6 @@ mod v14 {
           pub fn wrap_call(&self, call: ::alloc::vec::Vec<u8>) -> WrappedCall {
             WrappedCall::new(call)
           }
-        }
-
-        #[cfg(feature = "ink")]
-        impl ::polymesh_api_ink::ChainApi for Api {
-          type RuntimeCall = types::#call_ty;
-          type RuntimeEvent = types::#event_ty;
-          type DispatchInfo = types::frame_support::weights::DispatchInfo;
-          type DispatchError = types::sp_runtime::DispatchError;
         }
 
         #[async_trait::async_trait]

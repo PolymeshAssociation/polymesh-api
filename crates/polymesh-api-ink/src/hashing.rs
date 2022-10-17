@@ -1,6 +1,6 @@
 use ink_env::hash::*;
 
-use polymesh_extension::new_instance;
+use crate::extension::new_instance;
 
 pub fn blake2_128(data: &[u8]) -> [u8; 16] {
   let mut hash = <Blake2x128 as HashOutput>::Type::default(); // 128-bit buffer
