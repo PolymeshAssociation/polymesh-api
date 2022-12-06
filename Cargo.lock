@@ -13,6 +13,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "add_secondary_keys_with_auth"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dotenv",
+ "env_logger",
+ "log",
+ "parity-scale-codec",
+ "polymesh-api",
+ "polymesh-api-client-extras",
+ "sp-core",
+ "sp-runtime",
+ "tokio",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1853,6 +1869,17 @@ dependencies = [
  "sp-runtime",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "polymesh-api-client-extras"
+version = "0.3.0"
+dependencies = [
+ "parity-scale-codec",
+ "polymesh-api",
+ "polymesh-api-client",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

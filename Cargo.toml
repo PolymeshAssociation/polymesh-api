@@ -11,15 +11,17 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
 [workspace]
 members = [
-	"crates/polymesh-api-codegen-macro",
-	"crates/polymesh-api-codegen",
-	"crates/polymesh-api-client",
-	"crates/polymesh-api-ink",
+  "crates/polymesh-api-codegen-macro",
+  "crates/polymesh-api-codegen",
+  "crates/polymesh-api-client",
+  "crates/polymesh-api-client-extras",
+  "crates/polymesh-api-ink",
 
-	"examples/simple_transfer",
-	"examples/subscribe_blocks",
-	"examples/test_api",
-	"examples/dump_blocks",
+  "examples/simple_transfer",
+  "examples/add_secondary_keys_with_auth",
+  "examples/subscribe_blocks",
+  "examples/test_api",
+  "examples/dump_blocks",
 ]
 
 [dependencies]
@@ -64,21 +66,21 @@ tokio = { version = "1.19", features = ["full"] }
 default = [ "std", "rpc", "serde", "v14" ]
 
 rpc = [
-	"async-trait",
-	"lazy_static",
-	"polymesh-api-client",
+  "async-trait",
+  "lazy_static",
+  "polymesh-api-client",
 ]
 
 v14 = [
-	"polymesh-api-codegen-macro/v14",
-	"polymesh-api-client/v14",
+  "polymesh-api-codegen-macro/v14",
+  "polymesh-api-client/v14",
 ]
 
 ink = [
-	"polymesh-api-codegen-macro/v14",
-	"polymesh-api-ink",
-	"polymesh-api-codegen-macro/ink",
-	"polymesh-api-codegen-macro/no_std",
+  "polymesh-api-codegen-macro/v14",
+  "polymesh-api-ink",
+  "polymesh-api-codegen-macro/ink",
+  "polymesh-api-codegen-macro/no_std",
   "ink_primitives",
   "ink_env",
   "ink_storage",
@@ -87,25 +89,25 @@ ink = [
 ]
 
 wasm = [
-	"v14",
-	"serde",
-	"polymesh-api-codegen-macro/no_std",
-	"polymesh-api-client/wasm",
+  "v14",
+  "serde",
+  "polymesh-api-codegen-macro/no_std",
+  "polymesh-api-client/wasm",
 ]
 
 serde = [
-	"dep:serde",
-	"sp-arithmetic/serde",
-	"polymesh-api-client/serde",
-	"serde-big-array",
+  "dep:serde",
+  "sp-arithmetic/serde",
+  "polymesh-api-client/serde",
+  "serde-big-array",
 ]
 
 std = [
-	"sp-arithmetic/std",
-	"polymesh-api-codegen-macro/std",
-	"polymesh-api-client?/std",
-	"polymesh-api-ink?/std",
-	"scale-info/std",
+  "sp-arithmetic/std",
+  "polymesh-api-codegen-macro/std",
+  "polymesh-api-client?/std",
+  "polymesh-api-ink?/std",
+  "scale-info/std",
   "ink_primitives?/std",
   "ink_metadata/std",
   "ink_env?/std",

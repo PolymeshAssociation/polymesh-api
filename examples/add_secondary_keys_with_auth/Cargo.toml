@@ -1,0 +1,20 @@
+[package]
+name = "add_secondary_keys_with_auth"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+log = "0.4"
+dotenv = "0.15"
+env_logger = "0.9"
+
+tokio = { version = "1.19", features = ["full"] }
+
+# substrate
+sp-runtime = { version = "6.0", default-features = false }
+sp-core = { version = "6.0", default-features = false }
+codec = { version = "3", package = "parity-scale-codec", default-features = false }
+
+polymesh-api = { version = "0.3", path = "../../" }
+polymesh-api-client-extras = { version = "0.3", path = "../../crates/polymesh-api-client-extras" }
