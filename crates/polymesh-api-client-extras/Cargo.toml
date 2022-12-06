@@ -10,7 +10,7 @@ repository = "https://github.com/PolymeshAssociation/polymesh-api"
 homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
 [dependencies]
-polymesh-api = { version = "0.3", path = "../../", default-features = false }
+polymesh-api = { version = "0.3", path = "../../" }
 polymesh-api-client = { version = "0.3", path = "../polymesh-api-client", default-features = false }
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
