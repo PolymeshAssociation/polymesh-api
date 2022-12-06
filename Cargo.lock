@@ -1842,7 +1842,6 @@ dependencies = [
  "lazy_static",
  "log",
  "parity-scale-codec",
- "primitive-types",
  "scale-info",
  "serde",
  "serde-big-array",
