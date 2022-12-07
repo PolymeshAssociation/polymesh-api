@@ -1120,7 +1120,7 @@ mod v14 {
       let code = quote! {
         #[derive(Clone, Debug, PartialEq, Eq)]
         #[derive(::codec::Encode, ::codec::Decode)]
-        #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+        #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum RuntimeError {
           #variants
@@ -1161,7 +1161,7 @@ mod v14 {
 
         #(#[doc = #docs])*
         #[derive(Clone, Debug, PartialEq, Eq)]
-        #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+        #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct #ty_ident(RuntimeError);
 
@@ -1252,7 +1252,7 @@ mod v14 {
         #(#[doc = #docs])*
         #[derive(Clone, Debug, PartialEq, Eq)]
         #[derive(::codec::Encode, ::codec::Decode)]
-        #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+        #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub enum #ty_ident {
           Other,
@@ -1400,7 +1400,7 @@ mod v14 {
                 #derive_ord
                 #custom_derive
                 #[derive(::codec::Encode, ::codec::Decode)]
-                #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+                #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params (#fields);
               },
@@ -1414,7 +1414,7 @@ mod v14 {
                 #derive_ord
                 #custom_derive
                 #[derive(::codec::Encode, ::codec::Decode)]
-                #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+                #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct #ty_ident #params { #fields }
               },
@@ -1449,7 +1449,7 @@ mod v14 {
               #derive_ord
               #custom_derive
               #[derive(::codec::Encode, ::codec::Decode)]
-              #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+              #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
               #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
               pub enum #ty_ident #params {
                 #variants

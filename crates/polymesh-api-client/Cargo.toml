@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -53,17 +53,21 @@ env_logger = "0.9"
 default = [ "std", "serde", "v12", "v13", "v14" ]
 
 wasm = [
-	"v14",
-	"sp-application-crypto/full_crypto",
+  "v14",
+  "sp-application-crypto/full_crypto",
+]
+
+type_info = [
+  "scale-info"
 ]
 
 serde = [
-	"impl-serde",
-	"serde-big-array",
-	"sp-core/serde",
-	"sp-runtime/serde",
-	"sp-arithmetic/serde",
-	"sp-application-crypto/serde"
+  "impl-serde",
+  "serde-big-array",
+  "sp-core/serde",
+  "sp-runtime/serde",
+  "sp-arithmetic/serde",
+  "sp-application-crypto/serde"
 ]
 
 v12 = ["frame-metadata/v12"]
@@ -71,10 +75,10 @@ v13 = ["frame-metadata/v13"]
 v14 = ["frame-metadata/v14"]
 
 std = [
-	"codec/std",
-	"frame-metadata/std",
-	"sp-core/std",
-	"sp-runtime/std",
-	"sp-arithmetic/std",
-	"scale-info/std",
+  "codec/std",
+  "frame-metadata/std",
+  "sp-core/std",
+  "sp-runtime/std",
+  "sp-arithmetic/std",
+  "scale-info/std",
 ]

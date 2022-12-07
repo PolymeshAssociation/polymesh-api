@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -86,6 +86,12 @@ ink = [
   "ink_storage",
   "ink_lang",
   "ink_lang_codegen",
+  "type_info",
+]
+
+type_info = [
+  "scale-info",
+  "polymesh-api-client?/type_info",
 ]
 
 wasm = [
@@ -107,7 +113,7 @@ std = [
   "polymesh-api-codegen-macro/std",
   "polymesh-api-client?/std",
   "polymesh-api-ink?/std",
-  "scale-info/std",
+  "scale-info?/std",
   "ink_primitives?/std",
   "ink_metadata/std",
   "ink_env?/std",
