@@ -23,6 +23,7 @@ dependencies = [
  "parity-scale-codec",
  "polymesh-api",
  "polymesh-api-client-extras",
+ "serde_json",
  "sp-core",
  "sp-runtime",
  "tokio",
@@ -1877,7 +1878,6 @@ version = "0.3.0"
 dependencies = [
  "parity-scale-codec",
  "polymesh-api",
- "polymesh-api-client",
  "serde",
  "serde_json",
 ]

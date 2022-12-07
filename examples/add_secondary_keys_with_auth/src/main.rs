@@ -17,7 +17,6 @@ use polymesh_api::polymesh::types::{
         SecondaryKey,
         Permissions,
       },
-      subset::SubsetRestriction,
     },
 };
 use polymesh_api::Api;
@@ -62,11 +61,11 @@ async fn main() -> Result<()> {
   let auth_data = auth.encode();
 
   // Secondary keys with authorization and permissions.
-  let permissions = Permissions {
-    asset: SubsetRestriction::Whole,
-    extrinsic: SubsetRestriction::Whole,
-    portfolio: SubsetRestriction::Whole,
-  };
+  let permissions: Permissions = serde_json::from_value(serde_json::json!({
+    "asset": { "These": [ b"ABC123456789" ]},
+    "extrinsic": "Whole",
+    "portfolio": "Whole",
+  }))?;
   let mut keys = Vec::new();
   for key in args {
     let key = DefaultSigner::from_string(&key, None)?;

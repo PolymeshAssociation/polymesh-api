@@ -11,6 +11,8 @@ env_logger = "0.9"
 
 tokio = { version = "1.19", features = ["full"] }
 
+serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
+
 # substrate
 sp-runtime = { version = "6.0", default-features = false }
 sp-core = { version = "6.0", default-features = false }

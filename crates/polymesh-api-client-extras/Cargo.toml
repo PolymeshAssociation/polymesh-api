@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client-extras"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -11,7 +11,6 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
 [dependencies]
 polymesh-api = { version = "0.3", path = "../../" }
-polymesh-api-client = { version = "0.3", path = "../polymesh-api-client", default-features = false }
 
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = { version = "1.0" }
