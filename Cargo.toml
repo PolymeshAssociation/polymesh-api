@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "0.3.4"
+version = "0.3.5"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -64,6 +64,9 @@ tokio = { version = "1.19", features = ["full"] }
 
 [features]
 default = [ "std", "rpc", "serde", "v14" ]
+
+# Download the chain metadata from a RPC node.
+download_metadata = []
 
 rpc = [
   "async-trait",

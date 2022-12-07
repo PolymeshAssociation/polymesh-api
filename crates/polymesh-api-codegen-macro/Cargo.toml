@@ -13,26 +13,34 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 proc-macro = true
 
 [dependencies]
-polymesh-api-codegen = { version = "0.3", path = "../polymesh-api-codegen", default-features = false }
+tokio = { version = "1", features = ["full"] }
+
 darling = "0.14.1"
 proc-macro-error = "1"
 syn = "=1.0.96"
+
+polymesh-api-codegen = { version = "0.3", path = "../polymesh-api-codegen", default-features = false }
+polymesh-api-client = { version = "0.3", path = "../polymesh-api-client", default-features = false }
+
+codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
 [features]
 default = [ "std", "v14" ]
 
 ink = [
-	"polymesh-api-codegen/ink",
+  "polymesh-api-codegen/ink",
 ]
 
 no_std = [
-	"polymesh-api-codegen/no_std",
+  "polymesh-api-codegen/no_std",
 ]
 
 std = [
-	"polymesh-api-codegen/std",
+  "polymesh-api-codegen/std",
+  "polymesh-api-client/std",
 ]
 
 v14 = [
-	"polymesh-api-codegen/v14",
+  "polymesh-api-codegen/v14",
+  "polymesh-api-client/v14",
 ]
