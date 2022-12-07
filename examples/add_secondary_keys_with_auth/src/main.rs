@@ -1,16 +1,13 @@
 use std::env;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 
-use sp_core::{
-  sr25519, Pair,
-};
 use sp_runtime::MultiSignature;
 
 use codec::Encode;
 
 use polymesh_api_client_extras::*;
-use polymesh_api::client::{PairSigner, Signer};
+use polymesh_api::client::{DefaultSigner, Signer};
 use polymesh_api::polymesh::types::{
     primitive_types::H512,
     polymesh_common_utilities::traits::identity::SecondaryKeyWithAuth,
@@ -25,10 +22,6 @@ use polymesh_api::polymesh::types::{
 };
 use polymesh_api::Api;
 
-fn signer_from_string(s: &str) -> Result<PairSigner<sr25519::Pair>> {
-  Ok(PairSigner::new(sr25519::Pair::from_string(s, None).map_err(|e| anyhow!("Failed to create signer from '{s}': {e:?}"))?))
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
   dotenv::dotenv().ok();
@@ -39,7 +32,7 @@ async fn main() -> Result<()> {
   let url = args.next().expect("Missing ws url");
   let p_key = args.next().expect("Missing primary key");
 
-  let mut primary_key = signer_from_string(&p_key)?;
+  let mut primary_key = DefaultSigner::from_string(&p_key, None)?;
 
   let api = Api::new(&url).await?;
   let identity = api.query().identity();
@@ -76,7 +69,7 @@ async fn main() -> Result<()> {
   };
   let mut keys = Vec::new();
   for key in args {
-    let key = signer_from_string(&key)?;
+    let key = DefaultSigner::from_string(&key, None)?;
     match key.sign(&auth_data[..]).await? {
       MultiSignature::Sr25519(sig) => {
         keys.push(SecondaryKeyWithAuth {

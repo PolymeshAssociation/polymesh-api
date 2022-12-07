@@ -20,6 +20,9 @@ pub enum Error {
   #[error("parity-scale-codec error: {0}")]
   ParityScaleCodec(#[from] codec::Error),
 
+  #[error("sp-core crypto secret error: {0}")]
+  SecretStringError(String),
+
   #[error("Call API incompatible with connected chain: {0}")]
   IncompatibleCall(String),
 
@@ -39,4 +42,9 @@ pub enum Error {
   Jsonrpsee(#[from] jsonrpsee::core::Error),
 }
 
+impl From<sp_core::crypto::SecretStringError> for Error {
+  fn from(e: sp_core::crypto::SecretStringError) -> Self {
+    Self::SecretStringError(format!("{e:?}"))
+  }
+}
 pub type Result<T, E = Error> = std::result::Result<T, E>;
