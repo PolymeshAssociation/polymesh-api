@@ -26,7 +26,9 @@ async fn main() -> Result<()> {
   let version = client.get_block_runtime_version(hash).await?.unwrap();
   println!("spec: {} - {}", version.spec_name, version.spec_version);
 
-  let types = types_registry.get_block_types(&client, Some(version), hash).await?;
+  let types = types_registry
+    .get_block_types(&client, Some(version), hash)
+    .await?;
 
   types.dump_types();
   types.dump_unresolved();

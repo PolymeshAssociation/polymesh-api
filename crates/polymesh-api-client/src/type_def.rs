@@ -180,7 +180,10 @@ impl TypeDefVariant {
 
   pub fn get_by_idx(&self, index: u8) -> Option<&Variant> {
     // Try quick search.
-    let variant = self.variants.get(index as usize).filter(|v| v.index == index);
+    let variant = self
+      .variants
+      .get(index as usize)
+      .filter(|v| v.index == index);
     if variant.is_some() {
       return variant;
     }
