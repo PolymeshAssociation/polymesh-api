@@ -1,5 +1,5 @@
-use std::env;
 use std::collections::BTreeMap;
+use std::env;
 
 use anyhow::{anyhow, Result};
 
@@ -38,7 +38,9 @@ impl BlockData {
       data.block = client.get_block(data.hash).await?;
 
       // Get block events
-      data.events = client.get_storage_data_by_key(SYSTEM_EVENTS_KEY.clone(), data.hash).await?;
+      data.events = client
+        .get_storage_data_by_key(SYSTEM_EVENTS_KEY.clone(), data.hash)
+        .await?;
     }
     Ok(data)
   }
@@ -62,7 +64,8 @@ impl GetBlocksWorker {
     let client = Client::new(url).await?;
     let worker = Self {
       client,
-      rx, tx_data
+      rx,
+      tx_data,
     };
     worker.spawn();
 
@@ -100,7 +103,9 @@ impl GetBlocksWorkerPool {
   pub async fn new(max_workers: usize, url: &str, tx_data: TxBlockData) -> Result<TxBlockNumber> {
     let (tx, rx) = tokio::sync::mpsc::channel(1000);
     let pool = Self {
-      rx, tx_data, url: url.into(),
+      rx,
+      tx_data,
+      url: url.into(),
       max_workers,
       workers: Vec::new(),
     };
@@ -120,7 +125,9 @@ impl GetBlocksWorkerPool {
   async fn run(mut self) -> Result<()> {
     // Init workers.
     for _ in 0..self.max_workers {
-      self.workers.push(GetBlocksWorker::new(&self.url, self.tx_data.clone()).await?);
+      self
+        .workers
+        .push(GetBlocksWorker::new(&self.url, self.tx_data.clone()).await?);
     }
 
     let mut next_worker = 0;
@@ -147,12 +154,15 @@ struct ProcessBlocksWorker {
 impl ProcessBlocksWorker {
   pub fn new(next_block: BlockNumber, skip: BlockNumber) -> (Self, TxBlockData) {
     let (tx, rx) = tokio::sync::mpsc::channel(1000);
-    (Self {
-      blocks: BTreeMap::new(),
-      next_block,
-      skip,
-      rx
-    }, tx)
+    (
+      Self {
+        blocks: BTreeMap::new(),
+        next_block,
+        skip,
+        rx,
+      },
+      tx,
+    )
   }
 
   async fn recv(&mut self) -> Option<BlockData> {
@@ -187,17 +197,21 @@ async fn main() -> Result<()> {
   env_logger::init();
 
   let url = env::args().nth(1).expect("Missing ws url");
-  let start_block = env::args().nth(2)
+  let start_block = env::args()
+    .nth(2)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 0);
-  let count = env::args().nth(3)
+  let count = env::args()
+    .nth(3)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 10);
   let end_block = start_block + count;
-  let skip = env::args().nth(4)
+  let skip = env::args()
+    .nth(4)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 1);
-  let num_workers = env::args().nth(5)
+  let num_workers = env::args()
+    .nth(5)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 8);
 
@@ -219,18 +233,26 @@ async fn main() -> Result<()> {
   let client = Client::new(&url).await?;
   let types_registry = TypesRegistry::new("./schemas/init_types.json".into(), "schema.json".into());
 
-  let gen_hash = client.get_block_hash(0).await?
+  let gen_hash = client
+    .get_block_hash(0)
+    .await?
     .ok_or_else(|| anyhow!("Can't get genesis hash"))?;
-  let gen_version = client.get_block_runtime_version(Some(gen_hash)).await?
+  let gen_version = client
+    .get_block_runtime_version(Some(gen_hash))
+    .await?
     .ok_or_else(|| anyhow!("Can't get runtime version for genesis block"))?;
   let mut stat_counter = 0;
   let mut last_number = 0;
   let mut last_spec = gen_version.spec_version;
   println!("---- Spec version: {}", last_spec);
-  let mut last_types = types_registry.get_block_types(&client, Some(gen_version), Some(gen_hash)).await?;
+  let mut last_types = types_registry
+    .get_block_types(&client, Some(gen_version), Some(gen_hash))
+    .await?;
   let event_records_ty = last_types.resolve("EventRecords");
   println!("event_records_ty = {:?}", event_records_ty);
-  let mut event_records_ty = last_types.type_codec("EventRecords").expect("Failed to get EventRecords type.");
+  let mut event_records_ty = last_types
+    .type_codec("EventRecords")
+    .expect("Failed to get EventRecords type.");
   last_types.dump_unresolved();
   while let Some(block) = process_blocks.next_block().await {
     /*
@@ -242,8 +264,12 @@ async fn main() -> Result<()> {
       if version.spec_version != last_spec {
         last_spec = version.spec_version;
         println!("---- New spec version: {}", last_spec);
-        last_types = types_registry.get_block_types(&client, block.version, block.hash).await?;
-        event_records_ty = last_types.type_codec("EventRecords").expect("Failed to get EventRecords type.");
+        last_types = types_registry
+          .get_block_types(&client, block.version, block.hash)
+          .await?;
+        event_records_ty = last_types
+          .type_codec("EventRecords")
+          .expect("Failed to get EventRecords type.");
         last_types.dump_unresolved();
       }
     }
@@ -252,11 +278,19 @@ async fn main() -> Result<()> {
       match events.as_array() {
         // Skip empty blocks.
         Some(events) if events.len() > 1 => {
-          println!("block[{}] events: {}", block.number, serde_json::to_string_pretty(&events)?);
+          println!(
+            "block[{}] events: {}",
+            block.number,
+            serde_json::to_string_pretty(&events)?
+          );
         }
         Some(_) => (),
         None => {
-          println!("block[{}] events: {}", block.number, serde_json::to_string_pretty(&events)?);
+          println!(
+            "block[{}] events: {}",
+            block.number,
+            serde_json::to_string_pretty(&events)?
+          );
         }
       }
     }

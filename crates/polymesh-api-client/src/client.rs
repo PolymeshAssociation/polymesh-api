@@ -51,11 +51,14 @@ pub struct Client {
 impl Client {
   pub async fn new(url: &str) -> Result<Self> {
     let rpc = RpcClient::new(url).await?;
-    let runtime_version = Self::rpc_get_runtime_version(&rpc, None).await?
+    let runtime_version = Self::rpc_get_runtime_version(&rpc, None)
+      .await?
       .ok_or_else(|| Error::RpcClient(format!("Failed to get RuntimeVersion")))?;
-    let metadata = Self::rpc_get_metadata(&rpc, None).await?
+    let metadata = Self::rpc_get_metadata(&rpc, None)
+      .await?
       .ok_or_else(|| Error::RpcClient(format!("Failed to get chain metadata")))?;
-    let genesis_hash = Self::rpc_get_block_hash(&rpc, 0).await?
+    let genesis_hash = Self::rpc_get_block_hash(&rpc, 0)
+      .await?
       .ok_or_else(|| Error::RpcClient(format!("Failed to get chain Genesis hash")))?;
     Ok(Self {
       rpc,
@@ -271,7 +274,9 @@ impl Client {
     let hex: String = rpc.request("state_getMetadata", params).await?;
 
     let bytes = Vec::from_hex(&hex[2..])?;
-    Ok(Some(RuntimeMetadataPrefixed::decode(&mut bytes.as_slice())?))
+    Ok(Some(RuntimeMetadataPrefixed::decode(
+      &mut bytes.as_slice(),
+    )?))
   }
 
   /// Get the RuntimeMetadata of a block.

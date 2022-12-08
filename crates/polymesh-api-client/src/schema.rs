@@ -6,9 +6,9 @@ use std::sync::{Arc, RwLock};
 use serde_json::{Map, Value};
 
 use crate::error::*;
-use crate::type_def::*;
-use crate::type_codec::*;
 use crate::metadata::*;
+use crate::type_codec::*;
+use crate::type_def::*;
 use crate::*;
 
 /// Use large type ids for old schema and metadata (v12-v13) types.
@@ -381,11 +381,12 @@ impl Types {
             Ok(Some(TypeDefVariant::new_result(ok_ref, err_ref).into()))
           }
           "PhantomData" | "sp_std::marker::PhantomData" => Ok(Some(TypeDefTuple::unit().into())),
-          ty => {
-            Ok(self.name_to_id.get(ty).map(|id| {
-              TypeDefTuple::new_type(*id).into()
-            }))
-          }
+          ty => Ok(
+            self
+              .name_to_id
+              .get(ty)
+              .map(|id| TypeDefTuple::new_type(*id).into()),
+          ),
         }
       }
       Some(')') => {
@@ -476,11 +477,17 @@ impl Types {
 
   pub fn import_type(&mut self, name: &str, id: TypeId, ty: Type) -> Result<()> {
     if id.0 >= SCHEMA_TYPE_ID_BASE {
-      Err(Error::SchemaParseFailed(format!("Imported type ids must be below schema type base: {:?} >= {}", id, SCHEMA_TYPE_ID_BASE)))?;
+      Err(Error::SchemaParseFailed(format!(
+        "Imported type ids must be below schema type base: {:?} >= {}",
+        id, SCHEMA_TYPE_ID_BASE
+      )))?;
     }
     // insert type.
     if self.types.insert(id, Some(ty)).is_some() {
-      Err(Error::SchemaParseFailed(format!("Imported type id {:?} already exists", id)))?;
+      Err(Error::SchemaParseFailed(format!(
+        "Imported type id {:?} already exists",
+        id
+      )))?;
     }
 
     if self.name_to_id.get(name).is_some() {
@@ -601,20 +608,10 @@ impl TypeLookup {
   }
 }
 
-pub struct InitRegistryFn(
-  Box<
-    dyn Fn(&mut Types) -> Result<()>
-      + Send
-      + Sync
-      + 'static,
-  >,
-);
+pub struct InitRegistryFn(Box<dyn Fn(&mut Types) -> Result<()> + Send + Sync + 'static>);
 
 impl InitRegistryFn {
-  pub fn init_types(
-    &self,
-    types: &mut Types,
-  ) -> Result<()> {
+  pub fn init_types(&self, types: &mut Types) -> Result<()> {
     self.0(types)
   }
 }
@@ -653,7 +650,9 @@ impl InnerTypesRegistry {
   ) -> Result<TypeLookup> {
     let runtime_version = match version {
       Some(version) => version,
-      None => client.get_block_runtime_version(hash).await?
+      None => client
+        .get_block_runtime_version(hash)
+        .await?
         .ok_or_else(|| Error::RpcClient(format!("Failed to get block RuntimeVersion")))?,
     };
     // build schema path.
@@ -684,8 +683,10 @@ impl InnerTypesRegistry {
     }
 
     // Load chain metadata.
-    let runtime_metadata = client.get_block_metadata(hash).await?
-        .ok_or_else(|| Error::RpcClient(format!("Failed to get block Metadata")))?;
+    let runtime_metadata = client
+      .get_block_metadata(hash)
+      .await?
+      .ok_or_else(|| Error::RpcClient(format!("Failed to get block Metadata")))?;
     let metadata = Metadata::from_runtime_metadata(runtime_metadata, &mut types)?;
     types.set_metadata(metadata);
 
@@ -745,10 +746,7 @@ impl TypesRegistry {
 
   pub fn add_init<F>(&self, func: F)
   where
-    F: 'static
-      + Send
-      + Sync
-      + Fn(&mut Types) -> Result<()>,
+    F: 'static + Send + Sync + Fn(&mut Types) -> Result<()>,
   {
     self
       .0
