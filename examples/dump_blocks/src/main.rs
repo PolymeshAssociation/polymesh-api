@@ -31,13 +31,9 @@ async fn main() -> Result<()> {
   let mut block_number = start_block;
   while block_number < end_block {
     let hash = client.get_block_hash(block_number).await?;
-    let mut events = api.block_events(hash).await?;
+    let events = api.block_events(hash).await?;
     if events.len() > 1 {
-      println!("{block_number}: events={}", events.len());
-      events.truncate(10);
-      for event in events {
-        println!(" - {:?}", event.event);
-      }
+      println!("block[{block_number}] events: {}", serde_json::to_string_pretty(&events)?);
     }
     block_number += skip;
   }

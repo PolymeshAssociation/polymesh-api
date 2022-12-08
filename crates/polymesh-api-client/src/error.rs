@@ -38,6 +38,9 @@ pub enum Error {
   #[error("RpcClient: {0}")]
   RpcClient(String),
 
+  #[error("Decode type failed: {0}")]
+  DecodeTypeFailed(String),
+
   #[error("Signing transaction failed: {0}")]
   SigningTransactionFailed(String),
 
@@ -50,4 +53,5 @@ impl From<sp_core::crypto::SecretStringError> for Error {
     Self::SecretStringError(format!("{e:?}"))
   }
 }
+
 pub type Result<T, E = Error> = std::result::Result<T, E>;
