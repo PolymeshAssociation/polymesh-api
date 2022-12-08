@@ -7,6 +7,7 @@ use serde_json::{Map, Value};
 
 use crate::error::*;
 use crate::type_def::*;
+use crate::type_codec::*;
 use crate::metadata::*;
 use crate::*;
 
@@ -112,8 +113,8 @@ pub fn get_type_name(ty: &Type, types: &PortableRegistry, full: bool) -> String 
 
 #[derive(Clone, Debug)]
 pub struct TypeRef {
-  id: TypeId,
-  ty: Option<Type>,
+  pub id: TypeId,
+  pub ty: Option<Type>,
 }
 
 impl TypeRef {
@@ -579,6 +580,11 @@ impl TypeLookup {
   pub fn resolve(&self, name: &str) -> TypeRef {
     let mut t = self.types.write().unwrap();
     t.resolve(name)
+  }
+
+  pub fn type_codec(&self, name: &str) -> Option<TypeCodec> {
+    let type_ref = self.resolve(name);
+    TypeCodec::new(self, type_ref)
   }
 
   pub fn insert_type(&self, name: &str, type_meta: TypeDef) -> TypeId {

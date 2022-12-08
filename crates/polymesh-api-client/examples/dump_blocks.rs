@@ -197,9 +197,12 @@ async fn main() -> Result<()> {
   let skip = env::args().nth(4)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 1);
+  let num_workers = env::args().nth(5)
+    .and_then(|v| v.parse().ok())
+    .unwrap_or_else(|| 8);
 
   let (mut process_blocks, tx) = ProcessBlocksWorker::new(start_block, skip);
-  let worker_pool = GetBlocksWorkerPool::new(8, &url, tx).await?;
+  let worker_pool = GetBlocksWorkerPool::new(num_workers, &url, tx).await?;
   tokio::spawn(async move {
     let mut block_number = start_block;
     while block_number < end_block {
@@ -225,17 +228,36 @@ async fn main() -> Result<()> {
   let mut last_spec = gen_version.spec_version;
   println!("---- Spec version: {}", last_spec);
   let mut last_types = types_registry.get_block_types(&client, Some(gen_version), Some(gen_hash)).await?;
+  let event_records_ty = last_types.resolve("EventRecords");
+  println!("event_records_ty = {:?}", event_records_ty);
+  let mut event_records_ty = last_types.type_codec("EventRecords").expect("Failed to get EventRecords type.");
   last_types.dump_unresolved();
   while let Some(block) = process_blocks.next_block().await {
+    /*
     if block.number < last_number {
       println!("Out of order block: {} < {last_number}", block.number);
     }
+    */
     if let Some(version) = &block.version {
       if version.spec_version != last_spec {
         last_spec = version.spec_version;
         println!("---- New spec version: {}", last_spec);
         last_types = types_registry.get_block_types(&client, block.version, block.hash).await?;
+        event_records_ty = last_types.type_codec("EventRecords").expect("Failed to get EventRecords type.");
         last_types.dump_unresolved();
+      }
+    }
+    if let Some(events) = block.events {
+      let events = event_records_ty.decode(events.0)?;
+      match events.as_array() {
+        // Skip empty blocks.
+        Some(events) if events.len() > 1 => {
+          println!("block[{}] events: {}", block.number, serde_json::to_string_pretty(&events)?);
+        }
+        Some(_) => (),
+        None => {
+          println!("block[{}] events: {}", block.number, serde_json::to_string_pretty(&events)?);
+        }
       }
     }
     last_number = block.number;

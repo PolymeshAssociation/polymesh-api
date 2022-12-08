@@ -24,6 +24,8 @@ pub use client::*;
 
 pub mod type_def;
 
+pub mod type_codec;
+
 pub mod schema;
 
 pub mod metadata;
