@@ -36,6 +36,7 @@ pub fn codegen_api(args: TokenStream, input: TokenStream) -> TokenStream {
         .unwrap_or_else(|e| abort_call_site!(e));
       buf
     }
+    #[cfg(feature = "download_metadata")]
     CodegenArgs {
       metadata_file: None,
       metadata_url: Some(url),
@@ -57,6 +58,13 @@ pub fn codegen_api(args: TokenStream, input: TokenStream) -> TokenStream {
 
         metadata.encode()
       })
+    }
+    #[cfg(not(feature = "download_metadata"))]
+    CodegenArgs {
+      metadata_file: None,
+      metadata_url: Some(_),
+    } => {
+      panic!("Support `metadata_url` disabled, add feature `download_metadata`.");
     }
     _ => {
       panic!("Must provide either `metadata_file` or `metadata_url`, but not both.");
