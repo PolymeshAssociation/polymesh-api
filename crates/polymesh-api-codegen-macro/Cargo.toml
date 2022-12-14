@@ -17,7 +17,7 @@ tokio = { version = "1", features = ["full"] }
 
 darling = "0.14.1"
 proc-macro-error = "1"
-syn = "=1.0.96"
+syn = "1.0.96"
 
 polymesh-api-codegen = { version = "0.3", path = "../polymesh-api-codegen", default-features = false }
 polymesh-api-client = { version = "0.3", path = "../polymesh-api-client", default-features = false }

@@ -14,8 +14,8 @@ tokio = { version = "1.19", features = ["full"] }
 serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
 
 # substrate
-sp-runtime = { version = "6.0", default-features = false }
-sp-core = { version = "6.0", default-features = false }
+sp-runtime = { version = "7.0", default-features = false }
+sp-core = { version = "7.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
 polymesh-api = { version = "0.3", path = "../../" }
