@@ -12,10 +12,16 @@ use quote::{format_ident, quote, TokenStreamExt};
 use codec::{Decode, Encode};
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
 
-fn segments_ident(segments: &[String]) -> TokenStream {
+fn segments_ident(segments: &[String], import_types: bool) -> TokenStream {
   let idents: Vec<_> = segments.into_iter().map(|s| format_ident!("{s}")).collect();
-  quote! {
-    #(#idents)::*
+  if import_types && idents.len() > 1 {
+    quote! {
+      types::#(#idents)::*
+    }
+  } else {
+    quote! {
+      #(#idents)::*
+    }
   }
 }
 
@@ -176,7 +182,7 @@ mod v14 {
       // Detect the chain runtime path.
       let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
       let runtime_namespace = runtime_ty.path().namespace();
-      let runtime_ident = segments_ident(runtime_namespace);
+      let runtime_ident = segments_ident(runtime_namespace, false);
       #[cfg(feature = "ink")]
       let api_interface = quote!(::polymesh_api_ink);
       #[cfg(not(feature = "ink"))]
@@ -222,15 +228,15 @@ mod v14 {
           ("String", quote!(::alloc::string::String)),
           ("Vec", quote!(::alloc::vec::Vec)),
           (
-            "frame_support::storage::weak_bounded_vec::WeakBoundedVec",
+            "types::frame_support::storage::weak_bounded_vec::WeakBoundedVec",
             quote!(::alloc::vec::Vec),
           ),
           (
-            "frame_support::storage::bounded_vec::BoundedVec",
+            "types::frame_support::storage::bounded_vec::BoundedVec",
             quote!(::alloc::vec::Vec),
           ),
           (
-            "frame_system::EventRecord",
+            "types::frame_system::EventRecord",
             quote!(#api_interface::EventRecord),
           ),
         ]
@@ -436,9 +442,9 @@ mod v14 {
       quote! {}
     }
 
-    fn type_name(&self, id: u32, compact_wrap: bool) -> Option<TokenStream> {
+    fn type_name(&self, id: u32, compact_wrap: bool, import_types: bool) -> Option<TokenStream> {
       let mut scope = TypeParameters::default();
-      self.type_name_scoped(id, &mut scope, compact_wrap)
+      self.type_name_scoped(id, &mut scope, compact_wrap, import_types)
     }
 
     fn type_name_scoped(
@@ -446,6 +452,7 @@ mod v14 {
       id: u32,
       scope: &mut TypeParameters,
       compact_wrap: bool,
+      import_types: bool,
     ) -> Option<TokenStream> {
       if let Some(scope_type) = scope.get_param(id) {
         return Some(scope_type);
@@ -461,12 +468,12 @@ mod v14 {
         .rename_types
         .get(&full_name)
         .cloned()
-        .unwrap_or_else(|| segments_ident(segments));
+        .unwrap_or_else(|| segments_ident(segments, import_types));
 
       match ty.type_def() {
         TypeDef::Sequence(ty) => {
           return self
-            .type_name_scoped(ty.type_param().id(), scope, true)
+            .type_name_scoped(ty.type_param().id(), scope, true, import_types)
             .map(|elem_ty| {
               quote! { ::alloc::vec::Vec<#elem_ty> }
             });
@@ -474,7 +481,7 @@ mod v14 {
         TypeDef::Array(ty) => {
           let len = ty.len() as usize;
           return self
-            .type_name_scoped(ty.type_param().id(), scope, true)
+            .type_name_scoped(ty.type_param().id(), scope, true, import_types)
             .map(|elem_ty| {
               quote! { [#elem_ty; #len] }
             });
@@ -483,7 +490,7 @@ mod v14 {
           let fields = ty
             .fields()
             .into_iter()
-            .filter_map(|field| self.type_name_scoped(field.id(), scope, true))
+            .filter_map(|field| self.type_name_scoped(field.id(), scope, true, import_types))
             .collect::<Vec<_>>();
           return Some(quote! { (#(#fields),*) });
         }
@@ -513,7 +520,7 @@ mod v14 {
         }
         TypeDef::Compact(ty) => {
           return self
-            .type_name_scoped(ty.type_param().id(), scope, true)
+            .type_name_scoped(ty.type_param().id(), scope, true, import_types)
             .map(|ty| {
               if compact_wrap {
                 quote! { ::codec::Compact<#ty> }
@@ -539,7 +546,7 @@ mod v14 {
         .filter_map(|param| {
           param
             .ty()
-            .map(|ty| self.type_name_scoped(ty.id(), scope, true))
+            .map(|ty| self.type_name_scoped(ty.id(), scope, true, import_types))
         })
         .collect::<Vec<_>>();
 
@@ -593,7 +600,7 @@ mod v14 {
       for (idx, (key, hasher)) in hashers.into_iter().enumerate() {
         let key_ident = format_ident!("key_{}", idx);
         let type_name = self
-          .type_name(key.id(), false)
+          .type_name(key.id(), false, true)
           .expect("Missing Storage key type");
         keys.append_all(quote! {#key_ident: #type_name,});
         hashing.append_all(match hasher {
@@ -626,9 +633,9 @@ mod v14 {
       }
       let value_ty = if mod_prefix == "System" && storage_name == "Events" {
         let event_ty = &self.event;
-        quote!(::alloc::vec::Vec<#api_interface::EventRecord<#event_ty>>)
+        quote!(::alloc::vec::Vec<#api_interface::EventRecord<types::#event_ty>>)
       } else {
-        self.type_name(value_ty, false).unwrap()
+        self.type_name(value_ty, false, false).unwrap()
       };
 
       let (return_ty, return_value) = match md.modifier {
@@ -702,7 +709,7 @@ mod v14 {
       md: &Variant<PortableForm>,
     ) -> TokenStream {
       let mod_call_ident = format_ident!("{mod_name}");
-      let mod_call = self.type_name(mod_call_ty, false).unwrap();
+      let mod_call = self.type_name(mod_call_ty, false, true).unwrap();
       let func_name = md.name();
       let func_idx = md.index();
       let func_ident = format_ident!("{}", func_name.to_snake_case());
@@ -716,7 +723,7 @@ mod v14 {
           .map(|n| format_ident!("{n}"))
           .unwrap_or_else(|| format_ident!("param_{idx}"));
         let type_name = self
-          .type_name(field.ty().id(), false)
+          .type_name(field.ty().id(), false, true)
           .expect("Missing Extrinsic param type");
         fields.append_all(quote! {#name: #type_name,});
         if Self::is_boxed(field) {
@@ -736,7 +743,7 @@ mod v14 {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
           pub fn #func_ident(&self, #fields) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
-            self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
+            self.api.wrap_call(#call_ty::#mod_call_ident(#mod_call::#func_ident { #field_names }))
           }
 
           #(#[doc = #docs])*
@@ -753,7 +760,7 @@ mod v14 {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
           pub fn #func_ident(&self) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
-            self.api.wrap_call(types::#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
+            self.api.wrap_call(#call_ty::#mod_call_ident(#mod_call::#func_ident))
           }
 
           #(#[doc = #docs])*
@@ -855,7 +862,7 @@ mod v14 {
       }
 
       for field in fields {
-        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false)?;
+        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false, false)?;
         if Self::is_boxed(field) {
           field_ty = quote!(::alloc::boxed::Box<#field_ty>);
         }
@@ -930,7 +937,7 @@ mod v14 {
       }
 
       for field in fields {
-        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false)?;
+        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false, false)?;
         if Self::is_boxed(field) {
           field_ty = quote!(::alloc::boxed::Box<#field_ty>);
         }
@@ -1098,7 +1105,7 @@ mod v14 {
         let mod_ident = format_ident!("{}", p.name);
         let error_ty = p.error.as_ref().and_then(|e| {
           self
-            .type_name_scoped(e.ty.id(), &mut scope, false)
+            .type_name_scoped(e.ty.id(), &mut scope, false, false)
             .map(|ident| quote! { (#ident) })
         });
         if let Some(error_ty) = error_ty {
@@ -1230,7 +1237,7 @@ mod v14 {
         let mod_ident = format_ident!("{}", p.name);
         let error_ty = p.error.as_ref().and_then(|e| {
           self
-            .type_name_scoped(e.ty.id(), &mut scope, false)
+            .type_name_scoped(e.ty.id(), &mut scope, false, false)
             .map(|ident| quote! { (#ident) })
         });
         if let Some(error_ty) = error_ty {
