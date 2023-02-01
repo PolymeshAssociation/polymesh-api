@@ -297,7 +297,7 @@ async fn main() -> Result<()> {
     last_number = block.number;
     if stat_counter >= 10000 {
       stat_counter = 0;
-      println!("block[{}] = {:?}", block.number, block.hash);
+      //println!("block[{}] = {:?}", block.number, block.hash);
     }
     stat_counter += skip;
   }
