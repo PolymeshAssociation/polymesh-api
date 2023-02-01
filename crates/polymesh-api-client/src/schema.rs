@@ -95,14 +95,14 @@ pub fn get_type_name(ty: &Type, types: &PortableRegistry, full: bool) -> String 
   if ty_params.len() > 0 {
     let params = ty_params
       .iter()
-      .map(|p| match p.ty() {
+      .map(|p| match &p.ty {
         Some(ty) => {
           let p_ty = types
             .resolve(*ty)
             .expect("Failed to resolve type parameter");
           get_type_name(p_ty, types, full)
         }
-        None => p.name().clone(),
+        None => p.name.clone(),
       })
       .collect::<Vec<_>>();
     format!("{}<{}>", name, params.join(","))

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode};
 
-pub use scale_info::{form::PortableForm, TypeDefPrimitive, TypeParameter};
+pub use scale_info::{form::PortableForm, TypeDefPrimitive};
 
 #[derive(Clone, Debug, Default)]
 pub struct TypeForm;
@@ -49,11 +49,18 @@ impl Path {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
+pub struct TypeParameter {
+  pub name: String,
+  #[serde(rename = "type")]
+  pub ty: Option<TypeId>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Decode, Encode)]
 pub struct Type {
   #[serde(skip_serializing_if = "Path::is_empty", default)]
   pub path: Path,
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
-  pub type_params: Vec<TypeParameter<TypeForm>>,
+  pub type_params: Vec<TypeParameter>,
   #[serde(rename = "def")]
   pub type_def: TypeDef,
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -74,7 +81,7 @@ impl Type {
     &self.path
   }
 
-  pub fn type_params(&self) -> &[TypeParameter<TypeForm>] {
+  pub fn type_params(&self) -> &[TypeParameter] {
     self.type_params.as_slice()
   }
 
@@ -458,15 +465,20 @@ impl From<&scale_info::PortableRegistry> for PortableRegistry {
   }
 }
 
+impl From<&scale_info::TypeParameter<PortableForm>> for TypeParameter {
+  fn from(other: &scale_info::TypeParameter<PortableForm>) -> Self {
+    Self {
+      name: other.name().clone(),
+      ty: other.ty().map(|t| t.id().into()),
+    }
+  }
+}
+
 impl From<&scale_info::Type<PortableForm>> for Type {
   fn from(other: &scale_info::Type<PortableForm>) -> Self {
     Self {
       path: other.path().into(),
-      type_params: other
-        .type_params()
-        .iter()
-        .map(|p| TypeParameter::new(p.name().clone(), p.ty().map(|t| t.id().into())))
-        .collect(),
+      type_params: other.type_params().iter().map(|p| p.into()).collect(),
       type_def: other.type_def().into(),
       docs: other.docs().into(),
     }
