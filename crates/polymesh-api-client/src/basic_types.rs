@@ -17,6 +17,8 @@ pub use sp_core;
 
 pub use sp_core::hashing;
 
+pub use sp_weights;
+
 // Re-impl `per_things` to support serde
 pub mod per_things {
   use super::*;

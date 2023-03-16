@@ -174,6 +174,7 @@ mod v14 {
     runtime_namespace: Vec<String>,
     call: TokenStream,
     event: TokenStream,
+    v2_weights: bool,
     api_interface: TokenStream,
   }
 
@@ -182,15 +183,14 @@ mod v14 {
       // Detect the chain runtime path.
       let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
       let runtime_namespace = runtime_ty.path().namespace();
-      let runtime_ident = segments_ident(runtime_namespace, false);
       #[cfg(feature = "ink")]
       let api_interface = quote!(::polymesh_api_ink);
       #[cfg(not(feature = "ink"))]
       let api_interface = quote!(::polymesh_api_client);
 
-      let call = quote! { #runtime_ident::Call };
-      let event = quote! { #runtime_ident::Event };
-      let external_modules = HashSet::from_iter(["sp_version"].iter().map(|t| t.to_string()));
+      let call = quote! { runtime::RuntimeCall };
+      let event = quote! { runtime::RuntimeEvent };
+      let external_modules = HashSet::from_iter(["sp_version", "sp_weights"].iter().map(|t| t.to_string()));
       let rename_types = HashMap::from_iter(
         [
           (
@@ -238,6 +238,18 @@ mod v14 {
           (
             "types::frame_system::EventRecord",
             quote!(#api_interface::EventRecord),
+          ),
+          (
+            "sp_weights::OldWeight",
+            quote!(#api_interface::sp_weights::OldWeight),
+          ),
+          (
+            "sp_weights::Weight",
+            quote!(#api_interface::sp_weights::Weight),
+          ),
+          (
+            "sp_weights::weight_v2::Weight",
+            quote!(#api_interface::sp_weights::Weight),
           ),
         ]
         .into_iter()
@@ -325,6 +337,7 @@ mod v14 {
         custom_derives,
         call,
         event,
+        v2_weights: false,
         api_interface,
       };
       // Try a limited number of times to mark all types needing the `Ord` type.
@@ -345,7 +358,21 @@ mod v14 {
         }
       }
 
+      gen.detect_v2_weights();
+
       gen
+    }
+
+    // Detect if chain is using V2 Weights.
+    fn detect_v2_weights(&mut self) {
+      for ty in self.md.types.types() {
+        let id = ty.id();
+        let full_name = self.id_to_full_name(id).unwrap_or_default();
+        if full_name == "frame_support::dispatch::DispatchInfo" {
+          self.v2_weights = true;
+          return;
+        }
+      }
     }
 
     fn id_to_full_name(&self, id: u32) -> Option<String> {
@@ -459,17 +486,28 @@ mod v14 {
         return Some(scope_type);
       }
       let ty = self.md.types.resolve(id)?;
-      let segments = ty.path().segments();
-      let full_name = segments.join("::");
-      let is_btree = match full_name.as_str() {
-        "BTreeSet" | "BTreeMap" => true,
-        _ => false,
+      let path = ty.path();
+      let (type_ident, is_btree) = match self.is_runtime_type(path) {
+        Some(name) => {
+          // Remap runtime types to namespace `runtime`.
+          let ident = format_ident!("{name}");
+          (quote!(runtime::#ident), false)
+        },
+        None => {
+          let segments = ty.path().segments();
+          let full_name = segments.join("::");
+          let is_btree = match full_name.as_str() {
+            "BTreeSet" | "BTreeMap" => true,
+            _ => false,
+          };
+          let type_ident = self
+            .rename_types
+            .get(&full_name)
+            .cloned()
+            .unwrap_or_else(|| segments_ident(segments, import_types));
+          (type_ident, is_btree)
+        },
       };
-      let type_ident = self
-        .rename_types
-        .get(&full_name)
-        .cloned()
-        .unwrap_or_else(|| segments_ident(segments, import_types));
 
       match ty.type_def() {
         TypeDef::Sequence(ty) => {
@@ -1079,12 +1117,13 @@ mod v14 {
       })
     }
 
-    fn is_runtime_type(&self, path: &Path<PortableForm>) -> Option<&'static str> {
+    fn is_runtime_type(&self, path: &Path<PortableForm>) -> Option<String> {
       if self.runtime_namespace == path.namespace() {
         let ident = path.ident();
         match ident.as_deref() {
-          Some("Event") => Some("Event"),
-          Some("Call") => Some("Call"),
+          Some("Event") => Some("RuntimeEvent".into()),
+          Some("Call") => Some("RuntimeCall".into()),
+          Some(name) => Some(name.into()),
           _ => None,
         }
       } else {
@@ -1092,9 +1131,7 @@ mod v14 {
       }
     }
 
-    fn gen_module_error(&self, _id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
-      let path = ty.path();
-      let ident = path.ident()?;
+    fn gen_module_error(&self, _id: u32, ty: &Type<PortableForm>, ident: &str) -> Option<TokenStream> {
       let ty_ident = format_ident!("{ident}");
       let mut scope = TypeParameters::new(ty);
 
@@ -1217,16 +1254,15 @@ mod v14 {
           }
         }
       };
-      Some((ident, code))
+      Some(code)
     }
 
     fn gen_dispatch_error(
       &self,
       _id: u32,
       ty: &Type<PortableForm>,
-    ) -> Option<(String, TokenStream)> {
-      let path = ty.path();
-      let ident = path.ident()?;
+      ident: &str,
+    ) -> Option<TokenStream> {
       let ty_ident = format_ident!("{ident}");
       let mut scope = TypeParameters::new(ty);
 
@@ -1355,19 +1391,17 @@ mod v14 {
           }
         }
       };
-      Some((ident, code))
+      Some(code)
     }
 
-    fn gen_type(&self, id: u32, ty: &Type<PortableForm>) -> Option<(String, TokenStream)> {
+    fn gen_type(&self, id: u32, ty: &Type<PortableForm>, ident: &str, is_runtime_type: bool) -> Option<TokenStream> {
       let full_name = self.id_to_full_name(id)?;
       if full_name == "sp_runtime::ModuleError" {
-        return self.gen_module_error(id, ty);
+        return self.gen_module_error(id, ty, ident);
       }
       if full_name == "sp_runtime::DispatchError" {
-        return self.gen_dispatch_error(id, ty);
+        return self.gen_dispatch_error(id, ty, ident);
       }
-      let path = ty.path();
-      let ident = path.ident()?;
       let ty_ident = format_ident!("{ident}");
 
       let mut scope = TypeParameters::new(ty);
@@ -1380,7 +1414,7 @@ mod v14 {
       };
       let custom_derive = self
         .custom_derives
-        .get(&ident)
+        .get(ident)
         .cloned()
         .unwrap_or_else(|| quote!());
 
@@ -1480,32 +1514,39 @@ mod v14 {
         }
       }
 
-      match self.is_runtime_type(path) {
-        Some("Event") | Some("Call") => {
-          if let Some(as_static_str) = self.gen_enum_as_static_str(&ty_ident, &params, ty, None) {
-            code.append_all(as_static_str);
-          }
+      // For runtime types generate enum -> static string helpers.
+      if is_runtime_type && (ident == "RuntimeCall" || ident == "RuntimeEvent") {
+        if let Some(as_static_str) = self.gen_enum_as_static_str(&ty_ident, &params, ty, None) {
+          code.append_all(as_static_str);
         }
-        _ => (),
       }
-      Some((ident, code))
+      Some(code)
     }
 
     fn generate_types(&self) -> TokenStream {
       // Start with empty namespace.
       let mut modules = ModuleCode::new("".into());
+      let runtime_ns = [String::from("runtime")];
 
       for ty in self.md.types.types() {
         let ty_id = ty.id();
         let ty = ty.ty();
         let ty_path = ty.path();
-        let ty_ns = ty_path.namespace();
+        let mut ty_ns = ty_path.namespace();
         // Only generate type code for types with namespaces.  Basic rust types like
         // `Result` and `Option` have no namespace.
         if let Some(ns_top) = ty_ns.first() {
           // Don't generate code for external types.
           if !self.external_modules.contains(ns_top) {
-            if let Some((ident, code)) = self.gen_type(ty_id, ty) {
+            let (ident, is_runtime_type) = match self.is_runtime_type(ty_path) {
+              Some(name) => {
+                ty_ns = &runtime_ns;
+                (name, true)
+              },
+              None => (ty_path.ident().unwrap(), false),
+            };
+
+            if let Some(code) = self.gen_type(ty_id, ty, &ident, is_runtime_type) {
               modules.add_type(ty_ns, ident, code);
             }
           }
@@ -1546,6 +1587,12 @@ mod v14 {
         .collect();
 
       let types_code = self.generate_types();
+
+      let dispatch_info = if self.v2_weights {
+        quote! { frame_support::dispatch::DispatchInfo }
+      } else {
+        quote! { frame_support::weights::DispatchInfo }
+      };
 
       let metadata_bytes = self.md.encode();
       let call_ty = &self.call;
@@ -1644,7 +1691,7 @@ mod v14 {
         impl ::polymesh_api_client::ChainApi for Api {
           type RuntimeCall = types::#call_ty;
           type RuntimeEvent = types::#event_ty;
-          type DispatchInfo = types::frame_support::weights::DispatchInfo;
+          type DispatchInfo = types::#dispatch_info;
           type DispatchError = types::sp_runtime::DispatchError;
 
           async fn get_nonce(&self, account: ::polymesh_api_client::AccountId) -> ::polymesh_api_client::Result<u32> {
