@@ -4,7 +4,7 @@ extern crate alloc;
 
 use polymesh_api_codegen_macro::*;
 
-#[cfg_attr(not(feature = "download_metadata"), codegen_api(metadata_file = "specs/polymesh_dev_spec_5002000.meta"))]
+#[cfg_attr(not(feature = "download_metadata"), codegen_api(metadata_file = "specs/polymesh_dev_spec_5003000.meta"))]
 #[cfg_attr(feature = "download_metadata", codegen_api(metadata_url = "ws://localhost:9944"))]
 mod polymesh {}
 

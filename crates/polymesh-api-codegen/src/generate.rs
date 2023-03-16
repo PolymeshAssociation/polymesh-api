@@ -273,6 +273,7 @@ mod v14 {
           // Asset types.
           ("AssetName", &ink_extra_derives),
           ("AssetType", &ink_enum_derives),
+          ("NonFungibleType", &ink_enum_derives),
           ("AssetIdentifier", &ink_enum_derives),
           ("CustomAssetTypeId", &ink_id_derives),
           ("FundingRoundName", &ink_extra_derives),
