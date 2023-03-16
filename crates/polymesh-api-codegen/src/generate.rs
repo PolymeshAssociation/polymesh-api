@@ -166,7 +166,7 @@ mod v14 {
   struct Generator {
     md: RuntimeMetadataV14,
     external_modules: HashSet<String>,
-    pallet_types: HashMap<u32, String>,
+    pallet_types: HashMap<u32, (String, String)>,
     max_error_size: usize,
     rename_types: HashMap<String, TokenStream>,
     ord_types: HashSet<String>,
@@ -312,25 +312,11 @@ mod v14 {
         .map(|(name, code)| (name.to_string(), code.clone())),
       );
 
-      // Collect pallet Call/Event/Error types.
-      let mut pallet_types = HashMap::new();
-      for p in &md.pallets {
-        if let Some(c) = &p.calls {
-          pallet_types.insert(c.ty.id(), p.name.to_string());
-        }
-        if let Some(e) = &p.event {
-          pallet_types.insert(e.ty.id(), p.name.to_string());
-        }
-        if let Some(e) = &p.error {
-          pallet_types.insert(e.ty.id(), p.name.to_string());
-        }
-      }
-
       let mut gen = Self {
         runtime_namespace: runtime_namespace.iter().cloned().collect(),
         md,
         external_modules,
-        pallet_types,
+        pallet_types: HashMap::new(),
         max_error_size: 4,
         rename_types,
         ord_types: Default::default(),
@@ -360,7 +346,43 @@ mod v14 {
 
       gen.detect_v2_weights();
 
+      // Rename pallet types.
+      gen.rename_pallet_types();
+
       gen
+    }
+
+    fn rename_pallet_type(&mut self, id: u32, p_name: &str, kind: &str) {
+      let ty = self.md.types.resolve(id).unwrap();
+      let path = ty.path();
+      let mut segments: Vec<_> = path.segments().into_iter().cloned().collect();
+      let old_name = segments.join("::");
+      let new_name = format!("{}{}", p_name, kind);
+      if let Some(last) = segments.last_mut() {
+        *last = new_name.clone();
+      }
+      let new_ident = segments_ident(&segments, false);
+      self.rename_types.insert(old_name, new_ident);
+      self.pallet_types.insert(id, (p_name.to_string(), new_name));
+    }
+
+    // Rename pallet types Call/Event/Error.
+    fn rename_pallet_types(&mut self) {
+      // Collect pallet type ids.
+      let types: Vec<_> = self.md.pallets.iter().map(|p| {
+        (p.name.to_string(), p.calls.clone(), p.event.clone(), p.error.clone())
+      }).collect();
+      for (p_name, call, event, error) in types {
+        if let Some(c) = call {
+          self.rename_pallet_type(c.ty.id(), &p_name, "Call");
+        }
+        if let Some(e) = event {
+          self.rename_pallet_type(e.ty.id(), &p_name, "Event");
+        }
+        if let Some(e) = error {
+          self.rename_pallet_type(e.ty.id(), &p_name, "Error");
+        }
+      }
     }
 
     // Detect if chain is using V2 Weights.
@@ -782,7 +804,7 @@ mod v14 {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
           pub fn #func_ident(&self, #fields) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
-            self.api.wrap_call(#call_ty::#mod_call_ident(#mod_call::#func_ident { #field_names }))
+            self.api.wrap_call(#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
           }
 
           #(#[doc = #docs])*
@@ -799,7 +821,7 @@ mod v14 {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
           pub fn #func_ident(&self) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
-            self.api.wrap_call(#call_ty::#mod_call_ident(#mod_call::#func_ident))
+            self.api.wrap_call(#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
           }
 
           #(#[doc = #docs])*
@@ -814,9 +836,11 @@ mod v14 {
     fn gen_module(
       &self,
       md: &frame_metadata::v14::PalletMetadata<PortableForm>,
-    ) -> (Ident, TokenStream) {
+    ) -> (Ident, Ident, Ident, TokenStream) {
       let mod_idx = md.index;
       let mod_name = &md.name;
+      let mod_call_api = format_ident!("{}CallApi", mod_name);
+      let mod_query_api = format_ident!("{}QueryApi", mod_name);
       let mod_ident = format_ident!("{}", mod_name.to_snake_case());
 
       let mut call_fields = TokenStream::new();
@@ -857,33 +881,33 @@ mod v14 {
           use super::*;
 
           #[derive(Clone)]
-          pub struct CallApi<'api> {
+          pub struct #mod_call_api<'api> {
             api: &'api super::super::Api,
           }
 
-          impl<'api> CallApi<'api> {
+          impl<'api> #mod_call_api<'api> {
             #call_fields
           }
 
-          impl<'api> From<&'api super::super::Api> for CallApi<'api> {
+          impl<'api> From<&'api super::super::Api> for #mod_call_api<'api> {
             fn from(api: &'api super::super::Api) -> Self {
               Self { api }
             }
           }
 
           #[derive(Clone)]
-          pub struct QueryApi<'api> {
+          pub struct #mod_query_api<'api> {
             pub(crate) api: &'api super::super::Api,
             #[cfg(not(feature = "ink"))]
             pub(crate) at: Option<::polymesh_api_client::BlockHash>,
           }
 
-          impl<'api> QueryApi<'api> {
+          impl<'api> #mod_query_api<'api> {
             #query_fields
           }
         }
       };
-      (mod_ident, code)
+      (mod_ident, mod_call_api, mod_query_api, code)
     }
 
     fn gen_struct_fields(
@@ -1208,7 +1232,7 @@ mod v14 {
         #[derive(Clone, Debug, PartialEq, Eq)]
         #[cfg_attr(all(feature = "std", feature = "type_info"), derive(::scale_info::TypeInfo))]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct #ty_ident(RuntimeError);
+        pub struct #ty_ident(pub RuntimeError);
 
         impl ::codec::Encode for #ty_ident {
           fn encode_to<T: ::codec::Output + ?Sized>(&self, output: &mut T) {
@@ -1402,6 +1426,10 @@ mod v14 {
       if full_name == "sp_runtime::DispatchError" {
         return self.gen_dispatch_error(id, ty, ident);
       }
+      let (pallet_name, ident) = match self.pallet_types.get(&id) {
+        Some((pallet_name, ident)) => (Some(pallet_name), ident.as_str()),
+        None => (None, ident),
+      };
       let ty_ident = format_ident!("{ident}");
 
       let mut scope = TypeParameters::new(ty);
@@ -1506,7 +1534,7 @@ mod v14 {
       };
 
       // Special handling for pallet types.
-      if let Some(pallet_name) = self.pallet_types.get(&id) {
+      if let Some(pallet_name) = pallet_name {
         if let Some(as_static_str) =
           self.gen_enum_as_static_str(&ty_ident, &params, ty, Some(pallet_name))
         {
@@ -1566,15 +1594,15 @@ mod v14 {
         .pallets
         .iter()
         .map(|m| {
-          let (ident, code) = self.gen_module(m);
+          let (ident, call_api, query_api, code) = self.gen_module(m);
           call_fields.append_all(quote! {
-            pub fn #ident(&self) -> api::#ident::CallApi<'api> {
-              api::#ident::CallApi::from(self.api)
+            pub fn #ident(&self) -> api::#ident::#call_api<'api> {
+              api::#ident::#call_api::from(self.api)
             }
           });
           query_fields.append_all(quote! {
-            pub fn #ident(&self) -> api::#ident::QueryApi<'api> {
-              api::#ident::QueryApi {
+            pub fn #ident(&self) -> api::#ident::#query_api<'api> {
+              api::#ident::#query_api {
                 api: self.api,
                 #[cfg(not(feature = "ink"))]
                 at: self.at,
@@ -1709,9 +1737,9 @@ mod v14 {
 
           fn event_to_extrinsic_result(event: &::polymesh_api_client::EventRecord<Self::RuntimeEvent>) -> Option<::polymesh_api_client::ExtrinsicResult<Self>> {
             match &event.event {
-              types::#event_ty::System(types::frame_system::pallet::Event::ExtrinsicSuccess { dispatch_info }) =>
+              types::#event_ty::System(types::frame_system::pallet::SystemEvent::ExtrinsicSuccess { dispatch_info }) =>
                 Some(::polymesh_api_client::ExtrinsicResult::Success(dispatch_info.clone())),
-              types::#event_ty::System(types::frame_system::pallet::Event::ExtrinsicFailed { dispatch_info, dispatch_error }) =>
+              types::#event_ty::System(types::frame_system::pallet::SystemEvent::ExtrinsicFailed { dispatch_info, dispatch_error }) =>
                 Some(::polymesh_api_client::ExtrinsicResult::Failed(dispatch_info.clone(), dispatch_error.clone())),
               _ => None,
             }
