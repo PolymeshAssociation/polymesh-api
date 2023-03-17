@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
-use codec::{Decode, Encode};
+use codec::Decode;
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
 
 fn segments_ident(segments: &[String], import_types: bool) -> TokenStream {
@@ -1622,21 +1622,9 @@ mod v14 {
         quote! { frame_support::weights::DispatchInfo }
       };
 
-      let metadata_bytes = self.md.encode();
       let call_ty = &self.call;
       let event_ty = &self.event;
       quote! {
-        use ::codec::Decode;
-
-        #[cfg(not(feature = "ink"))]
-        pub const API_METADATA_BYTES: &'static [u8] = &[ #(#metadata_bytes,)* ];
-        #[cfg(not(feature = "ink"))]
-        ::lazy_static::lazy_static! {
-            pub static ref API_METADATA: ::polymesh_api_client::frame_metadata::v14::RuntimeMetadataV14 =
-              ::polymesh_api_client::frame_metadata::v14::RuntimeMetadataV14::decode(&mut &API_METADATA_BYTES[..])
-                  .expect("Shouldn't be able to fail");
-        }
-
         #[allow(dead_code, unused_imports, non_camel_case_types)]
         pub mod types {
           use super::WrappedCall;

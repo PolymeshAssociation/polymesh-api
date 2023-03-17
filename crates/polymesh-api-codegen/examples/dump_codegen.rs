@@ -16,7 +16,8 @@ async fn main() -> Result<()> {
   let client = Client::new(&url).await?;
 
   // Get current Metadata.
-  let metadata = client.get_block_metadata(None).await?;
+  let metadata = client.get_block_metadata(None).await?
+    .expect("Metadata");
 
   //let version = client.get_runtime_version(None).await?;
   //println!("{version:#?}");
