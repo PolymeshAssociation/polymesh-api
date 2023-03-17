@@ -1,12 +1,13 @@
 use anyhow::Result;
 
 use polymesh_api_client::schema::*;
+use polymesh_api_client::RuntimeVersion;
 
 fn main() -> Result<()> {
   dotenv::dotenv().ok();
   env_logger::init();
 
-  let mut types = Types::new();
+  let mut types = Types::new(RuntimeVersion::default());
   types.load_schema("./schemas/init_types.json")?;
   types.load_schema("./schemas/polymesh/3000.json")?;
 

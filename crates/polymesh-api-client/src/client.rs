@@ -17,7 +17,7 @@ use frame_metadata::RuntimeMetadataPrefixed;
 use crate::rpc::*;
 use crate::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeVersion {
   pub spec_name: String,
