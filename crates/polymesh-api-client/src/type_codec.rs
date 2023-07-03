@@ -38,6 +38,11 @@ impl TypeLookup {
     let ty = self
       .get_type(type_id)
       .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {type_id:?}")))?;
+    if ty.path().is_empty() {
+      log::trace!("decode type[{type_id:?}]");
+    } else {
+      log::trace!("decode type[{type_id:?}]: {}", ty.path());
+    }
     ty.decode_value(self, input, is_compact)
   }
 }
@@ -49,6 +54,9 @@ impl Type {
     input: &mut I,
     is_compact: bool,
   ) -> Result<Value> {
+    if !self.path().is_empty() {
+      log::trace!("decode type: {}", self.path());
+    }
     self.type_def.decode_value(type_lookup, input, is_compact)
   }
 }
@@ -66,67 +74,102 @@ impl TypeDef {
       TypeDef::Sequence(def) => def.decode_value(type_lookup, input, is_compact),
       TypeDef::Array(def) => def.decode_value(type_lookup, input, is_compact),
       TypeDef::Tuple(def) => def.decode_value(type_lookup, input, is_compact),
-      TypeDef::Primitive(prim) => match prim {
-        TypeDefPrimitive::Bool => match input.read_byte()? {
-          0 => Ok(json!(false)),
-          1 => Ok(json!(true)),
-          num => Err(Error::DecodeTypeFailed(format!(
-            "Invalid bool byte: {num:?}"
-          ))),
-        },
-        TypeDefPrimitive::Char => {
-          let ch = input.read_byte()? as char;
-          Ok(json!(ch))
-        }
-        TypeDefPrimitive::Str => {
-          let s = String::decode(input)?;
-          Ok(json!(s))
-        }
-        TypeDefPrimitive::U8 => {
-          let num = u8::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::U16 => {
-          let num = u16::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::U32 => {
-          let num = u32::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::U64 => {
-          let num = u64::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::U128 => {
-          let num = u128::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::U256 => {
-          unimplemented!();
-        }
-        TypeDefPrimitive::I8 => {
-          let num = i8::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::I16 => {
-          let num = i16::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::I32 => {
-          let num = i32::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::I64 => {
-          let num = i64::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::I128 => {
-          let num = i128::decode(input)?;
-          Ok(json!(num))
-        }
-        TypeDefPrimitive::I256 => {
-          unimplemented!();
+      TypeDef::Primitive(prim) => {
+        log::trace!("decode Primitive: {prim:?}, is_compact: {is_compact}");
+        match prim {
+          TypeDefPrimitive::Bool => match input.read_byte()? {
+            0 => Ok(json!(false)),
+            1 => Ok(json!(true)),
+            num => Err(Error::DecodeTypeFailed(format!(
+              "Invalid bool byte: {num:?}"
+            ))),
+          },
+          TypeDefPrimitive::Char => {
+            let ch = input.read_byte()? as char;
+            Ok(json!(ch))
+          }
+          TypeDefPrimitive::Str => {
+            let s = String::decode(input)?;
+            Ok(json!(s))
+          }
+          TypeDefPrimitive::U8 => {
+            let num = u8::decode(input)?;
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::U16 => {
+            let num = if is_compact {
+              Compact::<u16>::decode(input)?.0
+            } else {
+              u16::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::U32 => {
+            let num = if is_compact {
+              Compact::<u32>::decode(input)?.0
+            } else {
+              u32::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::U64 => {
+            let num = if is_compact {
+              Compact::<u64>::decode(input)?.0
+            } else {
+              u64::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::U128 => {
+            let num = if is_compact {
+              Compact::<u128>::decode(input)?.0
+            } else {
+              u128::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::U256 => {
+            unimplemented!();
+          }
+          TypeDefPrimitive::I8 => {
+            let num = i8::decode(input)?;
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::I16 => {
+            let num = if is_compact {
+              Compact::<u16>::decode(input)?.0 as i16
+            } else {
+              i16::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::I32 => {
+            let num = if is_compact {
+              Compact::<u32>::decode(input)?.0 as i32
+            } else {
+              i32::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::I64 => {
+            let num = if is_compact {
+              Compact::<u64>::decode(input)?.0 as i64
+            } else {
+              i64::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::I128 => {
+            let num = if is_compact {
+              Compact::<u128>::decode(input)?.0 as i128
+            } else {
+              i128::decode(input)?
+            };
+            Ok(json!(num))
+          }
+          TypeDefPrimitive::I256 => {
+            unimplemented!();
+          }
         }
       },
       TypeDef::Compact(def) => def.decode_value(type_lookup, input, is_compact),
@@ -157,6 +200,7 @@ fn decode_fields<I: Input>(
           .as_ref()
           .cloned()
           .unwrap_or_else(|| format!("{idx}"));
+        log::trace!("decode Composite field: {name}");
         m.insert(name, type_lookup.decode_value(field.ty, input, is_compact)?);
       }
       Ok(m.into())
