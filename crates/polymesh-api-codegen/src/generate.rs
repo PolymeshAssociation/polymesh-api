@@ -1331,7 +1331,7 @@ mod v14 {
           NoProviders,
           TooManyConsumers,
           Token(TokenError),
-          Arithmetic(ArithmeticError),
+          Arithmetic(sp_arithmetic::ArithmeticError),
         }
 
         impl #ty_ident {
@@ -1357,9 +1357,9 @@ mod v14 {
               },
               Self::Arithmetic(err) => {
                 match err {
-                  ArithmeticError::Underflow => "Arithmetic::Underflow",
-                  ArithmeticError::Overflow => "Arithmetic::Overflow",
-                  ArithmeticError::DivisionByZero => "Arithmetic::DivisionByZero",
+                  sp_arithmetic::ArithmeticError::Underflow => "Arithmetic::Underflow",
+                  sp_arithmetic::ArithmeticError::Overflow => "Arithmetic::Overflow",
+                  sp_arithmetic::ArithmeticError::DivisionByZero => "Arithmetic::DivisionByZero",
                 }
               },
             }
@@ -1406,9 +1406,9 @@ mod v14 {
               },
               Self::Arithmetic(err) => {
                 match err {
-                  ArithmeticError::Underflow => &["Arithmetic underflow"],
-                  ArithmeticError::Overflow => &["Arithmetic overflow"],
-                  ArithmeticError::DivisionByZero => &["Arithmetic divide by zero"],
+                  sp_arithmetic::ArithmeticError::Underflow => &["Arithmetic underflow"],
+                  sp_arithmetic::ArithmeticError::Overflow => &["Arithmetic overflow"],
+                  sp_arithmetic::ArithmeticError::DivisionByZero => &["Arithmetic divide by zero"],
                 }
               },
             }
