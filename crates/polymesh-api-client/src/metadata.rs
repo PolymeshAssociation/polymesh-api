@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 #[cfg(any(feature = "v13", feature = "v12",))]
 use frame_metadata::decode_different::{DecodeDifferent, DecodeDifferentArray};
-use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
 
 #[cfg(feature = "v14")]
 use scale_info::form::PortableForm;
@@ -29,56 +28,8 @@ pub struct Metadata {
 }
 
 impl Metadata {
-  pub fn from_runtime_metadata(
-    metadata_prefixed: RuntimeMetadataPrefixed,
-    lookup: &mut Types,
-  ) -> Result<Self> {
-    // Get versioned metadata.
-    let md = match metadata_prefixed.1 {
-      #[cfg(feature = "v12")]
-      RuntimeMetadata::V12(v12) => {
-        if metadata_prefixed.0 != frame_metadata::v12::META_RESERVED {
-          return Err(Error::MetadataParseFailed(format!(
-            "Invalid metadata prefix {}",
-            metadata_prefixed.0
-          )));
-        }
-
-        Self::from_v12_metadata(v12, lookup)?
-      }
-      #[cfg(feature = "v13")]
-      RuntimeMetadata::V13(v13) => {
-        if metadata_prefixed.0 != frame_metadata::v13::META_RESERVED {
-          return Err(Error::MetadataParseFailed(format!(
-            "Invalid metadata prefix {}",
-            metadata_prefixed.0
-          )));
-        }
-
-        Self::from_v13_metadata(v13, lookup)?
-      }
-      #[cfg(feature = "v14")]
-      RuntimeMetadata::V14(v14) => {
-        if metadata_prefixed.0 != frame_metadata::META_RESERVED {
-          return Err(Error::MetadataParseFailed(format!(
-            "Invalid metadata prefix {}",
-            metadata_prefixed.0
-          )));
-        }
-
-        Self::from_v14_metadata(v14, lookup)?
-      }
-      _ => {
-        return Err(Error::MetadataParseFailed(format!(
-          "Unsupported metadata version"
-        )));
-      }
-    };
-    Ok(md)
-  }
-
   #[cfg(feature = "v12")]
-  fn from_v12_metadata(
+  pub fn from_v12_metadata(
     md: frame_metadata::v12::RuntimeMetadataV12,
     lookup: &mut Types,
   ) -> Result<Self> {
@@ -117,7 +68,7 @@ impl Metadata {
   }
 
   #[cfg(feature = "v13")]
-  fn from_v13_metadata(
+  pub fn from_v13_metadata(
     md: frame_metadata::v13::RuntimeMetadataV13,
     lookup: &mut Types,
   ) -> Result<Self> {
@@ -156,7 +107,7 @@ impl Metadata {
   }
 
   #[cfg(feature = "v14")]
-  fn from_v14_metadata(
+  pub fn from_v14_metadata(
     md: frame_metadata::v14::RuntimeMetadataV14,
     lookup: &mut Types,
   ) -> Result<Self> {
@@ -188,7 +139,8 @@ impl Metadata {
     })?;
 
     let raw_event_ref = lookup.insert_type("RawEvent", TypeDef::Variant(mod_events));
-    lookup.insert_new_type("Event", raw_event_ref);
+    lookup.insert_new_type("RuntimeEvent", raw_event_ref);
+
     let raw_error_ref = lookup.insert_type("RawError", TypeDef::Variant(mod_errors));
     lookup.insert_new_type("DispatchErrorModule", raw_error_ref);
     // Define 'RuntimeCall' type.
@@ -512,26 +464,10 @@ impl NamedType {
   }
 
   #[cfg(feature = "v14")]
-  pub fn new_type(ty_id: u32, types: &PortableRegistry, lookup: &mut Types) -> Result<Self> {
-    let ty = types
-      .resolve(ty_id)
-      .ok_or_else(|| Error::MetadataParseFailed(format!("Failed to resolve type.")))?;
-    let name = get_type_name(ty, types, false);
-    let ty_id = lookup.parse_type(&name)?;
-    let named = Self {
-      name: name.into(),
-      ty_id,
-    };
-
-    Ok(named)
-  }
-
-  #[cfg(feature = "v14")]
-  pub fn new_field_type(md: &Field, types: &PortableRegistry, lookup: &mut Types) -> Result<Self> {
+  pub fn new_field_type(md: &Field, types: &PortableRegistry) -> Result<Self> {
     let ty = types
       .resolve(md.ty)
       .ok_or_else(|| Error::MetadataParseFailed(format!("Failed to resolve type.")))?;
-    //let name = get_type_name(ty, types);
     let name = md
       .type_name
       .as_ref()
@@ -551,10 +487,9 @@ impl NamedType {
         }
       })
       .unwrap_or_else(|| get_type_name(ty, types, false));
-    let ty_id = lookup.parse_type(&name)?;
     let named = Self {
       name: name.into(),
-      ty_id,
+      ty_id: md.ty,
     };
 
     Ok(named)
@@ -667,13 +602,15 @@ impl EventMetadata {
 
     // Decode event arguments.
     md.fields.iter().try_for_each(|md| -> Result<()> {
-      let arg = NamedType::new_field_type(md, types, lookup)?;
+      let arg = NamedType::new_field_type(md, types)?;
+      log::trace!("-- Event: {mod_name}.{}: field: {md:?}", event.name);
       event_tuple.push(arg.ty_id.clone());
       event.args.push(arg);
       Ok(())
     })?;
 
     let event_ref = if event_tuple.len() > 0 {
+      log::trace!("-- Event: {mod_name}.{}({event_tuple:?})", event.name);
       let type_name = format!("{}::RawEvent::{}", mod_name, event.name);
       Some(lookup.insert_type(&type_name, TypeDef::new_tuple(event_tuple)))
     } else {
@@ -844,7 +781,7 @@ impl FuncMetadata {
 
     // Decode function arguments.
     md.fields.iter().try_for_each(|md| -> Result<()> {
-      let arg = FuncArg::from_v14_meta(md, types, lookup)?;
+      let arg = FuncArg::from_v14_meta(md, types)?;
       func_tuple.push(arg.ty.ty_id.clone());
       func.args.push(arg);
       Ok(())
@@ -895,10 +832,10 @@ impl FuncArg {
   }
 
   #[cfg(feature = "v14")]
-  fn from_v14_meta(md: &Field, types: &PortableRegistry, lookup: &mut Types) -> Result<Self> {
+  fn from_v14_meta(md: &Field, types: &PortableRegistry) -> Result<Self> {
     let arg = Self {
       name: md.name.clone().unwrap_or_default(),
-      ty: NamedType::new_field_type(md, types, lookup)?,
+      ty: NamedType::new_field_type(md, types)?,
     };
 
     Ok(arg)

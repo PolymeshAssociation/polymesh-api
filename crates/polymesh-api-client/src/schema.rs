@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::{Arc, RwLock};
 
+use frame_metadata::RuntimeMetadata;
+
 use serde_json::{Map, Value};
 
 use crate::error::*;
@@ -160,7 +162,6 @@ impl Types {
   }
 
   pub fn load_schema(&mut self, filename: &str) -> Result<()> {
-    log::info!("load_schema: {}", filename);
     let file = File::open(filename)?;
 
     let schema: serde_json::Value = serde_json::from_reader(BufReader::new(file))?;
@@ -176,6 +177,17 @@ impl Types {
     self.parse_schema_types(types)?;
 
     Ok(())
+  }
+
+  pub fn try_load_schema(&mut self, filename: &str) -> bool {
+    log::info!("Try loading schema: {}", filename);
+    match self.load_schema(filename) {
+      Ok(_) => true,
+      Err(err) => {
+        log::debug!("Failed to load schema {}: {err:?}", filename);
+        false
+      }
+    }
   }
 
   fn parse_schema_types(&mut self, types: &Map<String, Value>) -> Result<()> {
@@ -642,6 +654,24 @@ impl InnerTypesRegistry {
     }
   }
 
+  fn load_custom_types(&self, prefix: &str, spec: u32, types: &mut Types) -> Result<()> {
+    // Load standard substrate types.
+    if !types
+      .try_load_schema(&format!("{}/init_{}.json", prefix, spec))
+    {
+      types.try_load_schema(&self.substrate_types);
+    }
+    // Load custom chain types.
+    if !types
+      .try_load_schema(&format!("{}/{}.json", prefix, spec))
+    {
+      // fallback.
+      types.try_load_schema(&self.custom_types);
+    }
+
+    Ok(())
+  }
+
   async fn build_types(
     &self,
     client: &Client,
@@ -667,27 +697,57 @@ impl InnerTypesRegistry {
     log::debug!("schema_prefix = {}", schema_prefix);
 
     let mut types = Types::new(runtime_version);
-    // Load standard substrate types.
-    if types
-      .load_schema(&format!("{}/init_{}.json", schema_prefix, spec_version))
-      .is_err()
-    {
-      types.load_schema(&self.substrate_types)?;
-    }
-    // Load custom chain types.
-    if types
-      .load_schema(&format!("{}/{}.json", schema_prefix, spec_version))
-      .is_err()
-    {
-      types.load_schema(&self.custom_types)?;
-    }
 
     // Load chain metadata.
     let runtime_metadata = client
       .get_block_metadata(hash)
       .await?
       .ok_or_else(|| Error::RpcClient(format!("Failed to get block Metadata")))?;
-    let metadata = Metadata::from_runtime_metadata(runtime_metadata, &mut types)?;
+
+    // Process chain metadata.
+    let metadata = match runtime_metadata.1 {
+      #[cfg(feature = "v12")]
+      RuntimeMetadata::V12(v12) => {
+        if runtime_metadata.0 != frame_metadata::v12::META_RESERVED {
+          return Err(Error::MetadataParseFailed(format!(
+            "Invalid metadata prefix {}",
+            runtime_metadata.0
+          )));
+        }
+        self.load_custom_types(&schema_prefix, spec_version, &mut types)?;
+
+        Metadata::from_v12_metadata(v12, &mut types)?
+      }
+      #[cfg(feature = "v13")]
+      RuntimeMetadata::V13(v13) => {
+        if runtime_metadata.0 != frame_metadata::v13::META_RESERVED {
+          return Err(Error::MetadataParseFailed(format!(
+            "Invalid metadata prefix {}",
+            runtime_metadata.0
+          )));
+        }
+        self.load_custom_types(&schema_prefix, spec_version, &mut types)?;
+
+        Metadata::from_v13_metadata(v13, &mut types)?
+      }
+      #[cfg(feature = "v14")]
+      RuntimeMetadata::V14(v14) => {
+        if runtime_metadata.0 != frame_metadata::META_RESERVED {
+          return Err(Error::MetadataParseFailed(format!(
+            "Invalid metadata prefix {}",
+            runtime_metadata.0
+          )));
+        }
+        types.try_load_schema("schemas/init_v14_types.json");
+
+        Metadata::from_v14_metadata(v14, &mut types)?
+      }
+      _ => {
+        return Err(Error::MetadataParseFailed(format!(
+          "Unsupported metadata version"
+        )));
+      }
+    };
     types.set_metadata(metadata);
 
     for init in &self.initializers {

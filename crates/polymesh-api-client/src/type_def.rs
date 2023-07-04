@@ -29,9 +29,12 @@ impl Path {
   pub fn new(ident: &str, module_path: &str) -> Self {
     let mut segments = module_path
       .split("::")
+      .filter(|s| !s.is_empty())
       .map(|s| s.into())
       .collect::<Vec<_>>();
-    segments.push(ident.into());
+    if ident != "" {
+      segments.push(ident.into());
+    }
     Self { segments }
   }
 
