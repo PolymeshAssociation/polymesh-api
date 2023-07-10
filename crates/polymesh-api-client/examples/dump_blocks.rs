@@ -16,6 +16,7 @@ lazy_static::lazy_static! {
 pub struct BlockData {
   pub number: BlockNumber,
   pub hash: Option<BlockHash>,
+  pub parent: Option<BlockHash>,
   pub version: Option<RuntimeVersion>,
   pub block: Option<Block>,
   pub events: Option<StorageData>,
@@ -31,11 +32,15 @@ impl BlockData {
     data.hash = client.get_block_hash(number).await?;
 
     if data.hash.is_some() {
-      // Get chain runtime version at this block.
-      data.version = client.get_block_runtime_version(data.hash).await?;
-
       // Get block.
       data.block = client.get_block(data.hash).await?;
+
+      // Get the runtime version for the parent block,
+      // since Upgrade blocks will give the next runtime version.
+      if let Some(block) = &data.block {
+        data.parent = Some(block.parent());
+        data.version = client.get_block_runtime_version(data.parent).await?;
+      }
 
       // Get block events
       data.events = client
@@ -53,17 +58,16 @@ type RxBlockData = tokio::sync::mpsc::Receiver<BlockData>;
 type TxBlockData = tokio::sync::mpsc::Sender<BlockData>;
 
 struct GetBlocksWorker {
-  client: Client,
   rx: RxBlockNumber,
+  url: String,
   tx_data: TxBlockData,
 }
 
 impl GetBlocksWorker {
   pub async fn new(url: &str, tx_data: TxBlockData) -> Result<TxBlockNumber> {
     let (tx, rx) = tokio::sync::mpsc::channel(1000);
-    let client = Client::new(url).await?;
     let worker = Self {
-      client,
+      url: url.to_string(),
       rx,
       tx_data,
     };
@@ -81,8 +85,9 @@ impl GetBlocksWorker {
   }
 
   async fn run(mut self) -> Result<()> {
+    let client = Client::new(&self.url).await?;
     while let Some(number) = self.rx.recv().await {
-      let block = BlockData::get_block(&self.client, number).await?;
+      let block = BlockData::get_block(&client, number).await?;
       self.tx_data.send(block).await?;
     }
     log::debug!("Get Block worker finished.");
@@ -205,7 +210,7 @@ async fn main() -> Result<()> {
     .nth(3)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 10);
-  let end_block = start_block + count;
+  let mut end_block = start_block + count;
   let skip = env::args()
     .nth(4)
     .and_then(|v| v.parse().ok())
@@ -214,6 +219,14 @@ async fn main() -> Result<()> {
     .nth(5)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 8);
+
+  let client = Client::new(&url).await?;
+  // Get latest block.
+  let latest = client.get_block(None).await?.expect("Latest block");
+  let latest_block_number = latest.block_number();
+  if end_block > latest_block_number {
+    end_block = latest_block_number;
+  }
 
   let (mut process_blocks, tx) = ProcessBlocksWorker::new(start_block, skip);
   let worker_pool = GetBlocksWorkerPool::new(num_workers, &url, tx).await?;
@@ -230,7 +243,6 @@ async fn main() -> Result<()> {
   });
 
   // Types registery.
-  let client = Client::new(&url).await?;
   let types_registry = TypesRegistry::new();
 
   let gen_hash = client
@@ -266,7 +278,7 @@ async fn main() -> Result<()> {
         last_spec = version.spec_version;
         println!("---- New spec version: {}", last_spec);
         last_types = types_registry
-          .get_block_types(&client, block.version, block.hash)
+          .get_block_types(&client, block.version, block.parent)
           .await?;
         event_records_ty = last_types
           .type_codec("EventRecords")

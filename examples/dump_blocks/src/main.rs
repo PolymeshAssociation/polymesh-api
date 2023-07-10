@@ -210,7 +210,7 @@ async fn main() -> Result<()> {
     .nth(3)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 10);
-  let end_block = start_block + count;
+  let mut end_block = start_block + count;
   let skip = env::args()
     .nth(4)
     .and_then(|v| v.parse().ok())
@@ -219,6 +219,14 @@ async fn main() -> Result<()> {
     .nth(5)
     .and_then(|v| v.parse().ok())
     .unwrap_or_else(|| 8);
+
+  let client = Client::new(&url).await?;
+  // Get latest block.
+  let latest = client.get_block(None).await?.expect("Latest block");
+  let latest_block_number = latest.block_number();
+  if end_block > latest_block_number {
+    end_block = latest_block_number;
+  }
 
   let (mut process_blocks, tx) = ProcessBlocksWorker::new(start_block, skip);
   let worker_pool = GetBlocksWorkerPool::new(num_workers, &url, tx).await?;
@@ -235,7 +243,6 @@ async fn main() -> Result<()> {
   });
 
   // Types registery.
-  let client = Client::new(&url).await?;
   let types_registry = TypesRegistry::new();
 
   let gen_hash = client
