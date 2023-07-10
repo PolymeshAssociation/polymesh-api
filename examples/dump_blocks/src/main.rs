@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::env;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 
@@ -58,16 +59,16 @@ type RxBlockData = tokio::sync::mpsc::Receiver<BlockData>;
 type TxBlockData = tokio::sync::mpsc::Sender<BlockData>;
 
 struct GetBlocksWorker {
+  client: Arc<Client>,
   rx: RxBlockNumber,
-  url: String,
   tx_data: TxBlockData,
 }
 
 impl GetBlocksWorker {
-  pub async fn new(url: &str, tx_data: TxBlockData) -> Result<TxBlockNumber> {
+  pub async fn new(client: Arc<Client>, tx_data: TxBlockData) -> Result<TxBlockNumber> {
     let (tx, rx) = tokio::sync::mpsc::channel(1000);
     let worker = Self {
-      url: url.to_string(),
+      client,
       rx,
       tx_data,
     };
@@ -85,9 +86,8 @@ impl GetBlocksWorker {
   }
 
   async fn run(mut self) -> Result<()> {
-    let client = Client::new(&self.url).await?;
     while let Some(number) = self.rx.recv().await {
-      let block = BlockData::get_block(&client, number).await?;
+      let block = BlockData::get_block(&self.client, number).await?;
       self.tx_data.send(block).await?;
     }
     log::debug!("Get Block worker finished.");
@@ -128,11 +128,21 @@ impl GetBlocksWorkerPool {
   }
 
   async fn run(mut self) -> Result<()> {
+    const MAX_CLIENTS: usize = 48;
+    let num_clients = (self.max_workers / 4).min(MAX_CLIENTS);
+    // Init shared clients.
+    let mut clients = Vec::new();
+    for _ in 0..num_clients {
+      let client = Client::new(&self.url).await?;
+      clients.push(Arc::new(client));
+    }
+    eprintln!("num_clients = {}", clients.len());
     // Init workers.
-    for _ in 0..self.max_workers {
+    for idx in 0..self.max_workers {
+      let client = clients[idx % num_clients].clone();
       self
         .workers
-        .push(GetBlocksWorker::new(&self.url, self.tx_data.clone()).await?);
+        .push(GetBlocksWorker::new(client, self.tx_data.clone()).await?);
     }
 
     let mut next_worker = 0;
