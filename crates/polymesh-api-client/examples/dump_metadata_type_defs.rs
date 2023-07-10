@@ -13,7 +13,7 @@ async fn main() -> Result<()> {
   let url = env::args().nth(1).expect("Missing ws url");
 
   let client = Client::new(&url).await?;
-  let types_registry = TypesRegistry::new("./schemas/init_types.json".into(), "schema.json".into());
+  let types_registry = TypesRegistry::new();
 
   // Get block hash
   let gen_hash = client.get_block_hash(0).await?;

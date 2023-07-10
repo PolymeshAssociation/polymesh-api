@@ -200,7 +200,7 @@ async fn main() -> Result<()> {
   let start_block = env::args()
     .nth(2)
     .and_then(|v| v.parse().ok())
-    .unwrap_or_else(|| 0);
+    .unwrap_or_else(|| 1);
   let count = env::args()
     .nth(3)
     .and_then(|v| v.parse().ok())
@@ -231,7 +231,7 @@ async fn main() -> Result<()> {
 
   // Types registery.
   let client = Client::new(&url).await?;
-  let types_registry = TypesRegistry::new("./schemas/init_types.json".into(), "schema.json".into());
+  let types_registry = TypesRegistry::new();
 
   let gen_hash = client
     .get_block_hash(0)
@@ -255,6 +255,7 @@ async fn main() -> Result<()> {
     .expect("Failed to get EventRecords type.");
   last_types.dump_unresolved();
   while let Some(block) = process_blocks.next_block().await {
+    //println!("block: {block:?}");
     /*
     if block.number < last_number {
       println!("Out of order block: {} < {last_number}", block.number);
@@ -274,6 +275,7 @@ async fn main() -> Result<()> {
       }
     }
     if let Some(events) = block.events {
+      //println!("decode events: {events:?}");
       let events = event_records_ty.decode(events.0)?;
       match events.as_array() {
         // Skip empty blocks.
@@ -281,8 +283,15 @@ async fn main() -> Result<()> {
           println!(
             "block[{}] events: {}",
             block.number,
+            events.len()
+          );
+          /*
+          println!(
+            "block[{}] events: {}",
+            block.number,
             serde_json::to_string_pretty(&events)?
           );
+          */
         }
         Some(_) => (),
         None => {
@@ -297,7 +306,7 @@ async fn main() -> Result<()> {
     last_number = block.number;
     if stat_counter >= 10000 {
       stat_counter = 0;
-      //println!("block[{}] = {:?}", block.number, block.hash);
+      println!("block[{}] = {:?}", block.number, block.hash);
     }
     stat_counter += skip;
   }

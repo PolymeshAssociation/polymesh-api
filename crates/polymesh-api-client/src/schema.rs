@@ -640,33 +640,30 @@ impl From<&RuntimeVersion> for SpecVersionKey {
 pub struct InnerTypesRegistry {
   block_types: HashMap<Option<SpecVersionKey>, TypeLookup>,
   initializers: Vec<InitRegistryFn>,
-  substrate_types: String,
-  custom_types: String,
 }
 
 impl InnerTypesRegistry {
-  pub fn new(substrate_types: String, custom_types: String) -> Self {
+  pub fn new() -> Self {
     Self {
       block_types: HashMap::new(),
       initializers: Vec::new(),
-      substrate_types,
-      custom_types,
     }
   }
 
+  #[cfg(any(feature = "v12", feature = "v32"))]
   fn load_custom_types(&self, prefix: &str, spec: u32, types: &mut Types) -> Result<()> {
     // Load standard substrate types.
     if !types
       .try_load_schema(&format!("{}/init_{}.json", prefix, spec))
     {
-      types.try_load_schema(&self.substrate_types);
+      types.try_load_schema("./schemas/init_types.json");
     }
     // Load custom chain types.
     if !types
       .try_load_schema(&format!("{}/{}.json", prefix, spec))
     {
       // fallback.
-      types.try_load_schema(&self.custom_types);
+      types.try_load_schema("schema.json");
     }
 
     Ok(())
@@ -687,6 +684,7 @@ impl InnerTypesRegistry {
     };
     // build schema path.
     let spec_name = runtime_version.spec_name.to_string();
+    #[cfg(any(feature = "v12", feature = "v32"))]
     let spec_version = runtime_version.spec_version;
     let name = if let Some((spec_name, _chain_type)) = spec_name.split_once("_") {
       spec_name
@@ -787,11 +785,8 @@ impl InnerTypesRegistry {
 pub struct TypesRegistry(Arc<RwLock<InnerTypesRegistry>>);
 
 impl TypesRegistry {
-  pub fn new(substrate_types: String, custom_types: String) -> Self {
-    Self(Arc::new(RwLock::new(InnerTypesRegistry::new(
-      substrate_types,
-      custom_types,
-    ))))
+  pub fn new() -> Self {
+    Self(Arc::new(RwLock::new(InnerTypesRegistry::new())))
   }
 
   pub async fn get_block_types(

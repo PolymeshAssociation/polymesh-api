@@ -17,4 +17,6 @@ tokio = { version = "1.19", features = ["full"] }
 
 sp-keyring = "7.0.0"
 
-polymesh-api = { version = "0.4", path = "../../" }
+polymesh-api-client = { version = "0.4", path = "../../crates/polymesh-api-client" }
+
+lazy_static = "1.4"
