@@ -88,12 +88,11 @@ mod v14 {
     fn new(ty: &Type<PortableForm>) -> Self {
       let mut names = IndexMap::new();
 
-      let ty_params = ty.type_params();
+      let ty_params = &ty.type_params;
       if ty_params.len() > 0 {
         for p in ty_params {
-          if let Some(p_ty) = p.ty() {
-            let name = p.name();
-            names.insert(p_ty.id(), name.into());
+          if let Some(p_ty) = p.ty {
+            names.insert(p_ty.id, p.name.clone());
           }
         }
       }
@@ -181,8 +180,8 @@ mod v14 {
   impl Generator {
     fn new(md: RuntimeMetadataV14) -> Self {
       // Detect the chain runtime path.
-      let runtime_ty = md.types.resolve(md.ty.id()).unwrap();
-      let runtime_namespace = runtime_ty.path().namespace();
+      let runtime_ty = md.types.resolve(md.ty.id).unwrap();
+      let runtime_namespace = runtime_ty.path.namespace();
       #[cfg(feature = "ink")]
       let api_interface = quote!(::polymesh_api_ink);
       #[cfg(not(feature = "ink"))]
@@ -354,8 +353,7 @@ mod v14 {
 
     fn rename_pallet_type(&mut self, id: u32, p_name: &str, kind: &str) {
       let ty = self.md.types.resolve(id).unwrap();
-      let path = ty.path();
-      let mut segments: Vec<_> = path.segments().into_iter().cloned().collect();
+      let mut segments: Vec<_> = ty.path.segments.iter().cloned().collect();
       let old_name = segments.join("::");
       let new_name = format!("{}{}", p_name, kind);
       if let Some(last) = segments.last_mut() {
@@ -374,21 +372,21 @@ mod v14 {
       }).collect();
       for (p_name, call, event, error) in types {
         if let Some(c) = call {
-          self.rename_pallet_type(c.ty.id(), &p_name, "Call");
+          self.rename_pallet_type(c.ty.id, &p_name, "Call");
         }
         if let Some(e) = event {
-          self.rename_pallet_type(e.ty.id(), &p_name, "Event");
+          self.rename_pallet_type(e.ty.id, &p_name, "Event");
         }
         if let Some(e) = error {
-          self.rename_pallet_type(e.ty.id(), &p_name, "Error");
+          self.rename_pallet_type(e.ty.id, &p_name, "Error");
         }
       }
     }
 
     // Detect if chain is using V2 Weights.
     fn detect_v2_weights(&mut self) {
-      for ty in self.md.types.types() {
-        let id = ty.id();
+      for ty in &self.md.types.types {
+        let id = ty.id;
         let full_name = self.id_to_full_name(id).unwrap_or_default();
         if full_name == "frame_support::dispatch::DispatchInfo" {
           self.v2_weights = true;
@@ -399,9 +397,8 @@ mod v14 {
 
     fn id_to_full_name(&self, id: u32) -> Option<String> {
       let ty = self.md.types.resolve(id)?;
-      let segments = ty.path().segments();
-      if segments.len() > 0 {
-        Some(segments.join("::"))
+      if ty.path.segments.len() > 0 {
+        Some(ty.path.segments.join("::"))
       } else {
         None
       }
@@ -409,19 +406,19 @@ mod v14 {
 
     fn check_for_ord_types(&self, ord_type_ids: &mut HashSet<u32>) -> bool {
       let count = ord_type_ids.len();
-      for ty in self.md.types.types() {
-        let id = ty.id();
-        let ty = ty.ty();
+      for ty in &self.md.types.types {
+        let id = ty.id;
+        let ty = &ty.ty;
         let full_name = self.id_to_full_name(id).unwrap_or_default();
         // Check for `BTreeSet` and `BTreeMap`.
         match full_name.as_str() {
           "BTreeSet" | "BTreeMap" => {
             // Mark the first type parameter as needing `Ord`.
-            ty.type_params()
+            ty.type_params
               .first()
-              .and_then(|param| param.ty())
+              .and_then(|param| param.ty)
               .map(|ty| {
-                ord_type_ids.insert(ty.id());
+                ord_type_ids.insert(ty.id);
               });
             continue;
           }
@@ -430,33 +427,33 @@ mod v14 {
         // Check if this type needs `Ord`.
         if ord_type_ids.contains(&id) {
           // Mark fields and used types as needing `Ord`.
-          match ty.type_def() {
+          match &ty.type_def {
             TypeDef::Composite(struct_ty) => {
-              for field in struct_ty.fields() {
-                ord_type_ids.insert(field.ty().id());
+              for field in &struct_ty.fields {
+                ord_type_ids.insert(field.ty.id);
               }
             }
             TypeDef::Variant(enum_ty) => {
-              for variant in enum_ty.variants() {
-                for field in variant.fields() {
-                  ord_type_ids.insert(field.ty().id());
+              for variant in &enum_ty.variants {
+                for field in &variant.fields {
+                  ord_type_ids.insert(field.ty.id);
                 }
               }
             }
             TypeDef::Sequence(ty) => {
-              ord_type_ids.insert(ty.type_param().id());
+              ord_type_ids.insert(ty.type_param.id);
             }
             TypeDef::Array(ty) => {
-              ord_type_ids.insert(ty.type_param().id());
+              ord_type_ids.insert(ty.type_param.id);
             }
             TypeDef::Tuple(ty) => {
-              for field in ty.fields() {
-                ord_type_ids.insert(field.id());
+              for field in &ty.fields {
+                ord_type_ids.insert(field.id);
               }
             }
             TypeDef::Primitive(_) => (),
             TypeDef::Compact(ty) => {
-              ord_type_ids.insert(ty.type_param().id());
+              ord_type_ids.insert(ty.type_param.id);
             }
             _ => {}
           }
@@ -467,7 +464,7 @@ mod v14 {
     }
 
     fn is_boxed(field: &Field<PortableForm>) -> bool {
-      if let Some(type_name) = field.type_name() {
+      if let Some(type_name) = &field.type_name {
         type_name.contains("Box<")
       } else {
         false
@@ -475,13 +472,13 @@ mod v14 {
     }
 
     fn need_field_attributes(&self, field: &Field<PortableForm>) -> TokenStream {
-      if let Some(ty) = self.md.types.resolve(field.ty().id()) {
-        match ty.type_def() {
+      if let Some(ty) = self.md.types.resolve(field.ty.id) {
+        match &ty.type_def {
           TypeDef::Compact(_) => {
             return quote! { #[codec(compact)] };
           }
           TypeDef::Array(ty) => {
-            let len = ty.len() as usize;
+            let len = ty.len as usize;
             if len > 32 {
               return quote! { #[cfg_attr(feature = "serde", serde(with = "::serde_big_array::BigArray"))] };
             }
@@ -508,15 +505,14 @@ mod v14 {
         return Some(scope_type);
       }
       let ty = self.md.types.resolve(id)?;
-      let path = ty.path();
-      let (type_ident, is_btree) = match self.is_runtime_type(path) {
+      let (type_ident, is_btree) = match self.is_runtime_type(&ty.path) {
         Some(name) => {
           // Remap runtime types to namespace `runtime`.
           let ident = format_ident!("{name}");
           (quote!(runtime::#ident), false)
         },
         None => {
-          let segments = ty.path().segments();
+          let segments = &ty.path.segments;
           let full_name = segments.join("::");
           let is_btree = match full_name.as_str() {
             "BTreeSet" | "BTreeMap" => true,
@@ -531,27 +527,27 @@ mod v14 {
         },
       };
 
-      match ty.type_def() {
+      match &ty.type_def {
         TypeDef::Sequence(ty) => {
           return self
-            .type_name_scoped(ty.type_param().id(), scope, true, import_types)
+            .type_name_scoped(ty.type_param.id, scope, true, import_types)
             .map(|elem_ty| {
               quote! { ::alloc::vec::Vec<#elem_ty> }
             });
         }
         TypeDef::Array(ty) => {
-          let len = ty.len() as usize;
+          let len = ty.len as usize;
           return self
-            .type_name_scoped(ty.type_param().id(), scope, true, import_types)
+            .type_name_scoped(ty.type_param.id, scope, true, import_types)
             .map(|elem_ty| {
               quote! { [#elem_ty; #len] }
             });
         }
         TypeDef::Tuple(ty) => {
           let fields = ty
-            .fields()
-            .into_iter()
-            .filter_map(|field| self.type_name_scoped(field.id(), scope, true, import_types))
+            .fields
+            .iter()
+            .filter_map(|field| self.type_name_scoped(field.id, scope, true, import_types))
             .collect::<Vec<_>>();
           return Some(quote! { (#(#fields),*) });
         }
@@ -581,7 +577,7 @@ mod v14 {
         }
         TypeDef::Compact(ty) => {
           return self
-            .type_name_scoped(ty.type_param().id(), scope, true, import_types)
+            .type_name_scoped(ty.type_param.id, scope, true, import_types)
             .map(|ty| {
               if compact_wrap {
                 quote! { ::codec::Compact<#ty> }
@@ -595,19 +591,19 @@ mod v14 {
 
       // Check if `BTreeSet` or `BTreeMap` use a scoped paramter for the key.
       if is_btree {
-        ty.type_params()
+        ty.type_params
           .first()
-          .and_then(|param| param.ty())
-          .map(|ty| scope.add_param_bounds(ty.id(), "Ord", quote!(Ord)));
+          .and_then(|param| param.ty)
+          .map(|ty| scope.add_param_bounds(ty.id, "Ord", quote!(Ord)));
       }
 
       let type_params = ty
-        .type_params()
+        .type_params
         .iter()
         .filter_map(|param| {
           param
-            .ty()
-            .map(|ty| self.type_name_scoped(ty.id(), scope, true, import_types))
+            .ty
+            .map(|ty| self.type_name_scoped(ty.id, scope, true, import_types))
         })
         .collect::<Vec<_>>();
 
@@ -633,7 +629,7 @@ mod v14 {
       key_prefix.extend(sp_core_hashing::twox_128(storage_name.as_bytes()));
 
       let (hashers, value_ty) = match &md.ty {
-        StorageEntryType::Plain(value) => (vec![], value.id()),
+        StorageEntryType::Plain(value) => (vec![], value.id),
         StorageEntryType::Map {
           hashers,
           key,
@@ -641,17 +637,17 @@ mod v14 {
         } => match hashers.as_slice() {
           [hasher] => {
             // 1 key.
-            (vec![(key, hasher)], value.id())
+            (vec![(key, hasher)], value.id)
           }
           hashers => {
             // >=2 keys.
-            let keys_ty = self.md.types.resolve(key.id()).unwrap();
-            let key_hashers = if let TypeDef::Tuple(ty) = keys_ty.type_def() {
-              ty.fields().iter().zip(hashers).collect()
+            let keys_ty = self.md.types.resolve(key.id).unwrap();
+            let key_hashers = if let TypeDef::Tuple(ty) = &keys_ty.type_def {
+              ty.fields.iter().zip(hashers).collect()
             } else {
               vec![]
             };
-            (key_hashers, value.id())
+            (key_hashers, value.id)
           }
         },
       };
@@ -661,7 +657,7 @@ mod v14 {
       for (idx, (key, hasher)) in hashers.into_iter().enumerate() {
         let key_ident = format_ident!("key_{}", idx);
         let type_name = self
-          .type_name(key.id(), false, true)
+          .type_name(key.id, false, true)
           .expect("Missing Storage key type");
         keys.append_all(quote! {#key_ident: #type_name,});
         hashing.append_all(match hasher {
@@ -771,20 +767,21 @@ mod v14 {
     ) -> TokenStream {
       let mod_call_ident = format_ident!("{mod_name}");
       let mod_call = self.type_name(mod_call_ty, false, true).unwrap();
-      let func_name = md.name();
-      let func_idx = md.index();
+      let func_name = &md.name;
+      let func_idx = md.index;
       let func_ident = format_ident!("{}", func_name.to_snake_case());
 
       let mut fields = TokenStream::new();
       let mut field_names = TokenStream::new();
       let mut fields_encode = TokenStream::new();
-      for (idx, field) in md.fields().iter().enumerate() {
+      for (idx, field) in md.fields.iter().enumerate() {
         let name = field
-          .name()
+          .name
+          .as_ref()
           .map(|n| format_ident!("{n}"))
           .unwrap_or_else(|| format_ident!("param_{idx}"));
         let type_name = self
-          .type_name(field.ty().id(), false, true)
+          .type_name(field.ty.id, false, true)
           .expect("Missing Extrinsic param type");
         fields.append_all(quote! {#name: #type_name,});
         if Self::is_boxed(field) {
@@ -797,9 +794,9 @@ mod v14 {
         });
       }
 
-      let docs = md.docs();
+      let docs = &md.docs;
       let call_ty = &self.call;
-      if md.fields().len() > 0 {
+      if md.fields.len() > 0 {
         quote! {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
@@ -851,12 +848,12 @@ mod v14 {
         let call_ty = self
           .md
           .types
-          .resolve(calls.ty.id())
+          .resolve(calls.ty.id)
           .expect("Missing Pallet call type");
-        match call_ty.type_def() {
+        match &call_ty.type_def {
           TypeDef::Variant(v) => {
-            let mod_call_ty = calls.ty.id();
-            for v in v.variants() {
+            let mod_call_ty = calls.ty.id;
+            for v in &v.variants {
               let code = self.gen_func(mod_name, mod_idx, mod_call_ty, v);
               call_fields.append_all(code);
             }
@@ -925,14 +922,14 @@ mod v14 {
       }
 
       for field in fields {
-        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false, false)?;
+        let mut field_ty = self.type_name_scoped(field.ty.id, scope, false, false)?;
         if Self::is_boxed(field) {
           field_ty = quote!(::alloc::boxed::Box<#field_ty>);
         }
         let attr = self.need_field_attributes(field);
         unnamed.push(quote! { #attr pub #field_ty });
-        if let Some(name) = field.name() {
-          let docs = field.docs();
+        if let Some(name) = &field.name {
+          let docs = &field.docs;
           let name = format_ident!("{name}");
           named.push(quote! {
               #(#[doc = #docs])*
@@ -968,7 +965,7 @@ mod v14 {
 
       for field in fields {
         unnamed.push(quote!(_));
-        if field.name().is_none() {
+        if field.name.is_none() {
           // If there are any unnamed fields, then make it a tuple.
           is_tuple = true;
         }
@@ -1000,18 +997,18 @@ mod v14 {
       }
 
       for field in fields {
-        let mut field_ty = self.type_name_scoped(field.ty().id(), scope, false, false)?;
+        let mut field_ty = self.type_name_scoped(field.ty.id, scope, false, false)?;
         if Self::is_boxed(field) {
           field_ty = quote!(::alloc::boxed::Box<#field_ty>);
         }
-        let docs = field.docs();
+        let docs = &field.docs;
         let attr = self.need_field_attributes(field);
         unnamed.push(quote! {
             #(#[doc = #docs])*
             #attr
             #field_ty
         });
-        if let Some(name) = field.name() {
+        if let Some(name) = &field.name {
           let name = format_ident!("{name}");
           named.push(quote! {
               #(#[doc = #docs])*
@@ -1044,12 +1041,12 @@ mod v14 {
     ) -> Option<TokenStream> {
       let mut as_str_arms = TokenStream::new();
       let mut as_docs_arms = TokenStream::new();
-      match (prefix, ty.type_def()) {
+      match (prefix, &ty.type_def) {
         (None, TypeDef::Variant(enum_ty)) => {
-          for variant in enum_ty.variants() {
-            let top_name = variant.name();
+          for variant in &enum_ty.variants {
+            let top_name = &variant.name;
             let top_ident = format_ident!("{}", top_name);
-            let fields = variant.fields().len();
+            let fields = variant.fields.len();
             if fields == 1 {
               as_str_arms.append_all(quote! {
                 Self::#top_ident(val) => {
@@ -1076,15 +1073,15 @@ mod v14 {
           }
         }
         (Some(prefix), TypeDef::Variant(enum_ty)) => {
-          for variant in enum_ty.variants() {
-            let var_name = variant.name();
+          for variant in &enum_ty.variants {
+            let var_name = &variant.name;
             let var_ident = format_ident!("{}", var_name);
-            let mut docs = variant.docs().to_vec();
+            let mut docs = variant.docs.to_vec();
             if docs.len() == 0 {
               docs.push("".to_string());
             }
             let as_str_name = format!("{}.{}", prefix, var_name);
-            let match_fields = self.gen_enum_match_fields(variant.fields());
+            let match_fields = self.gen_enum_match_fields(&variant.fields);
             as_str_arms.append_all(quote! {
               Self:: #var_ident #match_fields => {
                 #as_str_name
@@ -1167,7 +1164,7 @@ mod v14 {
         let mod_ident = format_ident!("{}", p.name);
         let error_ty = p.error.as_ref().and_then(|e| {
           self
-            .type_name_scoped(e.ty.id(), &mut scope, false, false)
+            .type_name_scoped(e.ty.id, &mut scope, false, false)
             .map(|ident| quote! { (#ident) })
         });
         if let Some(error_ty) = error_ty {
@@ -1184,7 +1181,7 @@ mod v14 {
         }
       }
 
-      let docs = ty.docs();
+      let docs = &ty.docs;
       let max_error_size = self.max_error_size + 1;
       let code = quote! {
         #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1298,7 +1295,7 @@ mod v14 {
         let mod_ident = format_ident!("{}", p.name);
         let error_ty = p.error.as_ref().and_then(|e| {
           self
-            .type_name_scoped(e.ty.id(), &mut scope, false, false)
+            .type_name_scoped(e.ty.id, &mut scope, false, false)
             .map(|ident| quote! { (#ident) })
         });
         if let Some(error_ty) = error_ty {
@@ -1315,7 +1312,7 @@ mod v14 {
         }
       }
 
-      let docs = ty.docs();
+      let docs = &ty.docs;
       let code = quote! {
         #(#[doc = #docs])*
         #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1446,10 +1443,10 @@ mod v14 {
         .cloned()
         .unwrap_or_else(|| quote!());
 
-      let docs = ty.docs();
-      let (mut code, params) = match ty.type_def() {
+      let docs = &ty.docs;
+      let (mut code, params) = match &ty.type_def {
         TypeDef::Composite(struct_ty) => {
-          let (is_tuple, mut fields) = self.gen_struct_fields(struct_ty.fields(), &mut scope)?;
+          let (is_tuple, mut fields) = self.gen_struct_fields(&struct_ty.fields, &mut scope)?;
           if let Some(unused_params) = scope.get_unused_params() {
             if is_tuple {
               fields.append_all(quote! {
@@ -1494,12 +1491,12 @@ mod v14 {
         }
         TypeDef::Variant(enum_ty) => {
           let mut variants = TokenStream::new();
-          for variant in enum_ty.variants() {
-            let idx = variant.index();
-            let docs = variant.docs();
-            let name = variant.name();
+          for variant in &enum_ty.variants {
+            let idx = variant.index;
+            let docs = &variant.docs;
+            let name = &variant.name;
             let ident = format_ident!("{}", name);
-            let fields = self.gen_enum_fields(variant.fields(), &mut scope)?;
+            let fields = self.gen_enum_fields(&variant.fields, &mut scope)?;
             variants.append_all(quote! {
               #(#[doc = #docs])*
               #[codec(index = #idx)]
@@ -1556,25 +1553,24 @@ mod v14 {
       let mut modules = ModuleCode::new("".into());
       let runtime_ns = [String::from("runtime")];
 
-      for ty in self.md.types.types() {
-        let ty_id = ty.id();
-        let ty = ty.ty();
-        let ty_path = ty.path();
-        let mut ty_ns = ty_path.namespace();
+      for ty in &self.md.types.types {
+        let ty_id = ty.id;
+        let ty = &ty.ty;
+        let mut ty_ns = ty.path.namespace();
         // Only generate type code for types with namespaces.  Basic rust types like
         // `Result` and `Option` have no namespace.
         if let Some(ns_top) = ty_ns.first() {
           // Don't generate code for external types.
           if !self.external_modules.contains(ns_top) {
-            let (ident, is_runtime_type) = match self.is_runtime_type(ty_path) {
+            let (ident, is_runtime_type) = match self.is_runtime_type(&ty.path) {
               Some(name) => {
                 ty_ns = &runtime_ns;
                 (name, true)
               },
-              None => (ty_path.ident().unwrap(), false),
+              None => (ty.path.ident().unwrap(), false),
             };
 
-            if let Some(code) = self.gen_type(ty_id, ty, &ident, is_runtime_type) {
+            if let Some(code) = self.gen_type(ty_id, &ty, &ident, is_runtime_type) {
               modules.add_type(ty_ns, ident, code);
             }
           }

@@ -360,9 +360,9 @@ impl ModuleMetadata {
       let mut raw_calls = TypeDefVariant::new();
 
       let call_ty = types
-        .resolve(calls.ty.id())
+        .resolve(calls.ty.id)
         .expect("Missing Pallet call type");
-      match call_ty.type_def() {
+      match &call_ty.type_def {
         TypeDef::Variant(v) => {
           v.variants.iter().try_for_each(|md| -> Result<()> {
             let (func, ty_ref) =
@@ -389,9 +389,9 @@ impl ModuleMetadata {
       let mut raw_events = TypeDefVariant::new();
 
       let event_ty = types
-        .resolve(events.ty.id())
+        .resolve(events.ty.id)
         .expect("Missing Pallet event type");
-      match event_ty.type_def() {
+      match &event_ty.type_def {
         TypeDef::Variant(v) => {
           v.variants.iter().try_for_each(|md| -> Result<()> {
             let (event, ty_ref) =
@@ -419,9 +419,9 @@ impl ModuleMetadata {
 
       let extra_bytes = lookup.parse_type("[u8; 3]")?;
       let error_ty = types
-        .resolve(error.ty.id())
+        .resolve(error.ty.id)
         .expect("Missing Pallet error type");
-      match error_ty.type_def() {
+      match &error_ty.type_def {
         TypeDef::Variant(v) => {
           v.variants.iter().try_for_each(|md| -> Result<()> {
             let error = ErrorMetadata::from_v14_meta(&mod_name, mod_idx, md)?;

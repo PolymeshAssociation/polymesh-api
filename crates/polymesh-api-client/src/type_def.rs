@@ -445,7 +445,7 @@ pub struct PortableRegistry {
 impl PortableRegistry {
   pub fn resolve<T: Into<TypeId>>(&self, id: T) -> Option<&Type> {
     let id = id.into();
-    self.types.get(id.0 as usize).map(|t| t.ty())
+    self.types.get(id.0 as usize).map(|t| &t.ty)
   }
 
   pub fn types(&self) -> &[PortableType] {
@@ -457,11 +457,11 @@ impl From<&scale_info::PortableRegistry> for PortableRegistry {
   fn from(other: &scale_info::PortableRegistry) -> Self {
     Self {
       types: other
-        .types()
+        .types
         .iter()
         .map(|t| PortableType {
-          id: t.id().into(),
-          ty: t.ty().into(),
+          id: t.id.into(),
+          ty: Type::from(&t.ty),
         })
         .collect(),
     }
@@ -471,8 +471,8 @@ impl From<&scale_info::PortableRegistry> for PortableRegistry {
 impl From<&scale_info::TypeParameter<PortableForm>> for TypeParameter {
   fn from(other: &scale_info::TypeParameter<PortableForm>) -> Self {
     Self {
-      name: other.name().clone(),
-      ty: other.ty().map(|t| t.id().into()),
+      name: other.name.clone(),
+      ty: other.ty.map(|t| t.id.into()),
     }
   }
 }
@@ -480,10 +480,10 @@ impl From<&scale_info::TypeParameter<PortableForm>> for TypeParameter {
 impl From<&scale_info::Type<PortableForm>> for Type {
   fn from(other: &scale_info::Type<PortableForm>) -> Self {
     Self {
-      path: other.path().into(),
-      type_params: other.type_params().iter().map(|p| p.into()).collect(),
-      type_def: other.type_def().into(),
-      docs: other.docs().into(),
+      path: Path::from(&other.path),
+      type_params: other.type_params.iter().map(|p| p.into()).collect(),
+      type_def: TypeDef::from(&other.type_def),
+      docs: other.docs.clone(),
     }
   }
 }
@@ -491,7 +491,7 @@ impl From<&scale_info::Type<PortableForm>> for Type {
 impl From<&scale_info::Path<PortableForm>> for Path {
   fn from(other: &scale_info::Path<PortableForm>) -> Self {
     Self {
-      segments: other.segments().iter().cloned().collect(),
+      segments: other.segments.iter().cloned().collect(),
     }
   }
 }
@@ -499,10 +499,10 @@ impl From<&scale_info::Path<PortableForm>> for Path {
 impl From<&scale_info::Field<PortableForm>> for Field {
   fn from(other: &scale_info::Field<PortableForm>) -> Self {
     Self {
-      name: other.name().cloned().into(),
-      ty: other.ty().id().into(),
-      type_name: other.type_name().cloned().into(),
-      docs: other.docs().into(),
+      name: other.name.clone(),
+      ty: other.ty.id.into(),
+      type_name: other.type_name.clone(),
+      docs: other.docs.clone(),
     }
   }
 }
@@ -510,10 +510,10 @@ impl From<&scale_info::Field<PortableForm>> for Field {
 impl From<&scale_info::Variant<PortableForm>> for Variant {
   fn from(other: &scale_info::Variant<PortableForm>) -> Self {
     Self {
-      name: other.name().into(),
-      fields: other.fields().iter().map(|f| f.into()).collect(),
-      index: other.index().into(),
-      docs: other.docs().into(),
+      name: other.name.clone(),
+      fields: other.fields.iter().map(|f| f.into()).collect(),
+      index: other.index.into(),
+      docs: other.docs.clone(),
     }
   }
 }
@@ -521,7 +521,7 @@ impl From<&scale_info::Variant<PortableForm>> for Variant {
 impl From<&scale_info::TypeDefComposite<PortableForm>> for TypeDefComposite {
   fn from(other: &scale_info::TypeDefComposite<PortableForm>) -> Self {
     Self {
-      fields: other.fields().iter().map(|v| v.into()).collect(),
+      fields: other.fields.iter().map(|v| v.into()).collect(),
     }
   }
 }
@@ -529,7 +529,7 @@ impl From<&scale_info::TypeDefComposite<PortableForm>> for TypeDefComposite {
 impl From<&scale_info::TypeDefVariant<PortableForm>> for TypeDefVariant {
   fn from(other: &scale_info::TypeDefVariant<PortableForm>) -> Self {
     Self {
-      variants: other.variants().iter().map(|v| v.into()).collect(),
+      variants: other.variants.iter().map(|v| v.into()).collect(),
     }
   }
 }
@@ -537,7 +537,7 @@ impl From<&scale_info::TypeDefVariant<PortableForm>> for TypeDefVariant {
 impl From<&scale_info::TypeDefSequence<PortableForm>> for TypeDefSequence {
   fn from(other: &scale_info::TypeDefSequence<PortableForm>) -> Self {
     Self {
-      type_param: other.type_param().id().into(),
+      type_param: other.type_param.id.into(),
     }
   }
 }
@@ -545,8 +545,8 @@ impl From<&scale_info::TypeDefSequence<PortableForm>> for TypeDefSequence {
 impl From<&scale_info::TypeDefArray<PortableForm>> for TypeDefArray {
   fn from(other: &scale_info::TypeDefArray<PortableForm>) -> Self {
     Self {
-      len: other.len(),
-      type_param: other.type_param().id().into(),
+      len: other.len,
+      type_param: other.type_param.id.into(),
     }
   }
 }
@@ -554,7 +554,7 @@ impl From<&scale_info::TypeDefArray<PortableForm>> for TypeDefArray {
 impl From<&scale_info::TypeDefTuple<PortableForm>> for TypeDefTuple {
   fn from(other: &scale_info::TypeDefTuple<PortableForm>) -> Self {
     Self {
-      fields: other.fields().iter().map(|v| v.id().into()).collect(),
+      fields: other.fields.iter().map(|v| v.id.into()).collect(),
     }
   }
 }
@@ -562,7 +562,7 @@ impl From<&scale_info::TypeDefTuple<PortableForm>> for TypeDefTuple {
 impl From<&scale_info::TypeDefCompact<PortableForm>> for TypeDefCompact {
   fn from(other: &scale_info::TypeDefCompact<PortableForm>) -> Self {
     Self {
-      type_param: other.type_param().id().into(),
+      type_param: other.type_param.id.into(),
     }
   }
 }
