@@ -54,7 +54,8 @@ pub fn codegen_api(args: TokenStream, input: TokenStream) -> TokenStream {
         let metadata = client
           .get_block_metadata(None)
           .await
-          .unwrap_or_else(|e| abort_call_site!(e));
+          .unwrap_or_else(|e| abort_call_site!(e))
+          .expect("Chain metadata");
 
         metadata.encode()
       })

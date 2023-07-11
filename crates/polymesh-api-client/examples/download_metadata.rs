@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
   let filename = format!("{}_spec_{}.meta", rt.spec_name, rt.spec_version);
 
   // Get current Metadata.
-  let metadata = client.get_block_metadata(block_hash).await?;
+  let metadata = client.get_block_metadata(block_hash).await?.expect("Chain metadata");
 
   let raw_metadata = metadata.encode();
 
