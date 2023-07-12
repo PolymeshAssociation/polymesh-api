@@ -169,6 +169,13 @@ impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
     Ok(self.extrinsic_result.as_ref())
   }
 
+  pub async fn ok(&mut self) -> Result<()> {
+    match self.extrinsic_result().await? {
+      Some(res) => res.ok(),
+      None => Err(Error::ExtrinsicError("Failed to get extrinsic results".into())),
+    }
+  }
+
   async fn load_events(&mut self) -> Result<bool> {
     // Do nothing if we already have the events.
     if self.events.is_some() {
@@ -245,6 +252,7 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
     call.into()
   }
 
+  /// Submit the transaction unsigned.
   pub async fn submit_unsigned_and_watch(&self) -> Result<TransactionResults<'api, Api>> {
     Ok(
       self
@@ -253,6 +261,22 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
     )
   }
 
+  /// Sign, submit and execute the transaction.
+  pub async fn execute(
+    &self,
+    signer: &mut impl Signer,
+  ) -> Result<TransactionResults<'api, Api>> {
+    // Sign and submit transaction.
+    let mut res = self.sign_submit_and_watch(signer).await?;
+    // Wait for transaction to be included in a block.
+    res.ok().await?;
+    // Transaction successful.
+    Ok(res)
+  }
+
+  /// Sign and submit the transaction, but don't wait for it to execute.
+  ///
+  /// The return values can be used to wait for transaction to execute and get the results.
   pub async fn sign_submit_and_watch(
     &self,
     signer: &mut impl Signer,
@@ -282,6 +306,10 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
     Ok(res)
   }
 
+  /// Submit a signed/unsigned transaction, but don't wait for it to execute.
+  ///
+  /// You most likely want to uses either [`Self::execute`] or [`Self::sign_submit_and_watch`]
+  /// not this method.
   pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<TransactionResults<'api, Api>> {
     let (tx_hex, tx_hash) = xt.as_hex_and_hash();
     let status = self.api.client().submit_and_watch(tx_hex).await?;

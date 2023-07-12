@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
     .call()
     .balances()
     .transfer(dest, 123_012_345)?
-    .sign_submit_and_watch(&mut alice)
+    .execute(&mut alice)
     .await?;
   let events = res.events().await?;
   println!("call1 events = {:#?}", events);
