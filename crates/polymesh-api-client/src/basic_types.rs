@@ -202,9 +202,15 @@ impl<AccountId: Clone, AccountIndex: Clone> From<&sp_runtime::MultiAddress<Accou
   }
 }
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+#[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
 pub struct AccountId(pub [u8; 32]);
+
+impl AccountId {
+  pub fn to_hex(&self) -> String {
+    format!("0x{}", hex::encode(&self.0))
+  }
+}
 
 // TODO: re-implement ss58 for `no_std`
 #[cfg(not(feature = "std"))]
