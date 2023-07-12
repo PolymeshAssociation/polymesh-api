@@ -59,9 +59,9 @@ async fn main() -> Result<()> {
     }
   }
 
-  let result = res1.extrinsic_result().await?;
+  let result = res1.ok().await?;
   println!("call1 result = {:#?}", result);
-  let result = res2.extrinsic_result().await?;
+  let result = res2.ok().await?;
   println!("call2 result = {:#?}", result);
   Ok(())
 }
