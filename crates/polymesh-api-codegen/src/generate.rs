@@ -223,6 +223,10 @@ mod v14 {
             "sp_arithmetic::per_things::Percent",
             quote!(#api_interface::per_things::Percent),
           ),
+          (
+            "sp_arithmetic::ArithmeticError",
+            quote!(::sp_arithmetic::ArithmeticError),
+          ),
           ("BTreeSet", quote!(::alloc::collections::BTreeSet)),
           ("BTreeMap", quote!(::alloc::collections::BTreeMap)),
           ("String", quote!(::alloc::string::String)),
@@ -1340,7 +1344,7 @@ mod v14 {
           NoProviders,
           TooManyConsumers,
           Token(TokenError),
-          Arithmetic(sp_arithmetic::ArithmeticError),
+          Arithmetic(::sp_arithmetic::ArithmeticError),
         }
 
         impl #ty_ident {
@@ -1366,9 +1370,9 @@ mod v14 {
               },
               Self::Arithmetic(err) => {
                 match err {
-                  sp_arithmetic::ArithmeticError::Underflow => "Arithmetic::Underflow",
-                  sp_arithmetic::ArithmeticError::Overflow => "Arithmetic::Overflow",
-                  sp_arithmetic::ArithmeticError::DivisionByZero => "Arithmetic::DivisionByZero",
+                  ::sp_arithmetic::ArithmeticError::Underflow => "Arithmetic::Underflow",
+                  ::sp_arithmetic::ArithmeticError::Overflow => "Arithmetic::Overflow",
+                  ::sp_arithmetic::ArithmeticError::DivisionByZero => "Arithmetic::DivisionByZero",
                 }
               },
             }
@@ -1415,9 +1419,9 @@ mod v14 {
               },
               Self::Arithmetic(err) => {
                 match err {
-                  sp_arithmetic::ArithmeticError::Underflow => &["Arithmetic underflow"],
-                  sp_arithmetic::ArithmeticError::Overflow => &["Arithmetic overflow"],
-                  sp_arithmetic::ArithmeticError::DivisionByZero => &["Arithmetic divide by zero"],
+                  ::sp_arithmetic::ArithmeticError::Underflow => &["Arithmetic underflow"],
+                  ::sp_arithmetic::ArithmeticError::Overflow => &["Arithmetic overflow"],
+                  ::sp_arithmetic::ArithmeticError::DivisionByZero => &["Arithmetic divide by zero"],
                 }
               },
             }
