@@ -9,3 +9,12 @@
 5. Run `cargo build` to confirm that it compiles.  (This also updates `Cargo.lock`)
 6. Commit changed/added files.
 7. Publish: `cargo publish`
+
+# Publishing order for all crates
+
+1. `crates/polymesh-api-client`
+2. `crates/polymesh-api-ink`
+3. `crates/polymesh-api-codegen`
+4. `crates/polymesh-api-codegen-macro`
+5. `polymesh-api`
+6. `crates/polymesh-api-client-extras`
