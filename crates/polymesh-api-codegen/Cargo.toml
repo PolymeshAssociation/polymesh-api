@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -8,6 +8,7 @@ description = "Polymesh API Codegen"
 keywords = ["polymesh", "blockchain", "substrate", "codegen"]
 repository = "https://github.com/PolymeshAssociation/polymesh-api"
 homepage = "https://github.com/PolymeshAssociation/polymesh-api"
+exclude = ["/examples", "*.sh"]
 
 [dependencies]
 thiserror = "1.0.31"
