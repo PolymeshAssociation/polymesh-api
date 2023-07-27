@@ -10,6 +10,8 @@ pub use basic_types::*;
 pub mod hashing;
 pub use hashing::*;
 
+pub use sp_weights;
+
 pub mod error;
 pub use error::*;
 

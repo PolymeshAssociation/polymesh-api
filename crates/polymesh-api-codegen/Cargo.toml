@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -26,7 +26,7 @@ serde-big-array = "0.4.1"
 sp-core-hashing = { version = "5.0", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
-scale-info = { version = "2", default-features = false }
+scale-info = { version = "=2.3", default-features = false }
 indexmap = "1.9.1"
 
 [dev-dependencies]
