@@ -50,6 +50,8 @@ anyhow = "1"
 dotenv = "0.15"
 env_logger = "0.9"
 
+frame-metadata = { version = "15.0.0", default-features = false, features = ["v14"] }
+
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]
 
