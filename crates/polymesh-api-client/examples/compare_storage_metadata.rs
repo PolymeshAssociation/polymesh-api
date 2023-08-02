@@ -62,6 +62,17 @@ impl Metadata {
     }
   }
 
+  fn resolve(&self, id: u32) -> &scale_info::Type<PortableForm> {
+    self.types.resolve(id).expect("expect type")
+  }
+
+  fn resolve_name(&self, id: u32) -> String {
+    let ty = self.resolve(id);
+    ty.path().ident().unwrap_or_else(|| {
+      format!("{:?}", ty.type_def())
+    })
+  }
+
   pub fn is_types_compatible(&self, seen: &mut HashMap<(u32, u32), bool>, other: &Self, id1: u32, id2: u32) -> bool {
     let mut compatible = true;
 
@@ -71,8 +82,8 @@ impl Metadata {
     // Mark the type pair as seen to prevent recursive checks.
     seen.insert((id1, id2), true);
 
-    let ty1 = self.types.resolve(id1).expect("expect type in metadata1");
-    let ty2 = other.types.resolve(id2).expect("expect type in metadata2");
+    let ty1 = self.resolve(id1);
+    let ty2 = other.resolve(id2);
 
     // Ignore `RuntimeCall`.
     let ident1 = ty1.path().ident().unwrap_or_default();
@@ -191,10 +202,13 @@ impl Metadata {
         match &entry2.ty {
           StorageEntryType::Plain(ty2) => {
             if !self.is_types_compatible(seen, other, ty1.id(), ty2.id()) {
+              log::trace!("Storage entry {:?}: Plain type changed '{}' -> '{}'",
+                entry.name, self.resolve_name(ty1.id()), other.resolve_name(ty2.id()));
               compatible = false;
             }
           }
           _ => {
+            log::trace!("Storage entry {:?} type changed", entry.name);
             compatible = false;
           }
         }
@@ -204,16 +218,21 @@ impl Metadata {
           StorageEntryType::Map { hashers: hashers2, key: key2, value: value2 } => {
             if hashers != hashers2 {
               compatible = false;
-              log::warn!("Hashers changed on storage entry");
+              log::trace!("Hashers changed on storage entry {:?}: {hashers:?} -> {hashers2:?}", entry.name);
             }
             if !self.is_types_compatible(seen, other, key.id(), key2.id()) {
+              log::trace!("Storage entry {:?}: map key type changed '{}' -> '{}'",
+                entry.name, self.resolve_name(key.id()), other.resolve_name(key2.id()));
               compatible = false;
             }
             if !self.is_types_compatible(seen, other, value.id(), value2.id()) {
+              log::trace!("Storage entry {:?}: map value type changed '{}' -> '{}'",
+                entry.name, self.resolve_name(value.id()), other.resolve_name(value2.id()));
               compatible = false;
             }
           }
           _ => {
+            log::trace!("Storage entry {:?} type changed", entry.name);
             compatible = false;
           }
         }
