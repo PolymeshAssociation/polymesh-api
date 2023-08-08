@@ -55,38 +55,68 @@ pub mod v5_to_v6 {
   };
 
   impl From<balances::Memo> for MemoV6 {
-    fn from(old: balances::Memo) -> Self {
-      Self(old.0)
+    fn from(other: balances::Memo) -> Self {
+      Self(other.0)
     }
   }
 
   impl From<Ticker> for TickerV6 {
-    fn from(old: Ticker) -> Self {
-      Self(old.0)
+    fn from(other: Ticker) -> Self {
+      Self(other.0)
+    }
+  }
+
+  impl From<TickerV6> for Ticker {
+    fn from(other: TickerV6) -> Self {
+      Self(other.0)
     }
   }
 
   impl From<PortfolioId> for PortfolioIdV6 {
-    fn from(old: PortfolioId) -> Self {
+    fn from(other: PortfolioId) -> Self {
       Self {
-        did: old.did,
-        kind: old.kind.into(),
+        did: other.did,
+        kind: other.kind.into(),
+      }
+    }
+  }
+
+  impl From<PortfolioIdV6> for PortfolioId {
+    fn from(other: PortfolioIdV6) -> Self {
+      Self {
+        did: other.did,
+        kind: other.kind.into(),
       }
     }
   }
 
   impl From<PortfolioKind> for PortfolioKindV6 {
-    fn from(old: PortfolioKind) -> Self {
-      match old {
+    fn from(other: PortfolioKind) -> Self {
+      match other {
         PortfolioKind::Default => Self::Default,
         PortfolioKind::User(num) => Self::User(num.into()),
       }
     }
   }
 
+  impl From<PortfolioKindV6> for PortfolioKind {
+    fn from(other: PortfolioKindV6) -> Self {
+      match other {
+        PortfolioKindV6::Default => Self::Default,
+        PortfolioKindV6::User(num) => Self::User(num.into()),
+      }
+    }
+  }
+
   impl From<PortfolioNumber> for PortfolioNumberV6 {
-    fn from(old: PortfolioNumber) -> Self {
-      Self(old.0)
+    fn from(other: PortfolioNumber) -> Self {
+      Self(other.0)
+    }
+  }
+
+  impl From<PortfolioNumberV6> for PortfolioNumber {
+    fn from(other: PortfolioNumberV6) -> Self {
+      Self(other.0)
     }
   }
 
