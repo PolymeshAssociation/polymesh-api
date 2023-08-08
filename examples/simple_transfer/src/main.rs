@@ -6,6 +6,9 @@ use sp_keyring::AccountKeyring;
 
 use polymesh_api::client::PairSigner;
 use polymesh_api::Api;
+use polymesh_api::polymesh::types::{
+  runtime::{RuntimeEvent, events},
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,6 +29,22 @@ async fn main() -> Result<()> {
     .execute(&mut alice)
     .await?;
   let events = res.events().await?;
-  println!("call1 events = {:#?}", events);
+  //println!("call1 events = {:#?}", events);
+  if let Some(events) = events {
+    for rec in &events.0 {
+      println!("  - {:?}: {:?}", rec.name(), rec.short_doc());
+      match &rec.event {
+        RuntimeEvent::Balances(events::BalancesEvent::Transfer(from_did, from, to_did, to, value, memo)) => {
+          println!("    - balances: transfer({:?}, {:?}, {:?}, {:?}, {:?}, {:?})", from_did, from, to_did, to, value, memo);
+        }
+        RuntimeEvent::Balances(ev) => {
+          println!("    - balances: other event: {ev:?}");
+        }
+        ev => {
+          println!("    - other: {ev:?}");
+        }
+      }
+    }
+  }
   Ok(())
 }

@@ -1002,14 +1002,14 @@ mod v14 {
       &self,
       fields: &[Field<PortableForm>],
       scope: &mut TypeParameters,
-    ) -> Option<TokenStream> {
+    ) -> Option<(bool, Vec<TokenStream>)> {
       let mut is_tuple = false;
       let mut named = Vec::new();
       let mut unnamed = Vec::new();
 
       // Check for unit type (i.e. empty field list).
       if fields.len() == 0 {
-        return Some(quote! {,});
+        return Some((true, unnamed));
       }
 
       for field in fields {
@@ -1038,13 +1038,9 @@ mod v14 {
       }
 
       if is_tuple {
-        Some(quote! { (#(#unnamed),*), })
+        Some((true, unnamed))
       } else {
-        Some(quote! {
-          {
-            #(#named),*
-          },
-        })
+        Some((false, named))
       }
     }
 
@@ -1507,16 +1503,41 @@ mod v14 {
         }
         TypeDef::Variant(enum_ty) => {
           let mut variants = TokenStream::new();
+          let mut runtime_events = TokenStream::new();
+          let is_runtime_event = is_runtime_type && ident == "RuntimeEvent";
           for variant in enum_ty.variants() {
             let idx = variant.index();
             let docs = variant.docs();
             let name = variant.name();
             let ident = format_ident!("{}", name);
-            let fields = self.gen_enum_fields(variant.fields(), &mut scope)?;
+            let (is_tuple, fields) = self.gen_enum_fields(variant.fields(), &mut scope)?;
+            let variant_ty = if is_runtime_event {
+              let event_ident = format_ident!("{}Event", name);
+              runtime_events.append_all(quote! {
+                pub type #event_ident = #(#fields),*;
+              });
+              quote! {
+                (events::#event_ident),
+              }
+            } else {
+              if is_tuple {
+                if fields.len() > 0 {
+                  quote! { (#(#fields),*), }
+                } else {
+                  quote! { , }
+                }
+              } else {
+                quote! {
+                  {
+                    #(#fields),*
+                  },
+                }
+              }
+            };
             variants.append_all(quote! {
               #(#[doc = #docs])*
               #[codec(index = #idx)]
-              #ident #fields
+              #ident #variant_ty
             });
           }
           if let Some(unused_params) = scope.get_unused_params() {
@@ -1524,9 +1545,19 @@ mod v14 {
               PhantomDataVariant(#unused_params)
             });
           }
+          if is_runtime_event {
+            runtime_events = quote! {
+              pub mod events {
+                use super::*;
+                #runtime_events
+              }
+            }
+          }
           let params = scope.get_type_params();
           (
             quote! {
+              #runtime_events
+
               #(#[doc = #docs])*
               #[derive(Clone, Debug, PartialEq, Eq)]
               #derive_ord
