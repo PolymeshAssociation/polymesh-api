@@ -38,7 +38,7 @@ pub enum CreatedIds {
 }
 
 /// Get ids from *Created events.
-pub async fn get_created_ids(mut res: TransactionResults) -> Result<Vec<CreatedIds>> {
+pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<CreatedIds>> {
   Ok(
     res
       .events()
@@ -78,7 +78,7 @@ pub async fn get_created_ids(mut res: TransactionResults) -> Result<Vec<CreatedI
 }
 
 /// Search transaction events for newly created identity id.
-pub async fn get_identity_id(mut res: TransactionResults) -> Result<Option<IdentityId>> {
+pub async fn get_identity_id(res: &mut TransactionResults) -> Result<Option<IdentityId>> {
   Ok(res.events().await?.and_then(|events| {
     for rec in &events.0 {
       match &rec.event {
@@ -96,7 +96,7 @@ pub async fn get_identity_id(mut res: TransactionResults) -> Result<Option<Ident
 }
 
 /// Search transaction events for VenueId.
-pub async fn get_venue_id(mut res: TransactionResults) -> Result<Option<VenueId>> {
+pub async fn get_venue_id(res: &mut TransactionResults) -> Result<Option<VenueId>> {
   Ok(res.events().await?.and_then(|events| {
     for rec in &events.0 {
       match &rec.event {
@@ -111,7 +111,7 @@ pub async fn get_venue_id(mut res: TransactionResults) -> Result<Option<VenueId>
 }
 
 /// Search transaction events for InstructionId.
-pub async fn get_instruction_id(mut res: TransactionResults) -> Result<Option<InstructionId>> {
+pub async fn get_instruction_id(res: &mut TransactionResults) -> Result<Option<InstructionId>> {
   Ok(res.events().await?.and_then(|events| {
     for rec in &events.0 {
       match &rec.event {
