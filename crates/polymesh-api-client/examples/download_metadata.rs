@@ -21,7 +21,10 @@ async fn main() -> Result<()> {
 
   let client = Client::new(&url).await?;
 
-  let rt = client.get_block_runtime_version(block_hash).await?.expect("RuntimeVersion");
+  let rt = client
+    .get_block_runtime_version(block_hash)
+    .await?
+    .expect("RuntimeVersion");
   println!(
     "Download chain metadata for Runtime: {}, spec: {}",
     rt.spec_name, rt.spec_version
@@ -29,7 +32,10 @@ async fn main() -> Result<()> {
   let filename = format!("{}_spec_{}.meta", rt.spec_name, rt.spec_version);
 
   // Get current Metadata.
-  let metadata = client.get_block_metadata(block_hash).await?.expect("Chain metadata");
+  let metadata = client
+    .get_block_metadata(block_hash)
+    .await?
+    .expect("Chain metadata");
 
   let raw_metadata = metadata.encode();
 

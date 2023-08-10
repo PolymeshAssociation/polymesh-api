@@ -6,20 +6,14 @@ use sp_runtime::MultiSignature;
 
 use codec::Encode;
 
-use polymesh_api_client_extras::*;
 use polymesh_api::client::{DefaultSigner, Signer};
 use polymesh_api::polymesh::types::{
-    primitive_types::H512,
-    polymesh_common_utilities::traits::identity::SecondaryKeyWithAuth,
-    polymesh_primitives::{
-      secondary_key::{
-        KeyRecord,
-        SecondaryKey,
-        Permissions,
-      },
-    },
+  polymesh_common_utilities::traits::identity::SecondaryKeyWithAuth,
+  polymesh_primitives::secondary_key::{KeyRecord, Permissions, SecondaryKey},
+  primitive_types::H512,
 };
 use polymesh_api::Api;
+use polymesh_api_client_extras::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -40,10 +34,10 @@ async fn main() -> Result<()> {
   let target_id = match identity.key_records(primary_key.account).await? {
     Some(KeyRecord::PrimaryKey(did)) => did,
     Some(_) => {
-        panic!("Must use primary key to add secondary keys.");
+      panic!("Must use primary key to add secondary keys.");
     }
     None => {
-        panic!("{:?} doesn't have an identity.", primary_key.account);
+      panic!("{:?} doesn't have an identity.", primary_key.account);
     }
   };
   let nonce = identity.off_chain_authorization_nonce(target_id).await?;
@@ -56,7 +50,7 @@ async fn main() -> Result<()> {
   let auth = TargetIdAuthorization {
     target_id,
     nonce,
-    expires_at
+    expires_at,
   };
   let auth_data = auth.encode();
 

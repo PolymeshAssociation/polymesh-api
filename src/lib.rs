@@ -4,8 +4,14 @@ extern crate alloc;
 
 use polymesh_api_codegen_macro::*;
 
-#[cfg_attr(not(feature = "download_metadata"), codegen_api(metadata_file = "specs/polymesh_dev_spec_6000000.meta"))]
-#[cfg_attr(feature = "download_metadata", codegen_api(metadata_url = "ws://localhost:9944"))]
+#[cfg_attr(
+  not(feature = "download_metadata"),
+  codegen_api(metadata_file = "specs/polymesh_dev_spec_6000000.meta")
+)]
+#[cfg_attr(
+  feature = "download_metadata",
+  codegen_api(metadata_url = "ws://localhost:9944")
+)]
 mod polymesh {}
 
 pub use polymesh::*;
@@ -26,32 +32,25 @@ pub mod v5_to_v6 {
   pub mod polymesh {}
 
   // V6 types.
-  use super::polymesh::types::{
-      polymesh_primitives::{
-          identity_id::{
-            PortfolioId as PortfolioIdV6,
-            PortfolioKind as PortfolioKindV6,
-            PortfolioNumber as PortfolioNumberV6,
-          },
-          portfolio::{Fund, FundDescription},
-          settlement::Leg as LegV6,
-          ticker::Ticker as TickerV6,
-          Memo as MemoV6,
-      },
+  use super::polymesh::types::polymesh_primitives::{
+    identity_id::{
+      PortfolioId as PortfolioIdV6, PortfolioKind as PortfolioKindV6,
+      PortfolioNumber as PortfolioNumberV6,
+    },
+    portfolio::{Fund, FundDescription},
+    settlement::Leg as LegV6,
+    ticker::Ticker as TickerV6,
+    Memo as MemoV6,
   };
   // V5 types.
   pub use polymesh::types::{
-      pallet_portfolio::MovePortfolioItem,
-      pallet_settlement::Leg,
-      polymesh_common_utilities::traits::balances,
-      polymesh_primitives::{
-          identity_id::{
-              PortfolioId,
-              PortfolioKind,
-              PortfolioNumber,
-          },
-          ticker::Ticker,
-      },
+    pallet_portfolio::MovePortfolioItem,
+    pallet_settlement::Leg,
+    polymesh_common_utilities::traits::balances,
+    polymesh_primitives::{
+      identity_id::{PortfolioId, PortfolioKind, PortfolioNumber},
+      ticker::Ticker,
+    },
   };
 
   impl From<balances::Memo> for MemoV6 {

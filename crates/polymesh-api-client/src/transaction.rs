@@ -172,7 +172,9 @@ impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
   pub async fn ok(&mut self) -> Result<()> {
     match self.extrinsic_result().await? {
       Some(res) => res.ok(),
-      None => Err(Error::ExtrinsicError("Failed to get extrinsic results".into())),
+      None => Err(Error::ExtrinsicError(
+        "Failed to get extrinsic results".into(),
+      )),
     }
   }
 
@@ -262,10 +264,7 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
   }
 
   /// Sign, submit and execute the transaction.
-  pub async fn execute(
-    &self,
-    signer: &mut impl Signer,
-  ) -> Result<TransactionResults<'api, Api>> {
+  pub async fn execute(&self, signer: &mut impl Signer) -> Result<TransactionResults<'api, Api>> {
     // Sign and submit transaction.
     let mut res = self.sign_submit_and_watch(signer).await?;
     // Wait for transaction to be included in a block.

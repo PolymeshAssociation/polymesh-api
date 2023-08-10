@@ -171,7 +171,7 @@ impl TypeDef {
             unimplemented!();
           }
         }
-      },
+      }
       TypeDef::Compact(def) => def.decode_value(type_lookup, input, is_compact),
     }
   }

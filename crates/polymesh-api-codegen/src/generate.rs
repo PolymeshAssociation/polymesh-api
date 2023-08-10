@@ -190,7 +190,8 @@ mod v14 {
 
       let call = quote! { runtime::RuntimeCall };
       let event = quote! { runtime::RuntimeEvent };
-      let external_modules = HashSet::from_iter(["sp_version", "sp_weights"].iter().map(|t| t.to_string()));
+      let external_modules =
+        HashSet::from_iter(["sp_version", "sp_weights"].iter().map(|t| t.to_string()));
       let rename_types = HashMap::from_iter(
         [
           (
@@ -382,9 +383,19 @@ mod v14 {
     // Rename pallet types Call/Event/Error.
     fn rename_pallet_types(&mut self) {
       // Collect pallet type ids.
-      let types: Vec<_> = self.md.pallets.iter().map(|p| {
-        (p.name.to_string(), p.calls.clone(), p.event.clone(), p.error.clone())
-      }).collect();
+      let types: Vec<_> = self
+        .md
+        .pallets
+        .iter()
+        .map(|p| {
+          (
+            p.name.to_string(),
+            p.calls.clone(),
+            p.event.clone(),
+            p.error.clone(),
+          )
+        })
+        .collect();
       for (p_name, call, event, error) in types {
         if let Some(c) = call {
           self.rename_pallet_type(c.ty.id(), &p_name, "Call");
@@ -527,7 +538,7 @@ mod v14 {
           // Remap runtime types to namespace `runtime`.
           let ident = format_ident!("{name}");
           (quote!(runtime::#ident), false)
-        },
+        }
         None => {
           let segments = ty.path().segments();
           let full_name = segments.join("::");
@@ -541,7 +552,7 @@ mod v14 {
             .cloned()
             .unwrap_or_else(|| segments_ident(segments, import_types));
           (type_ident, is_btree)
-        },
+        }
       };
 
       match ty.type_def() {
@@ -1164,7 +1175,12 @@ mod v14 {
       }
     }
 
-    fn gen_module_error(&self, _id: u32, ty: &Type<PortableForm>, ident: &str) -> Option<TokenStream> {
+    fn gen_module_error(
+      &self,
+      _id: u32,
+      ty: &Type<PortableForm>,
+      ident: &str,
+    ) -> Option<TokenStream> {
       let ty_ident = format_ident!("{ident}");
       let mut scope = TypeParameters::new(ty);
 
@@ -1427,7 +1443,13 @@ mod v14 {
       Some(code)
     }
 
-    fn gen_type(&self, id: u32, ty: &Type<PortableForm>, ident: &str, is_runtime_type: bool) -> Option<TokenStream> {
+    fn gen_type(
+      &self,
+      id: u32,
+      ty: &Type<PortableForm>,
+      ident: &str,
+      is_runtime_type: bool,
+    ) -> Option<TokenStream> {
       let full_name = self.id_to_full_name(id)?;
       if full_name == "sp_runtime::ModuleError" {
         return self.gen_module_error(id, ty, ident);
@@ -1614,7 +1636,7 @@ mod v14 {
               Some(name) => {
                 ty_ns = &runtime_ns;
                 (name, true)
-              },
+              }
               None => (ty_path.ident().unwrap(), false),
             };
 

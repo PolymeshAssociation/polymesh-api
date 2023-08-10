@@ -292,11 +292,7 @@ async fn main() -> Result<()> {
       match events.as_array() {
         // Skip empty blocks.
         Some(events) if events.len() > 1 => {
-          println!(
-            "block[{}] events: {}",
-            block.number,
-            events.len()
-          );
+          println!("block[{}] events: {}", block.number, events.len());
           /*
           println!(
             "block[{}] events: {}",

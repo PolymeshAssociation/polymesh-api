@@ -1,6 +1,6 @@
+use alloc::fmt;
 #[cfg(not(feature = "std"))]
 use alloc::{format, string::String, vec, vec::Vec};
-use alloc::fmt;
 
 use codec::{Decode, Encode, Output};
 
@@ -23,15 +23,15 @@ pub struct StorageKey(pub Vec<u8>);
 pub struct Encoded(pub Vec<u8>);
 
 impl From<Vec<u8>> for Encoded {
-    fn from(data: Vec<u8>) -> Self {
-        Self(data)
-    }
+  fn from(data: Vec<u8>) -> Self {
+    Self(data)
+  }
 }
 
 impl<T: Encode> From<&T> for Encoded {
-    fn from(v: &T) -> Self {
-        Self(v.encode())
-    }
+  fn from(v: &T) -> Self {
+    Self(v.encode())
+  }
 }
 
 impl Encode for Encoded {
@@ -95,7 +95,8 @@ impl fmt::Debug for Call {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.call.fmt(f)
   }
-}#[derive(Clone, Debug)]
+}
+#[derive(Clone, Debug)]
 pub struct AccountInfo {
   pub nonce: u32,
 }

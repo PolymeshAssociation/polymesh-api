@@ -653,15 +653,11 @@ impl InnerTypesRegistry {
   #[cfg(any(feature = "v12", feature = "v32"))]
   fn load_custom_types(&self, prefix: &str, spec: u32, types: &mut Types) -> Result<()> {
     // Load standard substrate types.
-    if !types
-      .try_load_schema(&format!("{}/init_{}.json", prefix, spec))
-    {
+    if !types.try_load_schema(&format!("{}/init_{}.json", prefix, spec)) {
       types.try_load_schema("./schemas/init_types.json");
     }
     // Load custom chain types.
-    if !types
-      .try_load_schema(&format!("{}/{}.json", prefix, spec))
-    {
+    if !types.try_load_schema(&format!("{}/{}.json", prefix, spec)) {
       // fallback.
       types.try_load_schema("schema.json");
     }

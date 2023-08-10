@@ -1,18 +1,14 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-use std::collections::HashMap;
 
 use anyhow::Result;
 
-use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
-use frame_metadata::v14::*;
-use scale_info::{
-  form::PortableForm,
-  PortableRegistry,
-  TypeDef,
-};
 use codec::Decode;
+use frame_metadata::v14::*;
+use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed};
+use scale_info::{form::PortableForm, PortableRegistry, TypeDef};
 
 pub struct StorageMetadata {
   pub prefix: String,
@@ -23,7 +19,11 @@ impl StorageMetadata {
   pub fn from_v14(md: PalletStorageMetadata<PortableForm>) -> Self {
     Self {
       prefix: md.prefix,
-      entries: md.entries.into_iter().map(|entry| (entry.name.clone(), entry)).collect(),
+      entries: md
+        .entries
+        .into_iter()
+        .map(|entry| (entry.name.clone(), entry))
+        .collect(),
     }
   }
 }
@@ -38,14 +38,23 @@ impl Metadata {
     let mut storage_prefix = HashMap::new();
     Self {
       types: md.types,
-      storage: md.pallets.into_iter().filter_map(|p| {
-        p.storage.map(|s| {
-          if let Some(old_pallet) = storage_prefix.insert(s.prefix.clone(), p.name.clone()) {
-            log::error!("Duplicate storage prefix '{}' used by {} and {}", s.prefix, old_pallet, p.name);
-          }
-          (p.name.clone(), StorageMetadata::from_v14(s))
+      storage: md
+        .pallets
+        .into_iter()
+        .filter_map(|p| {
+          p.storage.map(|s| {
+            if let Some(old_pallet) = storage_prefix.insert(s.prefix.clone(), p.name.clone()) {
+              log::error!(
+                "Duplicate storage prefix '{}' used by {} and {}",
+                s.prefix,
+                old_pallet,
+                p.name
+              );
+            }
+            (p.name.clone(), StorageMetadata::from_v14(s))
+          })
         })
-      }).collect(),
+        .collect(),
     }
   }
 
@@ -68,12 +77,18 @@ impl Metadata {
 
   fn resolve_name(&self, id: u32) -> String {
     let ty = self.resolve(id);
-    ty.path().ident().unwrap_or_else(|| {
-      format!("{:?}", ty.type_def())
-    })
+    ty.path()
+      .ident()
+      .unwrap_or_else(|| format!("{:?}", ty.type_def()))
   }
 
-  pub fn is_types_compatible(&self, seen: &mut HashMap<(u32, u32), bool>, other: &Self, id1: u32, id2: u32) -> bool {
+  pub fn is_types_compatible(
+    &self,
+    seen: &mut HashMap<(u32, u32), bool>,
+    other: &Self,
+    id1: u32,
+    id2: u32,
+  ) -> bool {
     let mut compatible = true;
 
     if let Some(comp) = seen.get(&(id1, id2)) {
@@ -115,7 +130,9 @@ impl Metadata {
             Some(variant2) => {
               if variant1.fields.len() != variant2.fields.len() {
                 compatible = false;
-                log::trace!("Enum variant has different number of fields: {variant1:?} != {variant2:?}");
+                log::trace!(
+                  "Enum variant has different number of fields: {variant1:?} != {variant2:?}"
+                );
               } else {
                 for (f1, f2) in variant1.fields.iter().zip(variant2.fields.iter()) {
                   if !self.is_types_compatible(seen, other, f1.ty().id(), f2.ty().id()) {
@@ -167,10 +184,20 @@ impl Metadata {
         }
       }
       (TypeDef::BitSequence(v1), TypeDef::BitSequence(v2)) => {
-        if !self.is_types_compatible(seen, other, v1.bit_order_type().id(), v2.bit_order_type().id()) {
+        if !self.is_types_compatible(
+          seen,
+          other,
+          v1.bit_order_type().id(),
+          v2.bit_order_type().id(),
+        ) {
           compatible = false;
         }
-        if !self.is_types_compatible(seen, other, v1.bit_store_type().id(), v2.bit_store_type().id()) {
+        if !self.is_types_compatible(
+          seen,
+          other,
+          v1.bit_store_type().id(),
+          v2.bit_store_type().id(),
+        ) {
           compatible = false;
         }
       }
@@ -189,7 +216,13 @@ impl Metadata {
     return compatible;
   }
 
-  pub fn is_storage_entry_compatible(&self, seen: &mut HashMap<(u32, u32), bool>, other: &Self, entry: &StorageEntryMetadata<PortableForm>, entry2: &StorageEntryMetadata<PortableForm>) -> bool {
+  pub fn is_storage_entry_compatible(
+    &self,
+    seen: &mut HashMap<(u32, u32), bool>,
+    other: &Self,
+    entry: &StorageEntryMetadata<PortableForm>,
+    entry2: &StorageEntryMetadata<PortableForm>,
+  ) -> bool {
     let mut compatible = true;
 
     if entry.modifier != entry2.modifier {
@@ -198,45 +231,64 @@ impl Metadata {
 
     // Check storage types.
     match &entry.ty {
-      StorageEntryType::Plain(ty1) => {
-        match &entry2.ty {
-          StorageEntryType::Plain(ty2) => {
-            if !self.is_types_compatible(seen, other, ty1.id(), ty2.id()) {
-              log::trace!("Storage entry {:?}: Plain type changed '{}' -> '{}'",
-                entry.name, self.resolve_name(ty1.id()), other.resolve_name(ty2.id()));
-              compatible = false;
-            }
-          }
-          _ => {
-            log::trace!("Storage entry {:?} type changed", entry.name);
+      StorageEntryType::Plain(ty1) => match &entry2.ty {
+        StorageEntryType::Plain(ty2) => {
+          if !self.is_types_compatible(seen, other, ty1.id(), ty2.id()) {
+            log::trace!(
+              "Storage entry {:?}: Plain type changed '{}' -> '{}'",
+              entry.name,
+              self.resolve_name(ty1.id()),
+              other.resolve_name(ty2.id())
+            );
             compatible = false;
           }
         }
-      }
-      StorageEntryType::Map { hashers, key, value } => {
-        match &entry2.ty {
-          StorageEntryType::Map { hashers: hashers2, key: key2, value: value2 } => {
-            if hashers != hashers2 {
-              compatible = false;
-              log::trace!("Hashers changed on storage entry {:?}: {hashers:?} -> {hashers2:?}", entry.name);
-            }
-            if !self.is_types_compatible(seen, other, key.id(), key2.id()) {
-              log::trace!("Storage entry {:?}: map key type changed '{}' -> '{}'",
-                entry.name, self.resolve_name(key.id()), other.resolve_name(key2.id()));
-              compatible = false;
-            }
-            if !self.is_types_compatible(seen, other, value.id(), value2.id()) {
-              log::trace!("Storage entry {:?}: map value type changed '{}' -> '{}'",
-                entry.name, self.resolve_name(value.id()), other.resolve_name(value2.id()));
-              compatible = false;
-            }
+        _ => {
+          log::trace!("Storage entry {:?} type changed", entry.name);
+          compatible = false;
+        }
+      },
+      StorageEntryType::Map {
+        hashers,
+        key,
+        value,
+      } => match &entry2.ty {
+        StorageEntryType::Map {
+          hashers: hashers2,
+          key: key2,
+          value: value2,
+        } => {
+          if hashers != hashers2 {
+            compatible = false;
+            log::trace!(
+              "Hashers changed on storage entry {:?}: {hashers:?} -> {hashers2:?}",
+              entry.name
+            );
           }
-          _ => {
-            log::trace!("Storage entry {:?} type changed", entry.name);
+          if !self.is_types_compatible(seen, other, key.id(), key2.id()) {
+            log::trace!(
+              "Storage entry {:?}: map key type changed '{}' -> '{}'",
+              entry.name,
+              self.resolve_name(key.id()),
+              other.resolve_name(key2.id())
+            );
+            compatible = false;
+          }
+          if !self.is_types_compatible(seen, other, value.id(), value2.id()) {
+            log::trace!(
+              "Storage entry {:?}: map value type changed '{}' -> '{}'",
+              entry.name,
+              self.resolve_name(value.id()),
+              other.resolve_name(value2.id())
+            );
             compatible = false;
           }
         }
-      }
+        _ => {
+          log::trace!("Storage entry {:?} type changed", entry.name);
+          compatible = false;
+        }
+      },
     }
 
     return compatible;
