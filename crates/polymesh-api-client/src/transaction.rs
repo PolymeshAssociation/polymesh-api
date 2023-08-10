@@ -238,7 +238,10 @@ pub struct Call<Api: ChainApi> {
 
 impl<Api: ChainApi> Call<Api> {
   pub fn new(api: &Api, call: Api::RuntimeCall) -> Self {
-    Self { api: api.clone(), call }
+    Self {
+      api: api.clone(),
+      call,
+    }
   }
 
   pub fn runtime_call(&self) -> &Api::RuntimeCall {
@@ -258,7 +261,7 @@ impl<Api: ChainApi> Call<Api> {
   pub async fn submit_unsigned_and_watch(&self) -> Result<TransactionResults<Api>> {
     Ok(
       self
-        .submit_and_watch(ExtrinsicV4::unsigned(self.encoded()))
+        .submit_raw_xt_and_watch(ExtrinsicV4::unsigned(self.encoded()))
         .await?,
     )
   }
@@ -297,7 +300,7 @@ impl<Api: ChainApi> Call<Api> {
 
     let xt = ExtrinsicV4::signed(account, sig, extra, encoded_call);
 
-    let res = self.submit_and_watch(xt).await?;
+    let res = self.submit_raw_xt_and_watch(xt).await?;
 
     // Update nonce if the call was submitted.
     signer.set_nonce(nonce + 1);
