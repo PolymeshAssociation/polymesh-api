@@ -18,5 +18,5 @@ sp-runtime = { version = "7.0", default-features = false }
 sp-core = { version = "7.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
-polymesh-api = { version = "1.1", path = "../../" }
-polymesh-api-client-extras = { version = "1.0", path = "../../crates/polymesh-api-client-extras" }
+polymesh-api = { version = "2.0", path = "../../" }
+polymesh-api-client-extras = { version = "2.0", path = "../../crates/polymesh-api-client-extras" }
