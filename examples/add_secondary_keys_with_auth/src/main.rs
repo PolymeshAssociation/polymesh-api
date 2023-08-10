@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
     .call()
     .identity()
     .add_secondary_keys_with_authorization(keys, expires_at)?
-    .sign_submit_and_watch(&mut primary_key)
+    .submit_and_watch(&mut primary_key)
     .await?;
   let events = res.events().await?;
   println!("Add secondary keys with auth: events = {:#?}", events);

@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     "call_json = {:#?}",
     serde_json::to_string(call.runtime_call())?
   );
-  let mut res1 = call.sign_submit_and_watch(&mut alice).await?;
+  let mut res1 = call.submit_and_watch(&mut alice).await?;
 
   // Test batches.
   let call = api.call().utility().batch(vec![
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     "call_json = {:#?}",
     serde_json::to_string(call.runtime_call())?
   );
-  let mut res2 = call.sign_submit_and_watch(&mut alice).await?;
+  let mut res2 = call.submit_and_watch(&mut alice).await?;
   println!("call1 in-block = {:?}", res1.wait_in_block().await);
   println!("call2 in-block = {:?}", res2.wait_in_block().await);
 

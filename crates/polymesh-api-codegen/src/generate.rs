@@ -827,7 +827,7 @@ mod v14 {
         quote! {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
-          pub fn #func_ident(&self, #fields) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
+          pub fn #func_ident(&self, #fields) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
             self.api.wrap_call(#call_ty::#mod_call_ident(types::#mod_call::#func_ident { #field_names }))
           }
 
@@ -844,7 +844,7 @@ mod v14 {
         quote! {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
-          pub fn #func_ident(&self) -> ::polymesh_api_client::error::Result<super::super::WrappedCall<'api>> {
+          pub fn #func_ident(&self) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
             self.api.wrap_call(#call_ty::#mod_call_ident(types::#mod_call::#func_ident))
           }
 
@@ -1706,6 +1706,7 @@ mod v14 {
           #( #modules )*
         }
 
+        #[derive(Clone)]
         pub struct Api {
           #[cfg(not(feature = "ink"))]
           client: ::polymesh_api_client::Client,
@@ -1814,20 +1815,23 @@ mod v14 {
         }
 
         #[cfg(not(feature = "ink"))]
-        pub type WrappedCall<'api> = ::polymesh_api_client::Call<'api, Api>;
+        pub type WrappedCall = ::polymesh_api_client::Call<Api>;
+        #[cfg(not(feature = "ink"))]
+        pub type TransactionResults = ::polymesh_api_client::TransactionResults<Api>;
+
         #[cfg(feature = "ink")]
         pub type WrappedCall = ::polymesh_api_ink::Call;
 
         #[cfg(not(feature = "ink"))]
-        impl<'api> From<WrappedCall<'api>> for types::#call_ty {
-          fn from(wrapped: WrappedCall<'api>) -> Self {
+        impl From<WrappedCall> for types::#call_ty {
+          fn from(wrapped: WrappedCall) -> Self {
             wrapped.into_runtime_call()
           }
         }
 
         #[cfg(not(feature = "ink"))]
-        impl<'api> From<&WrappedCall<'api>> for types::#call_ty {
-          fn from(wrapped: &WrappedCall<'api>) -> Self {
+        impl From<&WrappedCall> for types::#call_ty {
+          fn from(wrapped: &WrappedCall) -> Self {
             wrapped.runtime_call().clone()
           }
         }

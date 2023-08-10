@@ -60,7 +60,7 @@ impl<Api: ChainApi> ExtrinsicResult<Api> {
 }
 
 #[async_trait]
-pub trait ChainApi {
+pub trait ChainApi: Clone {
   type RuntimeCall: RuntimeEnumTraits;
   type RuntimeEvent: RuntimeEnumTraits;
   type DispatchInfo: RuntimeTraits;
@@ -90,8 +90,8 @@ pub trait ChainApi {
   fn client(&self) -> &Client;
 }
 
-pub struct TransactionResults<'api, Api: ChainApi> {
-  api: &'api Api,
+pub struct TransactionResults<Api: ChainApi> {
+  api: Api,
   sub: Option<Subscription<TransactionStatus>>,
   tx_hash: TxHash,
   status: Option<TransactionStatus>,
@@ -101,10 +101,10 @@ pub struct TransactionResults<'api, Api: ChainApi> {
   finalized: bool,
 }
 
-impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
-  pub fn new(api: &'api Api, sub: Subscription<TransactionStatus>, tx_hash: TxHash) -> Self {
+impl<Api: ChainApi> TransactionResults<Api> {
+  pub fn new(api: &Api, sub: Subscription<TransactionStatus>, tx_hash: TxHash) -> Self {
     Self {
-      api,
+      api: api.clone(),
       sub: Some(sub),
       tx_hash,
       status: None,
@@ -231,14 +231,14 @@ impl<'api, Api: ChainApi> TransactionResults<'api, Api> {
   }
 }
 
-pub struct Call<'api, Api: ChainApi> {
-  pub api: &'api Api,
+pub struct Call<Api: ChainApi> {
+  pub api: Api,
   call: Api::RuntimeCall,
 }
 
-impl<'api, Api: ChainApi> Call<'api, Api> {
-  pub fn new(api: &'api Api, call: Api::RuntimeCall) -> Self {
-    Self { api, call }
+impl<Api: ChainApi> Call<Api> {
+  pub fn new(api: &Api, call: Api::RuntimeCall) -> Self {
+    Self { api: api.clone(), call }
   }
 
   pub fn runtime_call(&self) -> &Api::RuntimeCall {
@@ -255,7 +255,7 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
   }
 
   /// Submit the transaction unsigned.
-  pub async fn submit_unsigned_and_watch(&self) -> Result<TransactionResults<'api, Api>> {
+  pub async fn submit_unsigned_and_watch(&self) -> Result<TransactionResults<Api>> {
     Ok(
       self
         .submit_and_watch(ExtrinsicV4::unsigned(self.encoded()))
@@ -264,9 +264,9 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
   }
 
   /// Sign, submit and execute the transaction.
-  pub async fn execute(&self, signer: &mut impl Signer) -> Result<TransactionResults<'api, Api>> {
+  pub async fn execute(&self, signer: &mut impl Signer) -> Result<TransactionResults<Api>> {
     // Sign and submit transaction.
-    let mut res = self.sign_submit_and_watch(signer).await?;
+    let mut res = self.submit_and_watch(signer).await?;
     // Wait for transaction to be included in a block.
     res.ok().await?;
     // Transaction successful.
@@ -276,10 +276,10 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
   /// Sign and submit the transaction, but don't wait for it to execute.
   ///
   /// The return values can be used to wait for transaction to execute and get the results.
-  pub async fn sign_submit_and_watch(
+  pub async fn submit_and_watch(
     &self,
     signer: &mut impl Signer,
-  ) -> Result<TransactionResults<'api, Api>> {
+  ) -> Result<TransactionResults<Api>> {
     let client = self.api.client();
     let account = signer.account();
     // Query account nonce.
@@ -307,16 +307,16 @@ impl<'api, Api: ChainApi> Call<'api, Api> {
 
   /// Submit a signed/unsigned transaction, but don't wait for it to execute.
   ///
-  /// You most likely want to uses either [`Self::execute`] or [`Self::sign_submit_and_watch`]
+  /// You most likely want to uses either [`Self::execute`] or [`Self::submit_and_watch`]
   /// not this method.
-  pub async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<TransactionResults<'api, Api>> {
+  pub async fn submit_raw_xt_and_watch(&self, xt: ExtrinsicV4) -> Result<TransactionResults<Api>> {
     let (tx_hex, tx_hash) = xt.as_hex_and_hash();
     let status = self.api.client().submit_and_watch(tx_hex).await?;
-    Ok(TransactionResults::new(self.api, status, tx_hash))
+    Ok(TransactionResults::new(&self.api, status, tx_hash))
   }
 }
 
-impl<'api, Api: ChainApi> Encode for Call<'api, Api> {
+impl<Api: ChainApi> Encode for Call<Api> {
   fn size_hint(&self) -> usize {
     self.call.size_hint()
   }
@@ -325,7 +325,7 @@ impl<'api, Api: ChainApi> Encode for Call<'api, Api> {
   }
 }
 
-impl<'api, Api: ChainApi> std::fmt::Debug for Call<'api, Api> {
+impl<Api: ChainApi> std::fmt::Debug for Call<Api> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     self.call.fmt(f)
   }
