@@ -720,7 +720,7 @@ mod v14 {
         let event_ty = &self.event;
         quote!(::alloc::vec::Vec<#api_interface::EventRecord<types::#event_ty>>)
       } else {
-        self.type_name(value_ty, false, false).unwrap()
+        self.type_name(value_ty, false, true).unwrap()
       };
 
       let (return_ty, return_value) = match md.modifier {
