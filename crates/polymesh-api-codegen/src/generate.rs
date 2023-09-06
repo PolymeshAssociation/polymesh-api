@@ -321,6 +321,13 @@ mod v14 {
           ("InstructionStatus", &ink_enum_derives),
           ("LegStatus", &ink_enum_derives),
           ("SettlementType", &ink_enum_derives),
+          // Confidential Asset types.
+          ("LegParty", &ink_enum_derives),
+          ("TransactionStatus", &ink_enum_derives),
+          ("TransactionId", &ink_id_derives),
+          ("TransactionLegId", &ink_id_derives),
+          ("MercatAccount", &ink_id_derives),
+          ("CompressedElgamalPublicKey", &ink_id_derives),
         ]
         .into_iter()
         .map(|(name, code)| (name.to_string(), code.clone())),
