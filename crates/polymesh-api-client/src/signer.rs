@@ -6,12 +6,15 @@ use sp_std::prelude::*;
 
 use async_trait::async_trait;
 
+#[cfg(not(feature = "std"))]
+use alloc::string::ToString;
+
 use crate::*;
 
 #[cfg(feature = "std")]
 pub type DefaultSigner = PairSigner<sp_core::sr25519::Pair>;
 #[cfg(not(feature = "std"))]
-pub type DefaultSigner = PairSigner<subxt_signer::sr25519::Pair>;
+pub type DefaultSigner = PairSigner<subxt_signer::sr25519::Keypair>;
 
 #[async_trait]
 pub trait Signer {
