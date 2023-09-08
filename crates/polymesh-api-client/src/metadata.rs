@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 #[cfg(feature = "std")]
 use std::{
   collections::BTreeMap,

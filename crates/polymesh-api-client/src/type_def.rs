@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use core::fmt;
 
 #[cfg(feature = "serde")]

@@ -345,7 +345,7 @@ impl From<&AccountId> for sp_runtime::AccountId32 {
   }
 }
 
-pub type GenericAddress = MultiAddress<AccountId, ()>;
+pub type GenericAddress = MultiAddress<AccountId, u32>;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]

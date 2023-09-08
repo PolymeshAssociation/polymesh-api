@@ -1,6 +1,5 @@
+#![allow(deprecated)]
 use std::collections::{HashMap, HashSet};
-
-use anyhow::{anyhow, Result};
 
 use heck::ToSnakeCase;
 
@@ -1864,18 +1863,19 @@ mod v14 {
   }
 }
 
-pub fn generate(metadata: RuntimeMetadataPrefixed) -> Result<TokenStream> {
+pub fn generate(metadata: RuntimeMetadataPrefixed) -> Result<TokenStream, String> {
   match metadata.1 {
     #[cfg(feature = "v14")]
     RuntimeMetadata::V14(v14) => Ok(v14::generate(v14)),
     _ => {
-      return Err(anyhow!("Unsupported metadata version").into());
+      return Err(format!("Unsupported metadata version"));
     }
   }
 }
 
-pub fn macro_codegen(mut buf: &[u8], mod_ident: TokenStream) -> Result<TokenStream> {
-  let metadata = RuntimeMetadataPrefixed::decode(&mut buf)?;
+pub fn macro_codegen(mut buf: &[u8], mod_ident: TokenStream) -> Result<TokenStream, String> {
+  let metadata = RuntimeMetadataPrefixed::decode(&mut buf)
+    .map_err(|e| e.to_string())?;
 
   let code = generate(metadata)?;
   Ok(quote! {
