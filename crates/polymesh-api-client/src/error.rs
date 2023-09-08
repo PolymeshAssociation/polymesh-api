@@ -106,6 +106,24 @@ impl From<sp_core::crypto::SecretStringError> for Error {
   }
 }
 
+impl From<subxt_signer::sr25519::Error> for Error {
+  fn from(e: subxt_signer::sr25519::Error) -> Self {
+    Self::SecretStringError(format!("{e:?}"))
+  }
+}
+
+impl From<subxt_signer::ecdsa::Error> for Error {
+  fn from(e: subxt_signer::ecdsa::Error) -> Self {
+    Self::SecretStringError(format!("{e:?}"))
+  }
+}
+
+impl From<subxt_signer::SecretUriError> for Error {
+  fn from(e: subxt_signer::SecretUriError) -> Self {
+    Self::SecretStringError(format!("{e:?}"))
+  }
+}
+
 #[cfg(not(feature = "std"))]
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

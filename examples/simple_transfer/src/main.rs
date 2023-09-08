@@ -15,7 +15,8 @@ async fn main() -> Result<()> {
 
   let url = env::args().nth(1).expect("Missing ws url");
 
-  let mut alice = PairSigner::new(AccountKeyring::Alice.pair());
+  //let mut alice = PairSigner::new(AccountKeyring::Alice.pair());
+  let mut alice = PairSigner::new(subxt_signer::sr25519::dev::alice());
 
   let api = Api::new(&url).await?;
 
