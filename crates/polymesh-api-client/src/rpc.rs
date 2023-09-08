@@ -1,5 +1,7 @@
-use jsonrpsee::core::client::{ClientT, Subscription, SubscriptionClientT};
-use jsonrpsee::types::ParamsSer;
+use jsonrpsee::core::{
+  client::{ClientT, Subscription, SubscriptionClientT, BatchResponse},
+  params::{ArrayParams, BatchRequestBuilder},
+};
 #[cfg(target_arch = "wasm32")]
 use jsonrpsee::wasm_client::{Client as WasmClient, WasmClientBuilder};
 #[cfg(not(target_arch = "wasm32"))]
@@ -72,7 +74,7 @@ impl RpcClient {
       url.to_string()
     };
     let client = WsClientBuilder::default()
-      .max_request_body_size(1024 * 1024 * 1024)
+      .max_request_size(1024 * 1024 * 1024)
       .build(&url)
       .await?;
     Ok(Self {
@@ -83,7 +85,7 @@ impl RpcClient {
   #[cfg(not(target_arch = "wasm32"))]
   fn new_http(url: &str) -> Result<Self> {
     let client = HttpClientBuilder::default()
-      .max_request_body_size(1024 * 1024 * 1024)
+      .max_request_size(1024 * 1024 * 1024)
       .build(&url)?;
     Ok(Self {
       client: InnerRpcClient::Http(client),
@@ -102,7 +104,7 @@ impl RpcClient {
   pub async fn subscribe<'a, Notif>(
     &self,
     subscribe_method: &'a str,
-    params: Option<ParamsSer<'a>>,
+    params: ArrayParams,
     unsubscribe_method: &'a str,
   ) -> Result<Subscription<Notif>>
   where
@@ -130,7 +132,7 @@ impl RpcClient {
   }
 
   #[cfg(feature = "serde")]
-  pub async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
+  pub async fn request<'a, R>(&self, method: &'a str, params: ArrayParams) -> Result<R>
   where
     R: DeserializeOwned,
   {
@@ -147,10 +149,10 @@ impl RpcClient {
   #[cfg(feature = "serde")]
   pub async fn batch_request<'a, R>(
     &self,
-    batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,
-  ) -> Result<Vec<R>>
+    batch: BatchRequestBuilder<'a>,
+  ) -> Result<BatchResponse<'a, R>>
   where
-    R: DeserializeOwned + Default + Clone,
+    R: DeserializeOwned + Default + Clone + alloc::fmt::Debug + 'a,
   {
     Ok(match &self.client {
       #[cfg(not(target_arch = "wasm32"))]

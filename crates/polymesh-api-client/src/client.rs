@@ -11,7 +11,8 @@ use alloc::{
 
 pub use jsonrpsee::core::client::Subscription;
 use jsonrpsee::rpc_params;
-use jsonrpsee::types::ParamsSer;
+use jsonrpsee::core::params::{ArrayParams, BatchRequestBuilder};
+use jsonrpsee::core::client::BatchResponse;
 
 use codec::Decode;
 
@@ -114,7 +115,7 @@ impl InnerClient {
   }
 
   #[cfg(feature = "serde")]
-  async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
+  async fn request<'a, R>(&self, method: &'a str, params: ArrayParams) -> Result<R>
   where
     R: DeserializeOwned,
   {
@@ -124,10 +125,10 @@ impl InnerClient {
   #[cfg(feature = "serde")]
   async fn batch_request<'a, R>(
     &self,
-    batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,
-  ) -> Result<Vec<R>>
+    batch: BatchRequestBuilder<'a>,
+  ) -> Result<BatchResponse<'a, R>>
   where
-    R: DeserializeOwned + Default + Clone,
+    R: DeserializeOwned + Default + Clone + alloc::fmt::Debug + 'a,
   {
     self.rpc.batch_request(batch).await
   }
@@ -136,7 +137,7 @@ impl InnerClient {
   async fn subscribe<'a, Notif>(
     &self,
     subscribe_method: &'a str,
-    params: Option<ParamsSer<'a>>,
+    params: ArrayParams,
     unsubscribe_method: &'a str,
   ) -> Result<Subscription<Notif>>
   where
@@ -295,7 +296,7 @@ impl Client {
 
   /// Make a RPC request to the node.
   #[cfg(feature = "serde")]
-  pub async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
+  pub async fn request<'a, R>(&self, method: &'a str, params: ArrayParams) -> Result<R>
   where
     R: DeserializeOwned,
   {
@@ -306,10 +307,10 @@ impl Client {
   #[cfg(feature = "serde")]
   pub async fn batch_request<'a, R>(
     &self,
-    batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,
-  ) -> Result<Vec<R>>
+    batch: BatchRequestBuilder<'a>,
+  ) -> Result<BatchResponse<'a, R>>
   where
-    R: DeserializeOwned + Default + Clone,
+    R: DeserializeOwned + Default + Clone + alloc::fmt::Debug + 'a,
   {
     self.inner.batch_request(batch).await
   }
@@ -319,7 +320,7 @@ impl Client {
   pub async fn subscribe<'a, Notif>(
     &self,
     subscribe_method: &'a str,
-    params: Option<ParamsSer<'a>>,
+    params: ArrayParams,
     unsubscribe_method: &'a str,
   ) -> Result<Subscription<Notif>>
   where

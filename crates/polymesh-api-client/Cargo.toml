@@ -37,12 +37,12 @@ async-trait = { version = "0.1" }
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.19", features = ["full"] }
-jsonrpsee = { version = "0.14", default-features = false, features = ["client"] }
+jsonrpsee = { version = "0.20", default-features = false, features = ["client"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { version = "1", features = ["rt"] }
-jsonrpsee = { version = "0.14", default-features = false, features = ["wasm-client"] }
+jsonrpsee = { version = "0.20", default-features = false, features = ["wasm-client"] }
 
 sp-application-crypto = { version = "23.0", default-features = false }
 sp-io = { version = "23.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
