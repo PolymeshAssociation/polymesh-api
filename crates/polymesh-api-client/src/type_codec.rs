@@ -1,6 +1,13 @@
 use codec::{Compact, Decode, Input};
 use serde_json::{json, Map, Value};
 
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+  string::String,
+};
+
 use crate::error::*;
 use crate::schema::*;
 use crate::type_def::*;

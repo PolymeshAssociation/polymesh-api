@@ -30,6 +30,7 @@ default = [ "std", "v14" ]
 # Support downloading chain metadata from a RPC node.
 download_metadata = [
   "polymesh-api-client",
+  "polymesh-api-client/type_info",
 ]
 
 ink = [

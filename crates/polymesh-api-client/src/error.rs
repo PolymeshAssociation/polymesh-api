@@ -1,51 +1,103 @@
+#[cfg(feature = "std")]
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format, fmt,
+  string::String,
+};
+
+#[derive(Debug)]
+#[cfg_attr(feature = "std", derive(Error))]
 pub enum Error {
-  #[error("Std io error: {0}")]
-  StdIo(#[from] std::io::Error),
+  #[cfg_attr(feature = "std", error("Std io error: {0}"))]
+  #[cfg(feature = "std")]
+  StdIo(std::io::Error),
 
-  #[error("Json error: {0}")]
-  Json(#[from] serde_json::Error),
+  #[cfg_attr(feature = "std", error("Json error: {0}"))]
+  Json(serde_json::Error),
 
-  #[error("hex error: {0}")]
-  Hex(#[from] hex::FromHexError),
+  #[cfg_attr(feature = "std", error("hex error: {0}"))]
+  Hex(hex::FromHexError),
 
-  #[error("http error: {0}")]
-  Http(#[from] http::Error),
+  #[cfg_attr(feature = "std", error("http error: {0}"))]
+  Http(http::Error),
 
-  #[error("http uri error: {0}")]
-  HttpUri(#[from] http::uri::InvalidUri),
+  #[cfg_attr(feature = "std", error("http uri error: {0}"))]
+  HttpUri(http::uri::InvalidUri),
 
-  #[error("parity-scale-codec error: {0}")]
-  ParityScaleCodec(#[from] codec::Error),
+  #[cfg_attr(feature = "std", error("parity-scale-codec error: {0}"))]
+  ParityScaleCodec(codec::Error),
 
-  #[error("sp-core crypto secret error: {0}")]
+  #[cfg_attr(feature = "std", error("sp-core crypto secret error: {0}"))]
   SecretStringError(String),
 
-  #[error("Call API incompatible with connected chain: {0}")]
+  #[cfg_attr(feature = "std", error("Call API incompatible with connected chain: {0}"))]
   IncompatibleCall(String),
 
-  #[error("Schema failed to parse: {0}")]
+  #[cfg_attr(feature = "std", error("Schema failed to parse: {0}"))]
   SchemaParseFailed(String),
 
-  #[error("Metadata failed to parse: {0}")]
+  #[cfg_attr(feature = "std", error("Metadata failed to parse: {0}"))]
   MetadataParseFailed(String),
 
-  #[error("ExtrinsicError: {0}")]
+  #[cfg_attr(feature = "std", error("ExtrinsicError: {0}"))]
   ExtrinsicError(String),
 
-  #[error("RpcClient: {0}")]
+  #[cfg_attr(feature = "std", error("RpcClient: {0}"))]
   RpcClient(String),
 
-  #[error("Decode type failed: {0}")]
+  #[cfg_attr(feature = "std", error("Decode type failed: {0}"))]
   DecodeTypeFailed(String),
 
-  #[error("Signing transaction failed: {0}")]
+  #[cfg_attr(feature = "std", error("Signing transaction failed: {0}"))]
   SigningTransactionFailed(String),
 
-  #[error("Jsonrpsee error: {0}")]
-  Jsonrpsee(#[from] jsonrpsee::core::Error),
+  #[cfg_attr(feature = "std", error("Jsonrpsee error: {0}"))]
+  Jsonrpsee(jsonrpsee::core::Error),
+}
+
+#[cfg(feature = "std")]
+impl From<std::io::Error> for Error {
+  fn from(e: std::io::Error) -> Self {
+    Self::StdIo(e)
+  }
+}
+
+impl From<serde_json::Error> for Error {
+  fn from(e: serde_json::Error) -> Self {
+    Self::Json(e)
+  }
+}
+
+impl From<hex::FromHexError> for Error {
+  fn from(e: hex::FromHexError) -> Self {
+    Self::Hex(e)
+  }
+}
+
+impl From<http::Error> for Error {
+  fn from(e: http::Error) -> Self {
+    Self::Http(e)
+  }
+}
+
+impl From<http::uri::InvalidUri> for Error {
+  fn from(e: http::uri::InvalidUri) -> Self {
+    Self::HttpUri(e)
+  }
+}
+
+impl From<codec::Error> for Error {
+  fn from(e: codec::Error) -> Self {
+    Self::ParityScaleCodec(e)
+  }
+}
+
+impl From<jsonrpsee::core::Error> for Error {
+  fn from(e: jsonrpsee::core::Error) -> Self {
+    Self::Jsonrpsee(e)
+  }
 }
 
 impl From<sp_core::crypto::SecretStringError> for Error {
@@ -54,4 +106,11 @@ impl From<sp_core::crypto::SecretStringError> for Error {
   }
 }
 
-pub type Result<T, E = Error> = std::result::Result<T, E>;
+#[cfg(not(feature = "std"))]
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+pub type Result<T, E = Error> = core::result::Result<T, E>;

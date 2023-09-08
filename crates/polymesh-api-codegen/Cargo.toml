@@ -24,7 +24,7 @@ quote = "1"
 serde = "1.0"
 serde-big-array = "0.4.1"
 
-sp-core-hashing = { version = "5.0", default-features = false }
+sp-core-hashing = { version = "6.0", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { version = "=2.3", default-features = false }
@@ -40,11 +40,12 @@ lazy_static = "1.4.0"
 async-trait = "0.1"
 
 tokio = { version = "1.19", features = ["full"] }
-polymesh-api-client = { version = "2.0", path = "../polymesh-api-client", default-features = false }
+polymesh-api-client = { version = "2.0", path = "../polymesh-api-client", default-features = false, features = ["type_info"] }
 rustfmt-wrapper = "0.2.0"
 
 # substrate
-sp-keyring = { version = "7.0.0", default-features = false }
+sp-arithmetic = { version = "9.0", default-features = false }
+sp-keyring = { version = "12.0.0", default-features = false }
 
 [features]
 default = [ "std", "serde", "v12", "v13", "v14" ]

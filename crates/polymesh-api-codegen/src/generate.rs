@@ -778,7 +778,7 @@ mod v14 {
           #(#[doc = #docs])*
           #[cfg(not(feature = "ink"))]
           pub async fn #storage_ident(&self) -> ::polymesh_api_client::error::Result<#return_ty> {
-            let key = ::polymesh_api_client::StorageKey(vec![#(#key_prefix,)*]);
+            let key = ::polymesh_api_client::StorageKey(::alloc::vec![#(#key_prefix,)*]);
             let value = self.api.client.get_storage_by_key(key, self.at).await?;
             #return_value
           }
@@ -1776,6 +1776,8 @@ mod v14 {
           }
         }
 
+        #[cfg(not(feature = "ink"))]
+        use alloc::boxed::Box;
         #[async_trait::async_trait]
         #[cfg(not(feature = "ink"))]
         impl ::polymesh_api_client::ChainApi for Api {

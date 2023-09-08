@@ -1,5 +1,6 @@
 use sp_core::{sr25519, Pair};
 use sp_runtime::MultiSignature;
+use sp_std::prelude::*;
 
 use async_trait::async_trait;
 
@@ -49,6 +50,7 @@ where
   /// Generate signing key pair from string `s`.
   ///
   /// See [`from_string_with_seed`](Pair::from_string_with_seed) for more extensive documentation.
+  #[cfg(feature = "std")]
   pub fn from_string(s: &str, password_override: Option<&str>) -> Result<Self> {
     Ok(Self::new(P::from_string(s, password_override)?))
   }

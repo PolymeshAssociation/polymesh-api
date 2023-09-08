@@ -22,9 +22,11 @@ impl-serde = { version = "0.3.1", default-features = false, optional = true }
 serde-big-array = { version = "0.4.1", optional = true }
 
 # substrate
-sp-core = { version = "7.0", default-features = false }
-sp-runtime = { version = "7.0", default-features = false }
-sp-weights = { version = "4.0", default-features = false }
+sp-core = { version = "11.0", default-features = false }
+sp-std = { version = "6.0", default-features = false }
+primitive-types = { version = "0.12.0", default-features = false, features = ["codec"] }
+sp-runtime = { version = "12.0", default-features = false }
+sp-weights = { version = "8.0", default-features = false }
 sp-arithmetic = { version = "9.0", default-features = false }
 frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
@@ -35,15 +37,15 @@ async-trait = { version = "0.1" }
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.19", features = ["full"] }
-jsonrpsee = { version = "0.14", features = ["client"] }
+jsonrpsee = { version = "0.14", default-features = false, features = ["client"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
-jsonrpsee = { version = "0.14", features = ["wasm-client"] }
+tokio = { version = "1", features = ["rt"] }
+jsonrpsee = { version = "0.14", default-features = false, features = ["wasm-client"] }
 
-sp-application-crypto = { version = "7.0", default-features = false }
-sp-io = { version = "7.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
+sp-application-crypto = { version = "12.0", default-features = false }
+sp-io = { version = "12.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
 
 [dev-dependencies]
 anyhow = "1"
@@ -61,14 +63,18 @@ wasm = [
 ]
 
 type_info = [
-  "scale-info"
+  "scale-info",
+  "serde",
+  "primitive-types/scale-info"
 ]
 
 serde = [
   "impl-serde",
   "serde-big-array",
   "sp-core/serde",
-  "sp-runtime/serde",
+  "sp-core/impl-serde",
+  "sp-weights/serde",
+  "primitive-types/impl-serde",
   "sp-arithmetic/serde",
   "sp-application-crypto/serde"
 ]
@@ -81,6 +87,7 @@ std = [
   "codec/std",
   "frame-metadata/std",
   "sp-core/std",
+  "sp-std/std",
   "sp-runtime/std",
   "sp-weights/std",
   "sp-arithmetic/std",

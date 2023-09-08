@@ -5,7 +5,14 @@ use scale_info::TypeInfo;
 
 use sp_core::{hashing::blake2_256, H256};
 use sp_runtime::{ConsensusEngineId, MultiSignature};
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+  string::String,
+};
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::basic_types::{AccountId, GenericAddress};
@@ -15,6 +22,7 @@ pub type TxHash = H256;
 pub type BlockHash = H256;
 pub type BlockNumber = u32;
 
+#[cfg(feature = "serde")]
 pub mod block_number {
   use super::BlockNumber;
   use sp_core::U256;
@@ -28,11 +36,12 @@ pub mod block_number {
   }
 }
 
-#[derive(Clone, Debug, Encode, Decode, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct Header {
   pub parent_hash: BlockHash,
-  #[serde(deserialize_with = "block_number::deserialize")]
+  #[cfg_attr(feature = "serde", serde(deserialize_with = "block_number::deserialize"))]
   #[codec(compact)]
   pub number: BlockNumber,
   pub state_root: BlockHash,
@@ -64,14 +73,16 @@ impl From<Header> for sp_runtime::generic::Header<BlockNumber, sp_runtime::trait
   }
 }
 
-#[derive(Clone, Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Digest {
   pub logs: Vec<DigestItem>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(try_from = "RawDigestItem")]
-#[serde(into = "RawDigestItem")]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "RawDigestItem"))]
+#[cfg_attr(feature = "serde", serde(into = "RawDigestItem"))]
 pub enum DigestItem {
   PreRuntime(ConsensusEngineId, Vec<u8>),
   Consensus(ConsensusEngineId, Vec<u8>),
@@ -128,7 +139,8 @@ impl TryFrom<RawDigestItem> for DigestItem {
   }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RawDigestItem(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
@@ -139,19 +151,22 @@ impl From<DigestItem> for RawDigestItem {
   }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct StorageData(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct StorageKey(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
 
 pub type AdditionalSigned = (u32, u32, BlockHash, BlockHash, (), (), ());
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
 pub enum Era {
   Immortal,
@@ -207,7 +222,8 @@ impl Extra {
   }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Encoded(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
@@ -351,13 +367,15 @@ impl Decode for ExtrinsicV4 {
   }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 pub struct AccountInfo {
   pub nonce: u32,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub enum TransactionStatus {
   Future,
   Ready,
@@ -371,14 +389,16 @@ pub enum TransactionStatus {
   Invalid,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct SignedBlock {
   pub block: Block,
   // TODO: Add Justifications field.
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Block {
   extrinsics: Vec<Encoded>,
   header: Header,
@@ -414,14 +434,16 @@ impl Block {
   }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Decode, PartialEq, Eq)]
+#[derive(Clone, Debug, Decode, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Phase {
   ApplyExtrinsic(u32),
   Finalization,
   Initialization,
 }
 
-#[derive(Clone, Debug, Serialize, Decode)]
+#[derive(Clone, Debug, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct EventRecord<Event: RuntimeEnumTraits> {
   pub phase: Phase,
   pub event: Event,
@@ -446,7 +468,8 @@ impl<Event: RuntimeEnumTraits> EventRecord<Event> {
   }
 }
 
-#[derive(Clone, Debug, Serialize, Decode, Default)]
+#[derive(Clone, Debug, Decode, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct EventRecords<Event: RuntimeEnumTraits>(pub Vec<EventRecord<Event>>);
 
 impl<Event: RuntimeEnumTraits> EventRecords<Event> {

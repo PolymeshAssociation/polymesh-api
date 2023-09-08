@@ -1,7 +1,22 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::BufReader;
-use std::sync::{Arc, RwLock};
+#[cfg(feature = "std")]
+use std::{
+  collections::BTreeMap,
+  fs::File,
+  io::BufReader,
+  sync::{Arc, RwLock},
+};
+#[cfg(not(feature = "std"))]
+use alloc::{
+  collections::btree_map::BTreeMap,
+  sync::{Arc, RwLock},
+};
+
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+  string::{String, ToString},
+};
 
 use frame_metadata::RuntimeMetadata;
 
@@ -132,8 +147,8 @@ impl TypeRef {
 #[derive(Clone)]
 pub struct Types {
   next_id: TypeId,
-  types: HashMap<TypeId, Option<Type>>,
-  name_to_id: HashMap<String, TypeId>,
+  types: BTreeMap<TypeId, Option<Type>>,
+  name_to_id: BTreeMap<String, TypeId>,
   runtime_version: RuntimeVersion,
   metadata: Option<Metadata>,
 }
@@ -142,8 +157,8 @@ impl Types {
   pub fn new(runtime_version: RuntimeVersion) -> Self {
     Self {
       next_id: TypeId(SCHEMA_TYPE_ID_BASE),
-      types: HashMap::new(),
-      name_to_id: HashMap::new(),
+      types: BTreeMap::new(),
+      name_to_id: BTreeMap::new(),
       runtime_version,
       metadata: None,
     }
@@ -161,7 +176,8 @@ impl Types {
     self.metadata.as_ref().cloned()
   }
 
-  pub fn load_schema(&mut self, filename: &str) -> Result<()> {
+  #[cfg(feature = "std")]
+  fn load_schema(&mut self, filename: &str) -> Result<()> {
     let file = File::open(filename)?;
 
     let schema: serde_json::Value = serde_json::from_reader(BufReader::new(file))?;
@@ -179,6 +195,7 @@ impl Types {
     Ok(())
   }
 
+  #[cfg(feature = "std")]
   pub fn try_load_schema(&mut self, filename: &str) -> bool {
     log::info!("Try loading schema: {}", filename);
     match self.load_schema(filename) {
@@ -188,6 +205,11 @@ impl Types {
         false
       }
     }
+  }
+
+  #[cfg(not(feature = "std"))]
+  pub fn try_load_schema(&mut self, _filename: &str) -> bool {
+    false
   }
 
   fn parse_schema_types(&mut self, types: &Map<String, Value>) -> Result<()> {
@@ -207,7 +229,7 @@ impl Types {
           }
         }
         _ => {
-          eprintln!("UNHANDLED JSON VALUE: {} => {:?}", name, val);
+          log::warn!("UNHANDLED JSON VALUE: {} => {:?}", name, val);
         }
       }
     }
@@ -535,7 +557,7 @@ impl Types {
   /// Dump types.
   pub fn dump_types(&self) {
     for (id, ty) in self.types.iter() {
-      eprintln!("Type[{:?}] => {:#?}", id, ty);
+      log::warn!("Type[{:?}] => {:#?}", id, ty);
     }
   }
 
@@ -544,10 +566,10 @@ impl Types {
     for (name, id) in self.name_to_id.iter() {
       match self.types.get(id) {
         None => {
-          eprintln!("--------- type name maps to invalid type id: {name}");
+          log::warn!("--------- type name maps to invalid type id: {name}");
         }
         Some(None) => {
-          eprintln!("--------- Unresolved[{:?}]: {}", id, name);
+          log::warn!("--------- Unresolved[{:?}]: {}", id, name);
         }
         Some(Some(_)) => {
           // Defined type.
@@ -628,7 +650,7 @@ impl InitRegistryFn {
   }
 }
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct SpecVersionKey(String, u32);
 
 impl From<&RuntimeVersion> for SpecVersionKey {
@@ -638,14 +660,14 @@ impl From<&RuntimeVersion> for SpecVersionKey {
 }
 
 pub struct InnerTypesRegistry {
-  block_types: HashMap<Option<SpecVersionKey>, TypeLookup>,
+  block_types: BTreeMap<Option<SpecVersionKey>, TypeLookup>,
   initializers: Vec<InitRegistryFn>,
 }
 
 impl InnerTypesRegistry {
   pub fn new() -> Self {
     Self {
-      block_types: HashMap::new(),
+      block_types: BTreeMap::new(),
       initializers: Vec::new(),
     }
   }

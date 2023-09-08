@@ -22,10 +22,14 @@ pub use transaction::*;
 pub mod client;
 pub use client::*;
 
+#[cfg(feature = "type_info")]
 pub mod type_def;
 
+#[cfg(feature = "type_info")]
 pub mod type_codec;
 
+#[cfg(feature = "type_info")]
 pub mod schema;
 
+#[cfg(feature = "type_info")]
 pub mod metadata;

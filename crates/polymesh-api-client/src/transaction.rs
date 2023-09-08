@@ -1,20 +1,40 @@
 use jsonrpsee::core::client::Subscription;
 
 use codec::{Decode, Encode};
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+};
 
 use async_trait::async_trait;
 
+#[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, ser::Serialize};
 
 use crate::*;
 
+#[cfg(feature = "serde")]
 pub trait RuntimeTraits:
-  Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
+  Clone + Encode + Decode + Serialize + DeserializeOwned + core::fmt::Debug
 {
 }
 
+#[cfg(not(feature = "serde"))]
+pub trait RuntimeTraits:
+  Clone + Encode + Decode + core::fmt::Debug
+{
+}
+
+#[cfg(feature = "serde")]
 impl<T> RuntimeTraits for T where
-  T: Clone + Encode + Decode + Serialize + DeserializeOwned + std::fmt::Debug
+  T: Clone + Encode + Decode + Serialize + DeserializeOwned + core::fmt::Debug
+{
+}
+
+#[cfg(not(feature = "serde"))]
+impl<T> RuntimeTraits for T where
+  T: Clone + Encode + Decode + core::fmt::Debug
 {
 }
 
@@ -30,7 +50,8 @@ pub trait EnumInfo: Into<&'static str> {
   }
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExtrinsicResult<Api: ChainApi + ?Sized> {
   Success(Api::DispatchInfo),
   Failed(Api::DispatchInfo, Api::DispatchError),
@@ -328,8 +349,8 @@ impl<Api: ChainApi> Encode for Call<Api> {
   }
 }
 
-impl<Api: ChainApi> std::fmt::Debug for Call<Api> {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<Api: ChainApi> core::fmt::Debug for Call<Api> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     self.call.fmt(f)
   }
 }

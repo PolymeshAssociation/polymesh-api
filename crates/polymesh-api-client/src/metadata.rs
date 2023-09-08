@@ -1,10 +1,24 @@
-use std::collections::HashMap;
+#[cfg(feature = "std")]
+use std::{
+  collections::BTreeMap,
+};
+#[cfg(not(feature = "std"))]
+use alloc::{
+  collections::btree_map::BTreeMap,
+};
 
 #[cfg(any(feature = "v13", feature = "v12",))]
 use frame_metadata::decode_different::{DecodeDifferent, DecodeDifferentArray};
 
 #[cfg(feature = "v14")]
 use scale_info::form::PortableForm;
+
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+  string::{String, ToString},
+};
 
 use crate::error::*;
 use crate::schema::*;
@@ -23,8 +37,8 @@ fn decode_meta<B: 'static, O: 'static>(encoded: &DecodeDifferent<B, O>) -> Resul
 
 #[derive(Clone)]
 pub struct Metadata {
-  modules: HashMap<String, ModuleMetadata>,
-  idx_map: HashMap<u8, String>,
+  modules: BTreeMap<String, ModuleMetadata>,
+  idx_map: BTreeMap<u8, String>,
 }
 
 impl Metadata {
@@ -34,8 +48,8 @@ impl Metadata {
     lookup: &mut Types,
   ) -> Result<Self> {
     let mut api_md = Self {
-      modules: HashMap::new(),
-      idx_map: HashMap::new(),
+      modules: BTreeMap::new(),
+      idx_map: BTreeMap::new(),
     };
 
     // Top-level event/error/call types.
@@ -73,8 +87,8 @@ impl Metadata {
     lookup: &mut Types,
   ) -> Result<Self> {
     let mut api_md = Self {
-      modules: HashMap::new(),
-      idx_map: HashMap::new(),
+      modules: BTreeMap::new(),
+      idx_map: BTreeMap::new(),
     };
 
     // Top-level event/error/call types.
@@ -112,8 +126,8 @@ impl Metadata {
     lookup: &mut Types,
   ) -> Result<Self> {
     let mut api_md = Self {
-      modules: HashMap::new(),
-      idx_map: HashMap::new(),
+      modules: BTreeMap::new(),
+      idx_map: BTreeMap::new(),
     };
 
     let types = PortableRegistry::from(&md.types);
@@ -158,10 +172,10 @@ impl Metadata {
 pub struct ModuleMetadata {
   name: String,
   index: u8,
-  funcs: HashMap<String, FuncMetadata>,
-  events: HashMap<String, EventMetadata>,
-  errors: HashMap<String, ErrorMetadata>,
-  err_idx_map: HashMap<u8, String>,
+  funcs: BTreeMap<String, FuncMetadata>,
+  events: BTreeMap<String, EventMetadata>,
+  errors: BTreeMap<String, ErrorMetadata>,
+  err_idx_map: BTreeMap<u8, String>,
   event_ref: Option<TypeId>,
   error_ref: Option<TypeId>,
   call_ref: Option<TypeId>,
@@ -175,10 +189,10 @@ impl ModuleMetadata {
     let mut module = Self {
       name: mod_name.clone(),
       index: mod_idx,
-      funcs: HashMap::new(),
-      events: HashMap::new(),
-      errors: HashMap::new(),
-      err_idx_map: HashMap::new(),
+      funcs: BTreeMap::new(),
+      events: BTreeMap::new(),
+      errors: BTreeMap::new(),
+      err_idx_map: BTreeMap::new(),
       event_ref: None,
       error_ref: None,
       call_ref: None,
@@ -258,10 +272,10 @@ impl ModuleMetadata {
     let mut module = Self {
       name: mod_name.clone(),
       index: mod_idx,
-      funcs: HashMap::new(),
-      events: HashMap::new(),
-      errors: HashMap::new(),
-      err_idx_map: HashMap::new(),
+      funcs: BTreeMap::new(),
+      events: BTreeMap::new(),
+      errors: BTreeMap::new(),
+      err_idx_map: BTreeMap::new(),
       event_ref: None,
       error_ref: None,
       call_ref: None,
@@ -345,10 +359,10 @@ impl ModuleMetadata {
     let mut module = Self {
       name: mod_name.clone(),
       index: mod_idx,
-      funcs: HashMap::new(),
-      events: HashMap::new(),
-      errors: HashMap::new(),
-      err_idx_map: HashMap::new(),
+      funcs: BTreeMap::new(),
+      events: BTreeMap::new(),
+      errors: BTreeMap::new(),
+      err_idx_map: BTreeMap::new(),
       event_ref: None,
       error_ref: None,
       call_ref: None,

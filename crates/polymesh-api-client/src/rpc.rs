@@ -8,6 +8,9 @@ use jsonrpsee::{
   ws_client::{WsClient, WsClientBuilder},
 };
 
+use sp_std::prelude::*;
+
+#[cfg(feature = "serde")]
 use serde::de::DeserializeOwned;
 
 use crate::error::*;
@@ -95,6 +98,7 @@ impl RpcClient {
     })
   }
 
+  #[cfg(feature = "serde")]
   pub async fn subscribe<'a, Notif>(
     &self,
     subscribe_method: &'a str,
@@ -125,6 +129,7 @@ impl RpcClient {
     }?)
   }
 
+  #[cfg(feature = "serde")]
   pub async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
   where
     R: DeserializeOwned,
@@ -139,6 +144,7 @@ impl RpcClient {
     }?)
   }
 
+  #[cfg(feature = "serde")]
   pub async fn batch_request<'a, R>(
     &self,
     batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,

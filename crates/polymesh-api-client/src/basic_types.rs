@@ -1,6 +1,6 @@
 use codec::{Compact, CompactAs, Decode, Encode};
 
-use std::fmt;
+use core::fmt;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -9,6 +9,12 @@ use serde::{Deserialize, Serialize};
 use scale_info::TypeInfo;
 
 use sp_core::crypto::Ss58Codec;
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+  string::String,
+};
 
 // Re-export some basic crates.
 pub use frame_metadata;

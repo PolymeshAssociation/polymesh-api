@@ -1,5 +1,13 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+#[cfg(feature = "std")]
+use std::{
+  collections::BTreeMap,
+  sync::Arc,
+};
+#[cfg(not(feature = "std"))]
+use alloc::{
+  collections::btree_map::BTreeMap,
+  sync::Arc,
+};
 
 pub use jsonrpsee::core::client::Subscription;
 use jsonrpsee::rpc_params;
@@ -7,44 +15,57 @@ use jsonrpsee::types::ParamsSer;
 
 use codec::Decode;
 
-use hex::FromHex;
-
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde::{
+  de::DeserializeOwned,
+  Deserialize, Serialize,
+};
+#[cfg(feature = "serde")]
 use serde_json::Value;
 
+use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use alloc::{
+  format,
+  string::String,
+};
+
+#[cfg(feature = "type_info")]
 use frame_metadata::RuntimeMetadataPrefixed;
 
 use crate::rpc::*;
 use crate::*;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct RuntimeVersion {
   pub spec_name: String,
   pub impl_name: String,
   pub authoring_version: u32,
   pub spec_version: u32,
   pub impl_version: u32,
-  #[serde(default)]
+  #[cfg_attr(feature = "serde", serde(default))]
   pub transaction_version: u32,
 
-  #[serde(flatten)]
-  pub extra: HashMap<String, Value>,
+  #[cfg_attr(feature = "serde", serde(flatten))]
+  #[cfg(feature = "serde")]
+  pub extra: BTreeMap<String, Value>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct SystemProperties {
   pub ss58_format: u16,
   pub token_decimals: u32,
   pub token_symbol: String,
 }
 
-#[derive(Debug)]
 struct InnerClient {
   rpc: RpcClient,
   runtime_version: RuntimeVersion,
+  #[cfg(feature = "type_info")]
   metadata: RuntimeMetadataPrefixed,
   genesis_hash: BlockHash,
 }
@@ -55,6 +76,7 @@ impl InnerClient {
     let runtime_version = Self::rpc_get_runtime_version(&rpc, None)
       .await?
       .ok_or_else(|| Error::RpcClient(format!("Failed to get RuntimeVersion")))?;
+    #[cfg(feature = "type_info")]
     let metadata = Self::rpc_get_metadata(&rpc, None)
       .await?
       .ok_or_else(|| Error::RpcClient(format!("Failed to get chain metadata")))?;
@@ -64,6 +86,7 @@ impl InnerClient {
     Ok(Self {
       rpc,
       runtime_version,
+      #[cfg(feature = "type_info")]
       metadata,
       genesis_hash,
     })
@@ -73,6 +96,7 @@ impl InnerClient {
     self.runtime_version.transaction_version as i64
   }
 
+  #[cfg(feature = "type_info")]
   fn get_metadata(&self) -> &RuntimeMetadataPrefixed {
     &self.metadata
   }
@@ -89,6 +113,7 @@ impl InnerClient {
     )
   }
 
+  #[cfg(feature = "serde")]
   async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
   where
     R: DeserializeOwned,
@@ -96,6 +121,7 @@ impl InnerClient {
     self.rpc.request(method, params).await
   }
 
+  #[cfg(feature = "serde")]
   async fn batch_request<'a, R>(
     &self,
     batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,
@@ -106,6 +132,7 @@ impl InnerClient {
     self.rpc.batch_request(batch).await
   }
 
+  #[cfg(feature = "serde")]
   async fn subscribe<'a, Notif>(
     &self,
     subscribe_method: &'a str,
@@ -147,10 +174,12 @@ impl InnerClient {
     Self::rpc_get_runtime_version(&self.rpc, block).await
   }
 
+  #[cfg(feature = "type_info")]
   async fn rpc_get_metadata(
     rpc: &RpcClient,
     block: Option<BlockHash>,
   ) -> Result<Option<RuntimeMetadataPrefixed>> {
+    use hex::FromHex;
     let params = rpc_params!(block);
     let hex: String = rpc.request("state_getMetadata", params).await?;
 
@@ -161,6 +190,7 @@ impl InnerClient {
   }
 
   /// Get the RuntimeMetadata of a block.
+  #[cfg(feature = "type_info")]
   async fn get_block_metadata(
     &self,
     block: Option<BlockHash>,
@@ -169,7 +199,7 @@ impl InnerClient {
   }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Client {
   inner: Arc<InnerClient>,
 }
@@ -185,6 +215,7 @@ impl Client {
     self.inner.get_transaction_version()
   }
 
+  #[cfg(feature = "type_info")]
   pub fn get_metadata(&self) -> &RuntimeMetadataPrefixed {
     self.inner.get_metadata()
   }
@@ -263,6 +294,7 @@ impl Client {
   }
 
   /// Make a RPC request to the node.
+  #[cfg(feature = "serde")]
   pub async fn request<'a, R>(&self, method: &'a str, params: Option<ParamsSer<'a>>) -> Result<R>
   where
     R: DeserializeOwned,
@@ -271,6 +303,7 @@ impl Client {
   }
 
   /// Make a batch of RPC requests to the node.
+  #[cfg(feature = "serde")]
   pub async fn batch_request<'a, R>(
     &self,
     batch: Vec<(&'a str, Option<ParamsSer<'a>>)>,
@@ -282,6 +315,7 @@ impl Client {
   }
 
   /// Subscribe to RPC updates.
+  #[cfg(feature = "serde")]
   pub async fn subscribe<'a, Notif>(
     &self,
     subscribe_method: &'a str,
@@ -360,6 +394,7 @@ impl Client {
   }
 
   /// Get the RuntimeMetadata of a block.
+  #[cfg(feature = "type_info")]
   pub async fn get_block_metadata(
     &self,
     block: Option<BlockHash>,
