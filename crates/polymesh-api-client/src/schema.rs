@@ -1,3 +1,8 @@
+#[cfg(not(feature = "std"))]
+use alloc::{
+  collections::btree_map::BTreeMap,
+  sync::{Arc, RwLock},
+};
 #[cfg(feature = "std")]
 use std::{
   collections::BTreeMap,
@@ -5,18 +10,13 @@ use std::{
   io::BufReader,
   sync::{Arc, RwLock},
 };
-#[cfg(not(feature = "std"))]
-use alloc::{
-  collections::btree_map::BTreeMap,
-  sync::{Arc, RwLock},
-};
 
-use sp_std::prelude::*;
 #[cfg(not(feature = "std"))]
 use alloc::{
   format,
   string::{String, ToString},
 };
+use sp_std::prelude::*;
 
 use frame_metadata::RuntimeMetadata;
 

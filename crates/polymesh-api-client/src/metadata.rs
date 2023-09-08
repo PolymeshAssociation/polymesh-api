@@ -1,13 +1,9 @@
 #![allow(deprecated)]
 
-#[cfg(feature = "std")]
-use std::{
-  collections::BTreeMap,
-};
 #[cfg(not(feature = "std"))]
-use alloc::{
-  collections::btree_map::BTreeMap,
-};
+use alloc::collections::btree_map::BTreeMap;
+#[cfg(feature = "std")]
+use std::collections::BTreeMap;
 
 #[cfg(any(feature = "v13", feature = "v12",))]
 use frame_metadata::decode_different::{DecodeDifferent, DecodeDifferentArray};
@@ -15,12 +11,12 @@ use frame_metadata::decode_different::{DecodeDifferent, DecodeDifferentArray};
 #[cfg(feature = "v14")]
 use scale_info::form::PortableForm;
 
-use sp_std::prelude::*;
 #[cfg(not(feature = "std"))]
 use alloc::{
   format,
   string::{String, ToString},
 };
+use sp_std::prelude::*;
 
 use crate::error::*;
 use crate::schema::*;

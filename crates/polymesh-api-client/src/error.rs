@@ -2,10 +2,7 @@
 use thiserror::Error;
 
 #[cfg(not(feature = "std"))]
-use alloc::{
-  format, fmt,
-  string::String,
-};
+use alloc::{fmt, format, string::String};
 
 #[derive(Debug)]
 #[cfg_attr(feature = "std", derive(Error))]
@@ -32,7 +29,10 @@ pub enum Error {
   #[cfg_attr(feature = "std", error("sp-core crypto secret error: {0}"))]
   SecretStringError(String),
 
-  #[cfg_attr(feature = "std", error("Call API incompatible with connected chain: {0}"))]
+  #[cfg_attr(
+    feature = "std",
+    error("Call API incompatible with connected chain: {0}")
+  )]
   IncompatibleCall(String),
 
   #[cfg_attr(feature = "std", error("Schema failed to parse: {0}"))]
@@ -126,9 +126,9 @@ impl From<subxt_signer::SecretUriError> for Error {
 
 #[cfg(not(feature = "std"))]
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{:?}", self)
+  }
 }
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;

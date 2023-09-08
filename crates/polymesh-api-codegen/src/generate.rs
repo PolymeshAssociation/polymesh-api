@@ -243,10 +243,7 @@ mod v14 {
             "types::frame_system::EventRecord",
             quote!(#api_interface::EventRecord),
           ),
-          (
-            "sp_weights::OldWeight",
-            quote!(#api_interface::OldWeight),
-          ),
+          ("sp_weights::OldWeight", quote!(#api_interface::OldWeight)),
           (
             "sp_weights::Weight",
             quote!(#api_interface::sp_weights::Weight),
@@ -1874,8 +1871,7 @@ pub fn generate(metadata: RuntimeMetadataPrefixed) -> Result<TokenStream, String
 }
 
 pub fn macro_codegen(mut buf: &[u8], mod_ident: TokenStream) -> Result<TokenStream, String> {
-  let metadata = RuntimeMetadataPrefixed::decode(&mut buf)
-    .map_err(|e| e.to_string())?;
+  let metadata = RuntimeMetadataPrefixed::decode(&mut buf).map_err(|e| e.to_string())?;
 
   let code = generate(metadata)?;
   Ok(quote! {

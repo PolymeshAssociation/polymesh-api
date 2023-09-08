@@ -7,12 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode};
 
-use sp_std::prelude::*;
 #[cfg(not(feature = "std"))]
-use alloc::{
-  format,
-  string::String,
-};
+use alloc::{format, string::String};
+use sp_std::prelude::*;
 
 pub use scale_info::{form::PortableForm, TypeDefPrimitive};
 
@@ -73,13 +70,22 @@ pub struct TypeParameter {
 #[derive(Clone, Debug, Decode, Encode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Type {
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Path::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Path::is_empty", default)
+  )]
   pub path: Path,
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub type_params: Vec<TypeParameter>,
   #[cfg_attr(feature = "serde", serde(rename = "def"))]
   pub type_def: TypeDef,
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub docs: Vec<String>,
 }
 
@@ -109,13 +115,22 @@ impl Type {
 #[derive(Clone, Debug, Decode, Encode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Field {
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Option::is_none", default)
+  )]
   pub name: Option<String>,
   #[cfg_attr(feature = "serde", serde(rename = "type"))]
   pub ty: TypeId,
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Option::is_none", default)
+  )]
   pub type_name: Option<String>,
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub docs: Vec<String>,
 }
 
@@ -143,10 +158,16 @@ impl Field {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Variant {
   pub name: String,
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub fields: Vec<Field>,
   pub index: u8,
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub docs: Vec<String>,
 }
 
@@ -164,7 +185,10 @@ impl Variant {
 #[derive(Clone, Debug, Default, Decode, Encode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TypeDefVariant {
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub variants: Vec<Variant>,
 }
 
@@ -227,7 +251,10 @@ impl TypeDefVariant {
 #[derive(Clone, Debug, Default, Decode, Encode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TypeDefComposite {
-  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Vec::is_empty", default)
+  )]
   pub fields: Vec<Field>,
 }
 
@@ -324,9 +351,7 @@ impl TypeDefCompact {
   }
 }
 
-#[derive(
-  Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Decode, Encode,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Decode, Encode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TypeId(#[codec(compact)] pub u32);
 

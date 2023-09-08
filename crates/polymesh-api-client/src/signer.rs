@@ -48,7 +48,10 @@ impl KeypairSigner for sp_core::ed25519::Pair {
   }
 
   fn from_string(s: &str, password_override: Option<&str>) -> Result<Self> {
-    Ok(<sp_core::ed25519::Pair as sp_core::Pair>::from_string(s, password_override)?)
+    Ok(<sp_core::ed25519::Pair as sp_core::Pair>::from_string(
+      s,
+      password_override,
+    )?)
   }
 }
 
@@ -63,7 +66,10 @@ impl KeypairSigner for sp_core::sr25519::Pair {
   }
 
   fn from_string(s: &str, password_override: Option<&str>) -> Result<Self> {
-    Ok(<sp_core::sr25519::Pair as sp_core::Pair>::from_string(s, password_override)?)
+    Ok(<sp_core::sr25519::Pair as sp_core::Pair>::from_string(
+      s,
+      password_override,
+    )?)
   }
 }
 

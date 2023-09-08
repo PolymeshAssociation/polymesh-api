@@ -8,13 +8,10 @@ use serde::{Deserialize, Serialize};
 #[cfg(all(feature = "std", feature = "type_info"))]
 use scale_info::TypeInfo;
 
+#[cfg(not(feature = "std"))]
+use alloc::{format, string::String};
 use sp_core::crypto::Ss58Codec;
 use sp_std::prelude::*;
-#[cfg(not(feature = "std"))]
-use alloc::{
-  format,
-  string::String,
-};
 
 // Re-export some basic crates.
 pub use frame_metadata;
@@ -26,7 +23,9 @@ pub use sp_core::hashing;
 pub use sp_weights;
 
 // Re-impl `OldWeight`
-#[derive(Clone, Copy, Debug, Encode, Decode, CompactAs, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+  Clone, Copy, Debug, Encode, Decode, CompactAs, Default, PartialEq, Eq, PartialOrd, Ord,
+)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]

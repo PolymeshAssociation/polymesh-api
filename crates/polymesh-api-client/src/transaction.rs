@@ -1,11 +1,9 @@
 use jsonrpsee::core::client::Subscription;
 
+#[cfg(not(feature = "std"))]
+use alloc::format;
 use codec::{Decode, Encode};
 use sp_std::prelude::*;
-#[cfg(not(feature = "std"))]
-use alloc::{
-  format,
-};
 
 use async_trait::async_trait;
 
@@ -21,10 +19,7 @@ pub trait RuntimeTraits:
 }
 
 #[cfg(not(feature = "serde"))]
-pub trait RuntimeTraits:
-  Clone + Encode + Decode + core::fmt::Debug
-{
-}
+pub trait RuntimeTraits: Clone + Encode + Decode + core::fmt::Debug {}
 
 #[cfg(feature = "serde")]
 impl<T> RuntimeTraits for T where
@@ -33,10 +28,7 @@ impl<T> RuntimeTraits for T where
 }
 
 #[cfg(not(feature = "serde"))]
-impl<T> RuntimeTraits for T where
-  T: Clone + Encode + Decode + core::fmt::Debug
-{
-}
+impl<T> RuntimeTraits for T where T: Clone + Encode + Decode + core::fmt::Debug {}
 
 pub trait RuntimeEnumTraits: RuntimeTraits + EnumInfo {}
 

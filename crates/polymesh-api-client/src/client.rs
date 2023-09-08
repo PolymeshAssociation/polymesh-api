@@ -1,35 +1,23 @@
-#[cfg(feature = "std")]
-use std::{
-  collections::BTreeMap,
-  sync::Arc,
-};
 #[cfg(not(feature = "std"))]
-use alloc::{
-  collections::btree_map::BTreeMap,
-  sync::Arc,
-};
+use alloc::{collections::btree_map::BTreeMap, sync::Arc};
+#[cfg(feature = "std")]
+use std::{collections::BTreeMap, sync::Arc};
 
-pub use jsonrpsee::core::client::Subscription;
-use jsonrpsee::rpc_params;
-use jsonrpsee::core::params::{ArrayParams, BatchRequestBuilder};
 use jsonrpsee::core::client::BatchResponse;
+pub use jsonrpsee::core::client::Subscription;
+use jsonrpsee::core::params::{ArrayParams, BatchRequestBuilder};
+use jsonrpsee::rpc_params;
 
 use codec::Decode;
 
 #[cfg(feature = "serde")]
-use serde::{
-  de::DeserializeOwned,
-  Deserialize, Serialize,
-};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg(feature = "serde")]
 use serde_json::Value;
 
-use sp_std::prelude::*;
 #[cfg(not(feature = "std"))]
-use alloc::{
-  format,
-  string::String,
-};
+use alloc::{format, string::String};
+use sp_std::prelude::*;
 
 #[cfg(feature = "type_info")]
 use frame_metadata::RuntimeMetadataPrefixed;

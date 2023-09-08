@@ -3,14 +3,11 @@ use codec::{Compact, Decode, Encode, Output};
 #[cfg(all(feature = "std", feature = "type_info"))]
 use scale_info::TypeInfo;
 
+#[cfg(not(feature = "std"))]
+use alloc::{format, string::String};
 use sp_core::{hashing::blake2_256, H256};
 use sp_runtime::{ConsensusEngineId, MultiSignature};
 use sp_std::prelude::*;
-#[cfg(not(feature = "std"))]
-use alloc::{
-  format,
-  string::String,
-};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -41,7 +38,10 @@ pub mod block_number {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct Header {
   pub parent_hash: BlockHash,
-  #[cfg_attr(feature = "serde", serde(deserialize_with = "block_number::deserialize"))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(deserialize_with = "block_number::deserialize")
+  )]
   #[codec(compact)]
   pub number: BlockNumber,
   pub state_root: BlockHash,
