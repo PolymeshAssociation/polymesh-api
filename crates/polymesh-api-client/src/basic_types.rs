@@ -25,6 +25,13 @@ pub use sp_core::hashing;
 
 pub use sp_weights;
 
+// Re-impl `OldWeight`
+#[derive(Clone, Copy, Debug, Encode, Decode, CompactAs, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
+pub struct OldWeight(pub u64);
+
 // Re-impl `per_things` to support serde
 pub mod per_things {
   use super::*;

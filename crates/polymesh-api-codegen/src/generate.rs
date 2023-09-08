@@ -245,7 +245,7 @@ mod v14 {
           ),
           (
             "sp_weights::OldWeight",
-            quote!(#api_interface::sp_weights::OldWeight),
+            quote!(#api_interface::OldWeight),
           ),
           (
             "sp_weights::Weight",
