@@ -24,6 +24,14 @@ pub mod block_number {
   use super::BlockNumber;
   use sp_core::U256;
 
+  pub fn serialize<S>(num: &BlockNumber, s: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    let num = U256::from(*num);
+    serde::Serialize::serialize(&num, s)
+  }
+
   pub fn deserialize<'de, D>(d: D) -> Result<BlockNumber, D::Error>
   where
     D: serde::Deserializer<'de>,
@@ -38,10 +46,7 @@ pub mod block_number {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct Header {
   pub parent_hash: BlockHash,
-  #[cfg_attr(
-    feature = "serde",
-    serde(deserialize_with = "block_number::deserialize")
-  )]
+  #[cfg_attr(feature = "serde", serde(with = "block_number"))]
   #[codec(compact)]
   pub number: BlockNumber,
   pub state_root: BlockHash,
