@@ -90,6 +90,10 @@ impl InnerClient {
     &self.metadata
   }
 
+  fn get_genesis_hash(&self) -> BlockHash {
+    self.genesis_hash
+  }
+
   fn get_signed_extra(&self) -> AdditionalSigned {
     (
       self.runtime_version.spec_version,
@@ -207,6 +211,10 @@ impl Client {
   #[cfg(feature = "type_info")]
   pub fn get_metadata(&self) -> &RuntimeMetadataPrefixed {
     self.inner.get_metadata()
+  }
+
+  pub fn get_genesis_hash(&self) -> BlockHash {
+    self.inner.get_genesis_hash()
   }
 
   pub fn get_signed_extra(&self) -> AdditionalSigned {
