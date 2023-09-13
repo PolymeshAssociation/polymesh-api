@@ -34,7 +34,7 @@ pub trait Signer {
   async fn sign(&self, msg: &[u8]) -> Result<MultiSignature>;
 }
 
-pub trait KeypairSigner: Send + Sync + Sized {
+pub trait KeypairSigner: Send + Sync + Sized + Clone {
   fn account(&self) -> AccountId;
   fn sign(&self, message: &[u8]) -> MultiSignature;
   fn from_string(s: &str, password_override: Option<&str>) -> Result<Self>;
@@ -118,7 +118,8 @@ impl KeypairSigner for subxt_signer::ecdsa::Keypair {
   }
 }
 
-pub struct PairSigner<P: KeypairSigner> {
+#[derive(Clone)]
+pub struct PairSigner<P: KeypairSigner + Clone> {
   pub pair: P,
   pub nonce: u32,
   pub account: AccountId,

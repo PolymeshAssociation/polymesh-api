@@ -211,6 +211,7 @@ impl From<Era> for sp_runtime::generic::Era {
 }
 
 #[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Extra(sp_runtime::generic::Era, Compact<u32>, Compact<u128>);
 
 impl Extra {
@@ -281,6 +282,47 @@ impl<'a> Encode for SignedPayload<'a> {
         f(payload)
       }
     })
+  }
+}
+
+/// PreparedTransaction holds all data needed to sign a transaction.
+///
+/// This can be used for offline signers.
+#[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct PreparedTransaction {
+  pub account: AccountId,
+  pub additional: AdditionalSigned,
+  pub extra: Extra,
+  pub call: Encoded,
+}
+
+impl PreparedTransaction {
+  pub fn new(account: AccountId, additional: AdditionalSigned, extra: Extra, call: Encoded) -> Self {
+    Self {
+      account,
+      additional,
+      extra,
+      call,
+    }
+  }
+
+  pub async fn sign(self, signer: &mut impl Signer) -> Result<ExtrinsicV4> {
+    // Ensure the signer's account matches the transaction.
+    let account = signer.account();
+    if account != self.account {
+      use sp_core::crypto::Ss58Codec;
+      let version = 12u16.into(); // Polymesh
+      let a1 = account.to_ss58check_with_version(version);
+      let a2 = self.account.to_ss58check_with_version(version);
+      return Err(Error::WrongSignerAccount(a1, a2));
+    }
+    let payload = SignedPayload::new(&self.call, &self.extra, self.additional);
+    let payload = payload.encode();
+    let sig = signer.sign(&payload[..]).await?;
+
+    let xt = ExtrinsicV4::signed(self.account, sig, self.extra, self.call);
+    Ok(xt)
   }
 }
 

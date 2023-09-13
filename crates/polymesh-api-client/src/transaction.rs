@@ -279,6 +279,18 @@ impl<Api: ChainApi> Call<Api> {
     )
   }
 
+  /// Prepare a transaction for offline signing.
+  pub async fn prepare(&self, account: AccountId) -> Result<PreparedTransaction> {
+    let client = self.api.client();
+    // Query account nonce.
+    let nonce = self.api.get_nonce(account).await?;
+
+    let encoded_call = self.encoded();
+    let extra = Extra::new(Era::Immortal, nonce);
+    let additional = client.get_signed_extra();
+    Ok(PreparedTransaction::new(account, additional, extra, encoded_call))
+  }
+
   /// Sign, submit and execute the transaction.
   pub async fn execute(&self, signer: &mut impl Signer) -> Result<TransactionResults<Api>> {
     // Sign and submit transaction.
