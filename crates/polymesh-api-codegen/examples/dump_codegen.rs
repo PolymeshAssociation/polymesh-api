@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
   //let version = client.get_runtime_version(None).await?;
   //println!("{version:#?}");
 
-  let code = generate(metadata)?;
+  let code = generate(metadata).map_err(|e| anyhow::anyhow!("{e:?}"))?;
   eprintln!("------------- Generated code.  Now formatting.");
   println!("{}", rustfmt_wrapper::rustfmt(code).unwrap());
   //println!("{code}");
