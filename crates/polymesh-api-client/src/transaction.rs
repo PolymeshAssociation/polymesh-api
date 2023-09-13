@@ -101,6 +101,13 @@ pub trait ChainApi: Clone {
   }
 
   fn client(&self) -> &Client;
+
+  /// Submit a signed/unsigned transaction, but don't wait for it to execute.
+  async fn submit_and_watch(&self, xt: ExtrinsicV4) -> Result<TransactionResults<Self>> {
+    let (tx_hex, tx_hash) = xt.as_hex_and_hash();
+    let status = self.client().submit_and_watch(tx_hex).await?;
+    Ok(TransactionResults::new(self, status, tx_hash))
+  }
 }
 
 pub struct TransactionResults<Api: ChainApi> {
@@ -232,9 +239,22 @@ impl<Api: ChainApi> TransactionResults<Api> {
     self.status.as_ref()
   }
 
+  /// Wait for the transaction to be included in a block.
   pub async fn wait_in_block(&mut self) -> Result<Option<BlockHash>> {
     // Wait for call to be included in a block.
     while self.block.is_none() {
+      if !self.next_status().await? {
+        // No more updates available.
+        return Ok(None);
+      }
+    }
+    return Ok(self.block);
+  }
+
+  /// Wait for the transaction to be finalized.
+  pub async fn wait_finalized(&mut self) -> Result<Option<BlockHash>> {
+    // Wait for call to be included in a block.
+    while self.finalized {
       if !self.next_status().await? {
         // No more updates available.
         return Ok(None);
