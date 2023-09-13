@@ -308,7 +308,12 @@ impl<Api: ChainApi> Call<Api> {
     let encoded_call = self.encoded();
     let extra = Extra::new(Era::Immortal, nonce);
     let additional = client.get_signed_extra();
-    Ok(PreparedTransaction::new(account, additional, extra, encoded_call))
+    Ok(PreparedTransaction::new(
+      account,
+      additional,
+      extra,
+      encoded_call,
+    ))
   }
 
   /// Sign, submit and execute the transaction.

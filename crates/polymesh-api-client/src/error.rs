@@ -56,7 +56,10 @@ pub enum Error {
   #[cfg_attr(feature = "std", error("Jsonrpsee error: {0}"))]
   Jsonrpsee(jsonrpsee::core::Error),
 
-  #[cfg_attr(feature = "std", error("The signer's account {0} doesn't match the transaction's account: {1}"))]
+  #[cfg_attr(
+    feature = "std",
+    error("The signer's account {0} doesn't match the transaction's account: {1}")
+  )]
   WrongSignerAccount(String, String),
 }
 

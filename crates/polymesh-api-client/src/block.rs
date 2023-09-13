@@ -298,7 +298,12 @@ pub struct PreparedTransaction {
 }
 
 impl PreparedTransaction {
-  pub fn new(account: AccountId, additional: AdditionalSigned, extra: Extra, call: Encoded) -> Self {
+  pub fn new(
+    account: AccountId,
+    additional: AdditionalSigned,
+    extra: Extra,
+    call: Encoded,
+  ) -> Self {
     Self {
       account,
       additional,

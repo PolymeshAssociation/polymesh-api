@@ -6,7 +6,7 @@ use serde_json::to_string;
 
 use rust_decimal::prelude::*;
 
-use polymesh_api::client::{DefaultSigner, AccountId, ExtrinsicV4, PreparedTransaction, ChainApi};
+use polymesh_api::client::{AccountId, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction};
 use polymesh_api::Api;
 
 use clap::{Args, Parser, Subcommand};
@@ -68,8 +68,8 @@ struct SubmitArgs {
 }
 
 fn decode_signer(s: &str) -> Result<DefaultSigner, String> {
-  let signer = DefaultSigner::from_string(s, None)
-    .map_err(|e| format!("Failed to decode: {e:?}"))?;
+  let signer =
+    DefaultSigner::from_string(s, None).map_err(|e| format!("Failed to decode: {e:?}"))?;
   Ok(signer)
 }
 
@@ -81,16 +81,15 @@ fn decode_account(s: &str) -> Result<AccountId, String> {
     Ok(account)
   } else {
     use sp_core::crypto::Ss58Codec;
-    let account = AccountId::from_ss58check(s)
-        .map_err(|e| format!("Invalid account id: {e:?}"))?;
+    let account = AccountId::from_ss58check(s).map_err(|e| format!("Invalid account id: {e:?}"))?;
     Ok(account)
   }
 }
 
 fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction, String> {
   let off = if s.starts_with("0x") { 2 } else { 0 };
-  let buf = hex::decode(&s[off..])
-    .map_err(|e| format!("Prepared transaction not valid hex: {e:?}"))?;
+  let buf =
+    hex::decode(&s[off..]).map_err(|e| format!("Prepared transaction not valid hex: {e:?}"))?;
   let prepared = PreparedTransaction::decode(&mut buf.as_slice())
     .map_err(|e| format!("Invalid prepared transaction: {e:?}"))?;
   Ok(prepared)
@@ -98,8 +97,8 @@ fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction, String> {
 
 fn decode_extrinsic_v4(s: &str) -> Result<ExtrinsicV4, String> {
   let off = if s.starts_with("0x") { 2 } else { 0 };
-  let buf = hex::decode(&s[off..])
-    .map_err(|e| format!("Signed transaction not valid hex: {e:?}"))?;
+  let buf =
+    hex::decode(&s[off..]).map_err(|e| format!("Signed transaction not valid hex: {e:?}"))?;
   let xt = ExtrinsicV4::decode(&mut buf.as_slice())
     .map_err(|e| format!("Invalid signed transaction: {e:?}"))?;
   Ok(xt)
@@ -114,10 +113,7 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
       let amount = (amount * scale)
         .to_u128()
         .ok_or_else(|| anyhow!("Failed to convert amount to u128."))?;
-      api
-        .call()
-        .balances()
-        .transfer(dest.into(), amount)?
+      api.call().balances().transfer(dest.into(), amount)?
     }
   };
   log::info!("tx = {:?}", to_string(&tx.runtime_call()));
