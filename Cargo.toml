@@ -35,7 +35,7 @@ polymesh-api-codegen-macro = { version = "2.1.0", path = "crates/polymesh-api-co
 polymesh-api-client = { version = "2.1.0", path = "crates/polymesh-api-client", optional = true, default-features = false }
 
 # For Ink! Smart Contract support.
-polymesh-api-ink = { version = "0.4.2", path = "crates/polymesh-api-ink", optional = true, default-features = false }
+polymesh-api-ink = { version = "0.5.0", path = "crates/polymesh-api-ink", optional = true, default-features = false }
 ink_primitives = { version = "3.0", optional = true, default-features = false }
 ink_metadata = { version = "3.0", optional = true, default-features = false, features = ["derive"] }
 ink_env = { version = "3.0", optional = true, default-features = false }
