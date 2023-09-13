@@ -24,7 +24,7 @@ sp-keyring = "24.0.0"
 subxt-signer = "0.31"
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
-polymesh-api = { version = "2.0", path = "../../" }
+polymesh-api = { version = "2.2", path = "../../" }
 hex = "0.4.3"
 clap = { version = "4.4.3", features = ["derive"] }
 rust_decimal = "1.32.0"
