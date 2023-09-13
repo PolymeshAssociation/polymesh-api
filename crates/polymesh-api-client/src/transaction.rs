@@ -254,7 +254,7 @@ impl<Api: ChainApi> TransactionResults<Api> {
   /// Wait for the transaction to be finalized.
   pub async fn wait_finalized(&mut self) -> Result<Option<BlockHash>> {
     // Wait for call to be included in a block.
-    while self.finalized {
+    while !self.finalized {
       if !self.next_status().await? {
         // No more updates available.
         return Ok(None);
