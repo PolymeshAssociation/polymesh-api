@@ -268,7 +268,7 @@ impl<'de> Deserialize<'de> for AccountId {
     let h: &str = Deserialize::deserialize(deserializer)?;
     let mut id = AccountId::default();
     let off = if h.starts_with("0x") { 2 } else { 0 };
-    hex::decode_to_slice(h, &mut id.0[off..]).map_err(|e| serde::de::Error::custom(e))?;
+    hex::decode_to_slice(&h[off..], &mut id.0).map_err(|e| serde::de::Error::custom(e))?;
     Ok(id)
   }
 }
@@ -391,7 +391,7 @@ impl<'de> Deserialize<'de> for IdentityId {
     let h: &str = Deserialize::deserialize(deserializer)?;
     let mut id = IdentityId::default();
     let off = if h.starts_with("0x") { 2 } else { 0 };
-    hex::decode_to_slice(h, &mut id.0[off..]).map_err(|e| serde::de::Error::custom(e))?;
+    hex::decode_to_slice(&h[off..], &mut id.0).map_err(|e| serde::de::Error::custom(e))?;
     Ok(id)
   }
 }
