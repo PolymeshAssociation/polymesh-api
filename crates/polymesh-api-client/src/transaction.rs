@@ -300,14 +300,18 @@ impl<Api: ChainApi> Call<Api> {
   }
 
   /// Prepare a transaction for offline signing.
-  pub async fn prepare(&self, account: AccountId) -> Result<PreparedTransaction> {
+  pub async fn prepare(
+    &self,
+    account: AccountId,
+    lifetime: Option<u64>,
+  ) -> Result<PreparedTransaction> {
     let client = self.api.client();
     // Query account nonce.
     let nonce = self.api.get_nonce(account).await?;
 
     let encoded_call = self.encoded();
-    let extra = Extra::new(Era::Immortal, nonce);
-    let additional = client.get_signed_extra();
+    let (additional, era) = client.get_additional_signed(lifetime).await?;
+    let extra = Extra::new(era, nonce);
     Ok(PreparedTransaction::new(
       account,
       additional,
@@ -342,8 +346,9 @@ impl<Api: ChainApi> Call<Api> {
     };
 
     let encoded_call = self.encoded();
-    let extra = Extra::new(Era::Immortal, nonce);
-    let payload = SignedPayload::new(&encoded_call, &extra, client.get_signed_extra());
+    let (additional, era) = client.get_additional_signed(None).await?;
+    let extra = Extra::new(era, nonce);
+    let payload = SignedPayload::new(&encoded_call, &extra, additional);
 
     let payload = payload.encode();
     let sig = signer.sign(&payload[..]).await?;

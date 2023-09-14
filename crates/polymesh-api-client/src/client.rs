@@ -94,16 +94,28 @@ impl InnerClient {
     self.genesis_hash
   }
 
-  fn get_signed_extra(&self) -> AdditionalSigned {
-    (
-      self.runtime_version.spec_version,
-      self.runtime_version.transaction_version,
-      self.genesis_hash,
-      self.genesis_hash,
-      (),
-      (),
-      (),
-    )
+  async fn get_additional_signed(&self, lifetime: Option<u64>) -> Result<(AdditionalSigned, Era)> {
+    let mut addititional = AdditionalSigned {
+      spec_version: self.runtime_version.spec_version,
+      tx_version: self.runtime_version.transaction_version,
+      genesis_hash: self.genesis_hash,
+      current_hash: self.genesis_hash,
+    };
+    let era = match lifetime {
+      Some(0) => Era::immortal(),
+      lifetime => {
+        let current = self
+          .get_block_header(None)
+          .await?
+          .ok_or_else(|| Error::RpcClient("Failed to get current block".into()))?;
+        let number = current.number;
+        // Need to use the current block hash.
+        addititional.current_hash = current.hash();
+        Era::mortal(number, lifetime)
+      }
+    };
+
+    Ok((addititional, era))
   }
 
   #[cfg(feature = "serde")]
@@ -144,6 +156,11 @@ impl InnerClient {
   async fn rpc_get_block_hash(rpc: &RpcClient, block_number: u32) -> Result<Option<BlockHash>> {
     let params = rpc_params!(block_number);
     Ok(rpc.request("chain_getBlockHash", params).await?)
+  }
+
+  /// Get the header of a block.
+  async fn get_block_header(&self, block: Option<BlockHash>) -> Result<Option<Header>> {
+    Ok(self.request("chain_getHeader", rpc_params!(block)).await?)
   }
 
   /// Get the block hash for a `block_number`.
@@ -217,8 +234,11 @@ impl Client {
     self.inner.get_genesis_hash()
   }
 
-  pub fn get_signed_extra(&self) -> AdditionalSigned {
-    self.inner.get_signed_extra()
+  pub async fn get_additional_signed(
+    &self,
+    lifetime: Option<u64>,
+  ) -> Result<(AdditionalSigned, Era)> {
+    self.inner.get_additional_signed(lifetime).await
   }
 
   /// Get the `SystemProperties` of the chain.
@@ -361,7 +381,7 @@ impl Client {
 
   /// Get the header of a block.
   pub async fn get_block_header(&self, block: Option<BlockHash>) -> Result<Option<Header>> {
-    Ok(self.request("chain_getHeader", rpc_params!(block)).await?)
+    self.inner.get_block_header(block).await
   }
 
   /// Get the block hash for a `block_number`.

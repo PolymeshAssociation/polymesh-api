@@ -168,7 +168,14 @@ pub struct StorageKey(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
 
-pub type AdditionalSigned = (u32, u32, BlockHash, BlockHash, (), (), ());
+#[derive(Clone, Debug, Default, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct AdditionalSigned {
+  pub spec_version: u32,
+  pub tx_version: u32,
+  pub genesis_hash: BlockHash,
+  pub current_hash: BlockHash,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -176,6 +183,17 @@ pub type AdditionalSigned = (u32, u32, BlockHash, BlockHash, (), (), ());
 pub enum Era {
   Immortal,
   Mortal(u64, u64),
+}
+
+impl Era {
+  pub fn mortal(current: BlockNumber, period: Option<u64>) -> Self {
+    let period = period.unwrap_or(64);
+    sp_runtime::generic::Era::mortal(period, current.into()).into()
+  }
+
+  pub fn immortal() -> Self {
+    Self::Immortal
+  }
 }
 
 impl Encode for Era {
