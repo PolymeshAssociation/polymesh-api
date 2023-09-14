@@ -117,7 +117,7 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
     }
   };
   log::info!("tx = {:?}", to_string(&tx.runtime_call()));
-  let prepared_tx = tx.prepare(args.account).await?;
+  let prepared_tx = tx.prepare(args.account, None).await?;
   log::info!("json = {:?}", to_string(&prepared_tx));
   let encoded = prepared_tx.encode();
   println!("0x{}", hex::encode(encoded));

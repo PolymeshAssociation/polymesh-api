@@ -230,19 +230,27 @@ impl From<Era> for sp_runtime::generic::Era {
 
 #[derive(Clone, Debug, Encode, Decode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Extra(sp_runtime::generic::Era, Compact<u32>, Compact<u128>);
+pub struct Extra {
+  era: sp_runtime::generic::Era,
+  nonce: Compact<u32>,
+  tip: Compact<u128>,
+}
 
 impl Extra {
   pub fn new(era: Era, nonce: u32) -> Self {
-    Self(era.into(), nonce.into(), 0u128.into())
+    Self {
+      era: era.into(),
+      nonce: nonce.into(),
+      tip: 0u128.into(),
+    }
   }
 
   pub fn nonce(&self) -> u32 {
-    self.1 .0
+    self.nonce.0
   }
 
   pub fn tip(&self) -> u128 {
-    self.2 .0
+    self.tip.0
   }
 }
 
@@ -349,12 +357,21 @@ impl PreparedTransaction {
   }
 }
 
+#[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ExtrinsicSignature {
+  pub account: GenericAddress,
+  pub signature: MultiSignature,
+  pub extra: Extra,
+}
+
 /// Current version of the `UncheckedExtrinsic` format.
 pub const EXTRINSIC_VERSION: u8 = 4;
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ExtrinsicV4 {
-  pub signature: Option<(GenericAddress, MultiSignature, Extra)>,
+  pub signature: Option<ExtrinsicSignature>,
   pub call: Encoded,
 }
 
@@ -365,7 +382,11 @@ impl ExtrinsicV4 {
 
   pub fn signed(account: AccountId, sig: MultiSignature, extra: Extra, call: Encoded) -> Self {
     Self {
-      signature: Some((GenericAddress::from(account), sig, extra)),
+      signature: Some(ExtrinsicSignature {
+        account: GenericAddress::from(account),
+        signature: sig,
+        extra,
+      }),
       call,
     }
   }
@@ -424,8 +445,7 @@ impl Decode for ExtrinsicV4 {
     }
 
     let signature = if is_signed {
-      let sig: (GenericAddress, MultiSignature, Extra) = Decode::decode(input)?;
-      Some(sig)
+      Some(ExtrinsicSignature::decode(input)?)
     } else {
       None
     };

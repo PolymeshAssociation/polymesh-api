@@ -29,6 +29,9 @@ pub enum Error {
   #[cfg_attr(feature = "std", error("sp-core crypto secret error: {0}"))]
   SecretStringError(String),
 
+  #[cfg_attr(feature = "std", error("sp-core crypto error: {0}"))]
+  CoreCryptoError(String),
+
   #[cfg_attr(
     feature = "std",
     error("Call API incompatible with connected chain: {0}")
@@ -109,6 +112,12 @@ impl From<jsonrpsee::core::Error> for Error {
 impl From<sp_core::crypto::SecretStringError> for Error {
   fn from(e: sp_core::crypto::SecretStringError) -> Self {
     Self::SecretStringError(format!("{e:?}"))
+  }
+}
+
+impl From<sp_core::crypto::PublicError> for Error {
+  fn from(e: sp_core::crypto::PublicError) -> Self {
+    Self::CoreCryptoError(format!("{e:?}"))
   }
 }
 
