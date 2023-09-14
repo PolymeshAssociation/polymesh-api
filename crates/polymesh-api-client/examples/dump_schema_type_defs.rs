@@ -8,8 +8,8 @@ fn main() -> Result<()> {
   env_logger::init();
 
   let mut types = Types::new(RuntimeVersion::default());
-  types.load_schema("./schemas/init_types.json")?;
-  types.load_schema("./schemas/polymesh/3000.json")?;
+  types.try_load_schema("./schemas/init_types.json");
+  types.try_load_schema("./schemas/polymesh/3000.json");
 
   types.dump_types();
   types.dump_unresolved();
