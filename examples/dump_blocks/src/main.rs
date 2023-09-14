@@ -298,7 +298,7 @@ async fn main() -> Result<()> {
     }
     if let Some(events) = block.events {
       //println!("decode events: {events:?}");
-      let events = event_records_ty.decode(events.0)?;
+      let events = event_records_ty.decode(&events.0)?;
       match events.as_array() {
         // Skip empty blocks.
         Some(events) if events.len() > 1 => {

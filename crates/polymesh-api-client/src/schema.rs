@@ -24,7 +24,6 @@ use serde_json::{Map, Value};
 
 use crate::error::*;
 use crate::metadata::*;
-use crate::type_codec::*;
 use crate::type_def::*;
 use crate::*;
 
@@ -621,11 +620,6 @@ impl TypeLookup {
   pub fn resolve(&self, name: &str) -> TypeRef {
     let mut t = self.types.write().unwrap();
     t.resolve(name)
-  }
-
-  pub fn type_codec(&self, name: &str) -> Option<TypeCodec> {
-    let type_ref = self.resolve(name);
-    TypeCodec::new(self, type_ref)
   }
 
   pub fn insert_type(&self, name: &str, type_meta: TypeDef) -> TypeId {

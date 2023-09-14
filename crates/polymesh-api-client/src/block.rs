@@ -260,6 +260,12 @@ pub struct Encoded(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
 
+impl Encoded {
+  pub fn decode_as<T: Decode>(&self) -> Result<T> {
+    Ok(T::decode(&mut &self.0[..])?)
+  }
+}
+
 impl<T: Encode> From<&T> for Encoded {
   fn from(other: &T) -> Self {
     Self(other.encode())
@@ -501,6 +507,10 @@ impl Block {
       .extrinsics
       .iter()
       .position(|xt| ExtrinsicV4::tx_hash(xt.0.as_slice()) == xt_hash)
+  }
+
+  pub fn extrinsics(&self) -> &[Encoded] {
+    self.extrinsics.as_slice()
   }
 
   pub fn parent(&self) -> BlockHash {

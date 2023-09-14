@@ -27,12 +27,17 @@ impl TypeCodec {
     self.ty.decode_value(&self.type_lookup, input, is_compact)
   }
 
-  pub fn decode(&self, data: Vec<u8>) -> Result<Value> {
-    self.decode_value(&mut &data[..], false)
+  pub fn decode(&self, mut data: &[u8]) -> Result<Value> {
+    self.decode_value(&mut data, false)
   }
 }
 
 impl TypeLookup {
+  pub fn type_codec(&self, name: &str) -> Option<TypeCodec> {
+    let type_ref = self.resolve(name);
+    TypeCodec::new(self, type_ref)
+  }
+
   pub fn decode_value<I: Input>(
     &self,
     type_id: TypeId,
@@ -265,8 +270,11 @@ impl TypeDefSequence {
   ) -> Result<Value> {
     let len = Compact::<u64>::decode(input)?.0 as usize;
     let mut vec = Vec::with_capacity(len.max(256));
+    let ty = type_lookup
+      .get_type(self.type_param)
+      .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param)))?;
     for _ in 0..len {
-      vec.push(type_lookup.decode_value(self.type_param, input, is_compact)?);
+      vec.push(ty.decode_value(type_lookup, input, is_compact)?);
     }
     Ok(vec.into())
   }
@@ -281,8 +289,11 @@ impl TypeDefArray {
   ) -> Result<Value> {
     let len = self.len as usize;
     let mut vec = Vec::with_capacity(len);
+    let ty = type_lookup
+      .get_type(self.type_param)
+      .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param)))?;
     for _ in 0..len {
-      vec.push(type_lookup.decode_value(self.type_param, input, is_compact)?);
+      vec.push(ty.decode_value(type_lookup, input, is_compact)?);
     }
     Ok(vec.into())
   }
