@@ -146,7 +146,7 @@ impl TypeRef {
 #[derive(Clone)]
 pub struct Types {
   next_id: TypeId,
-  types: BTreeMap<TypeId, Option<Type>>,
+  types: BTreeMap<TypeId, Type>,
   name_to_id: BTreeMap<String, TypeId>,
   runtime_version: RuntimeVersion,
   metadata: Option<Metadata>,
@@ -472,26 +472,31 @@ impl Types {
     }
   }
 
-  fn new_type(&mut self, ty: Option<Type>) -> TypeId {
+  fn get_next_id(&mut self) -> TypeId {
     let id = self.next_id;
     self.next_id.inc();
+    id
+  }
+
+  fn new_type(&mut self, ty: Type) -> TypeId {
+    let id = self.get_next_id();
     self.types.insert(id, ty);
     id
   }
 
   pub fn get_type(&self, id: TypeId) -> Option<&Type> {
-    self.types.get(&id).and_then(|t| t.as_ref())
+    self.types.get(&id)
   }
 
   pub fn resolve(&mut self, name: &str) -> TypeRef {
     let id = if let Some(id) = self.name_to_id.get(name) {
       *id
     } else if let Some(prim) = Self::is_primitive(name) {
-      let id = self.new_type(Some(Type::new("", prim.into())));
+      let id = self.new_type(Type::new("", prim.into()));
       self.name_to_id.insert(name.into(), id);
       id
     } else {
-      let id = self.new_type(None);
+      let id = self.get_next_id();
       self.name_to_id.insert(name.into(), id);
       id
     };
@@ -516,7 +521,7 @@ impl Types {
       )))?;
     }
     // insert type.
-    if self.types.insert(id, Some(ty)).is_some() {
+    if self.types.insert(id, ty).is_some() {
       Err(Error::SchemaParseFailed(format!(
         "Imported type id {:?} already exists",
         id
@@ -534,20 +539,15 @@ impl Types {
 
   pub fn insert(&mut self, name: &str, ty: Type) -> TypeId {
     if let Some(id) = self.name_to_id.get(name) {
-      if let Some(old_type) = self.types.get_mut(id) {
-        // Already exists.  Check if it has a type defined yet.
-        if old_type.is_none() {
-          *old_type = Some(ty);
-        } else {
-          log::warn!("REDEFINE TYPE: {}", name);
-        }
+      // Already exists.  Check if it has a type defined yet.
+      if self.types.contains_key(id) {
+        log::warn!("REDEFINE TYPE: {}", name);
       } else {
-        log::warn!("TYPE_ID MISSING: {} -> {:?}", name, id);
-        self.types.insert(*id, Some(ty));
+        self.types.insert(*id, ty);
       }
       *id
     } else {
-      let id = self.new_type(Some(ty));
+      let id = self.new_type(ty);
       self.name_to_id.insert(name.into(), id);
       id
     }
@@ -565,12 +565,9 @@ impl Types {
     for (name, id) in self.name_to_id.iter() {
       match self.types.get(id) {
         None => {
-          log::warn!("--------- type name maps to invalid type id: {name}");
-        }
-        Some(None) => {
           log::warn!("--------- Unresolved[{:?}]: {}", id, name);
         }
-        Some(Some(_)) => {
+        Some(_) => {
           // Defined type.
         }
       }
