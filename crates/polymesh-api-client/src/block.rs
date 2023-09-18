@@ -543,8 +543,8 @@ pub enum Phase {
 }
 
 #[derive(Clone, Debug, Decode)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct EventRecord<Event: RuntimeEnumTraits> {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct EventRecord<Event> {
   pub phase: Phase,
   pub event: Event,
   pub topics: Vec<BlockHash>,
@@ -569,8 +569,8 @@ impl<Event: RuntimeEnumTraits> EventRecord<Event> {
 }
 
 #[derive(Clone, Debug, Decode, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct EventRecords<Event: RuntimeEnumTraits>(pub Vec<EventRecord<Event>>);
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct EventRecords<Event>(pub Vec<EventRecord<Event>>);
 
 impl<Event: RuntimeEnumTraits> EventRecords<Event> {
   pub fn from_vec(mut events: Vec<EventRecord<Event>>, filter: Option<Phase>) -> Self {
