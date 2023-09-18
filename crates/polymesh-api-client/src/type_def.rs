@@ -180,6 +180,11 @@ impl Variant {
       docs: Vec::new(),
     }
   }
+
+  /// Check if the variant is a tuple enum variant or struct enum variant (all fields need to have names).
+  pub fn is_struct(&self) -> bool {
+    named_fields(self.fields.as_slice())
+  }
 }
 
 #[derive(Clone, Debug, Default, Decode, Encode)]
@@ -248,6 +253,19 @@ impl TypeDefVariant {
   }
 }
 
+/// Check if the variant is a tuple enum variant or struct enum variant (all fields need to have names).
+fn named_fields(fields: &[Field]) -> bool {
+  let mut named = true;
+  for field in fields {
+    if field.name.is_none() {
+      // If there are any unnamed fields, then it is a tuple.
+      named = false;
+      break;
+    }
+  }
+  named
+}
+
 #[derive(Clone, Debug, Default, Decode, Encode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TypeDefComposite {
@@ -261,6 +279,11 @@ pub struct TypeDefComposite {
 impl TypeDefComposite {
   pub fn new(fields: Vec<Field>) -> Self {
     Self { fields }
+  }
+
+  /// Check if the composite is a tuple variant or struct variant (all fields need to have names).
+  pub fn is_struct(&self) -> bool {
+    named_fields(self.fields.as_slice())
   }
 }
 
