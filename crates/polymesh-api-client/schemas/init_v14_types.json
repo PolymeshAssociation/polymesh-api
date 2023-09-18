@@ -1,13 +1,6 @@
 {
   "H256": "[u8; 32]",
   "Hash": "H256",
-  "Phase": {
-    "_enum": {
-      "ApplyExtrinsic": "u32",
-      "Finalization": "",
-      "Initialization": ""
-    }
-  },
   "EventRecords": "Vec<EventRecord<RuntimeEvent, Hash>>",
   "EventRecord<RuntimeEvent, Hash>": {
     "phase": "frame_system::Phase",

@@ -66,20 +66,29 @@ impl Type {
     if !self.path().is_empty() {
       log::trace!("decode type: {}", self.path());
     }
-    self.type_def.decode_value(type_lookup, input, is_compact)
+    self
+      .type_def
+      .decode_value(self, type_lookup, input, is_compact)
   }
 }
 
 impl TypeDef {
   pub fn decode_value<I: Input>(
     &self,
+    ty: &Type,
     type_lookup: &TypeLookup,
     input: &mut I,
     is_compact: bool,
   ) -> Result<Value> {
     match self {
       TypeDef::Composite(def) => def.decode_value(type_lookup, input, is_compact),
-      TypeDef::Variant(def) => def.decode_value(type_lookup, input, is_compact),
+      TypeDef::Variant(def) => {
+        if ty.path().segments == &["Option"] {
+          def.decode_value(type_lookup, input, is_compact, true)
+        } else {
+          def.decode_value(type_lookup, input, is_compact, false)
+        }
+      }
       TypeDef::Sequence(def) => def.decode_value(type_lookup, input, is_compact),
       TypeDef::Array(def) => def.decode_value(type_lookup, input, is_compact),
       TypeDef::Tuple(def) => def.decode_value(type_lookup, input, is_compact),
@@ -188,6 +197,7 @@ impl TypeDef {
 
 fn decode_fields<I: Input>(
   fields: &Vec<Field>,
+  is_struct: bool,
   type_lookup: &TypeLookup,
   input: &mut I,
   is_compact: bool,
@@ -201,7 +211,7 @@ fn decode_fields<I: Input>(
     1 if fields[0].name.is_none() => {
       Ok(type_lookup.decode_value(fields[0].ty, input, is_compact)?)
     }
-    len => {
+    len if is_struct => {
       let mut m = Map::with_capacity(len);
       for (idx, field) in fields.iter().enumerate() {
         let name = field
@@ -214,6 +224,14 @@ fn decode_fields<I: Input>(
       }
       Ok(m.into())
     }
+    len => {
+      log::trace!("decode Composite tuple fields");
+      let mut arr = Vec::with_capacity(len);
+      for field in fields.iter() {
+        arr.push(type_lookup.decode_value(field.ty, input, is_compact)?);
+      }
+      Ok(arr.into())
+    }
   }
 }
 
@@ -224,7 +242,13 @@ impl TypeDefComposite {
     input: &mut I,
     is_compact: bool,
   ) -> Result<Value> {
-    decode_fields(&self.fields, type_lookup, input, is_compact)
+    decode_fields(
+      &self.fields,
+      self.is_struct(),
+      type_lookup,
+      input,
+      is_compact,
+    )
   }
 }
 
@@ -234,21 +258,36 @@ impl TypeDefVariant {
     type_lookup: &TypeLookup,
     input: &mut I,
     is_compact: bool,
+    is_option: bool,
   ) -> Result<Value> {
     let val = input.read_byte()?;
-    match self.get_by_idx(val) {
-      Some(variant) if variant.fields.len() == 0 => Ok(json!(variant.name)),
-      Some(variant) => {
+    match (val, self.get_by_idx(val), is_option) {
+      (0, Some(_variant), true) => Ok(Value::Null),
+      (1, Some(variant), true) => decode_fields(
+        &variant.fields,
+        variant.is_struct(),
+        type_lookup,
+        input,
+        is_compact,
+      ),
+      (_, Some(variant), _) if variant.fields.len() == 0 => Ok(json!(variant.name)),
+      (_, Some(variant), _) => {
         let mut m = Map::new();
         let name = variant.name.clone();
         m.insert(
           name,
-          decode_fields(&variant.fields, type_lookup, input, is_compact)?,
+          decode_fields(
+            &variant.fields,
+            variant.is_struct(),
+            type_lookup,
+            input,
+            is_compact,
+          )?,
         );
         Ok(m.into())
       }
-      None if val == 0 => Ok(Value::Null),
-      None => {
+      (_, None, _) if val == 0 => Ok(Value::Null),
+      (_, None, _) => {
         log::debug!(
           "Invalid variant: {}, bytes remaining: {:?}, variants: {:?}",
           val,

@@ -140,7 +140,7 @@ impl Metadata {
 
     // Decode module metadata.
     md.pallets.iter().try_for_each(|m| -> Result<()> {
-      let m = ModuleMetadata::from_v14_meta(m, &types, lookup)?;
+      let m = ModuleMetadata::from_v14_meta(m, &types)?;
       let name = m.name.clone();
       mod_events.insert(m.index, &name, m.event_ref.clone());
       mod_errors.insert(m.index, &name, m.error_ref.clone());
@@ -150,12 +150,8 @@ impl Metadata {
       Ok(())
     })?;
 
-    let raw_event_ref = lookup.insert_type("RawEvent", TypeDef::Variant(mod_events));
-    lookup.insert_new_type("RuntimeEvent", raw_event_ref);
-
-    let raw_error_ref = lookup.insert_type("RawError", TypeDef::Variant(mod_errors));
-    lookup.insert_new_type("DispatchErrorModule", raw_error_ref);
-    // Define 'RuntimeCall' type.
+    lookup.insert_type("RuntimeEvent", TypeDef::Variant(mod_events));
+    lookup.insert_type("RuntimeError", TypeDef::Variant(mod_errors));
     lookup.insert_type("RuntimeCall", TypeDef::Variant(mod_calls));
 
     Ok(api_md)
@@ -350,7 +346,6 @@ impl ModuleMetadata {
   fn from_v14_meta(
     md: &frame_metadata::v14::PalletMetadata<PortableForm>,
     types: &PortableRegistry,
-    lookup: &mut Types,
   ) -> Result<Self> {
     let mod_idx = md.index;
     let mod_name = &md.name;
@@ -368,19 +363,15 @@ impl ModuleMetadata {
 
     // Decode module functions.
     if let Some(calls) = &md.calls {
-      // Module RawCall type.
-      let mut raw_calls = TypeDefVariant::new();
+      let id = calls.ty.id();
+      module.call_ref = Some(id.into());
 
-      let call_ty = types
-        .resolve(calls.ty.id())
-        .expect("Missing Pallet call type");
+      let call_ty = types.resolve(id).expect("Missing Pallet call type");
       match call_ty.type_def() {
         TypeDef::Variant(v) => {
           v.variants.iter().try_for_each(|md| -> Result<()> {
-            let (func, ty_ref) =
-              FuncMetadata::from_v14_meta(&mod_name, mod_idx, md, types, lookup)?;
+            let func = FuncMetadata::from_v14_meta(&mod_name, mod_idx, md, types)?;
             let name = func.name.clone();
-            raw_calls.insert(func.func_idx, &name, ty_ref);
             module.funcs.insert(name, func);
             Ok(())
           })?;
@@ -389,27 +380,19 @@ impl ModuleMetadata {
           unimplemented!("Only Variant type supported for Pallet Call type.");
         }
       }
-      module.call_ref = Some(lookup.insert_type(
-        &format!("{}::RawCall", mod_name),
-        TypeDef::Variant(raw_calls),
-      ));
     }
 
     // Decode module events.
     if let Some(events) = &md.event {
-      // Module RawEvent type.
-      let mut raw_events = TypeDefVariant::new();
+      let id = events.ty.id();
+      module.event_ref = Some(id.into());
 
-      let event_ty = types
-        .resolve(events.ty.id())
-        .expect("Missing Pallet event type");
+      let event_ty = types.resolve(id).expect("Missing Pallet event type");
       match event_ty.type_def() {
         TypeDef::Variant(v) => {
           v.variants.iter().try_for_each(|md| -> Result<()> {
-            let (event, ty_ref) =
-              EventMetadata::from_v14_meta(&mod_name, mod_idx, md, types, lookup)?;
+            let event = EventMetadata::from_v14_meta(&mod_name, mod_idx, md, types)?;
             let name = event.name.clone();
-            raw_events.insert(event.event_idx, &name, ty_ref);
             module.events.insert(name, event);
             Ok(())
           })?;
@@ -418,27 +401,19 @@ impl ModuleMetadata {
           unimplemented!("Only Variant type supported for Pallet Event type.");
         }
       }
-      module.event_ref = Some(lookup.insert_type(
-        &format!("{}::RawEvent", mod_name),
-        TypeDef::Variant(raw_events),
-      ));
     }
 
     // Decode module errors.
     if let Some(error) = &md.error {
-      // Module RawError type.
-      let mut raw_errors = TypeDefVariant::new();
+      let id = error.ty.id();
+      module.error_ref = Some(id.into());
 
-      let extra_bytes = lookup.parse_type("[u8; 3]")?;
-      let error_ty = types
-        .resolve(error.ty.id())
-        .expect("Missing Pallet error type");
+      let error_ty = types.resolve(id).expect("Missing Pallet error type");
       match error_ty.type_def() {
         TypeDef::Variant(v) => {
           v.variants.iter().try_for_each(|md| -> Result<()> {
             let error = ErrorMetadata::from_v14_meta(&mod_name, mod_idx, md)?;
             let name = error.name.clone();
-            raw_errors.insert(error.error_idx, &name, Some(extra_bytes.clone()));
             module.err_idx_map.insert(error.error_idx, name.clone());
             module.errors.insert(name, error);
             Ok(())
@@ -448,10 +423,6 @@ impl ModuleMetadata {
           unimplemented!("Only Variant type supported for Pallet Error type.");
         }
       }
-      module.error_ref = Some(lookup.insert_type(
-        &format!("{}::RawError", mod_name),
-        TypeDef::Variant(raw_errors),
-      ));
     }
 
     Ok(module)
@@ -600,8 +571,7 @@ impl EventMetadata {
     _mod_idx: u8,
     md: &Variant,
     types: &PortableRegistry,
-    lookup: &mut Types,
-  ) -> Result<(Self, Option<TypeId>)> {
+  ) -> Result<Self> {
     let mut event = Self {
       mod_name: mod_name.into(),
       name: md.name.clone(),
@@ -610,26 +580,15 @@ impl EventMetadata {
       docs: Docs::from_v14_meta(&md.docs),
     };
 
-    let mut event_tuple = Vec::new();
-
     // Decode event arguments.
     md.fields.iter().try_for_each(|md| -> Result<()> {
       let arg = NamedType::new_field_type(md, types)?;
       log::trace!("-- Event: {mod_name}.{}: field: {md:?}", event.name);
-      event_tuple.push(arg.ty_id.clone());
       event.args.push(arg);
       Ok(())
     })?;
 
-    let event_ref = if event_tuple.len() > 0 {
-      log::trace!("-- Event: {mod_name}.{}({event_tuple:?})", event.name);
-      let type_name = format!("{}::RawEvent::{}", mod_name, event.name);
-      Some(lookup.insert_type(&type_name, TypeDef::new_tuple(event_tuple)))
-    } else {
-      None
-    };
-
-    Ok((event, event_ref))
+    Ok(event)
   }
 }
 
@@ -778,8 +737,7 @@ impl FuncMetadata {
     mod_idx: u8,
     md: &Variant,
     types: &PortableRegistry,
-    lookup: &mut Types,
-  ) -> Result<(Self, Option<TypeId>)> {
+  ) -> Result<Self> {
     let mut func = Self {
       mod_name: mod_name.into(),
       name: md.name.clone(),
@@ -789,24 +747,14 @@ impl FuncMetadata {
       docs: Docs::from_v14_meta(&md.docs),
     };
 
-    let mut func_tuple = Vec::new();
-
     // Decode function arguments.
     md.fields.iter().try_for_each(|md| -> Result<()> {
       let arg = FuncArg::from_v14_meta(md, types)?;
-      func_tuple.push(arg.ty.ty_id.clone());
       func.args.push(arg);
       Ok(())
     })?;
 
-    let func_ref = if func_tuple.len() > 0 {
-      let type_name = format!("{}::RawFunc::{}", mod_name, func.name);
-      Some(lookup.insert_type(&type_name, TypeDef::new_tuple(func_tuple)))
-    } else {
-      None
-    };
-
-    Ok((func, func_ref))
+    Ok(func)
   }
 }
 

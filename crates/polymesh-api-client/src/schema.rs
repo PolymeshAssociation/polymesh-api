@@ -745,9 +745,10 @@ impl InnerTypesRegistry {
             runtime_metadata.0
           )));
         }
-        types.try_load_schema("schemas/init_v14_types.json");
 
-        Metadata::from_v14_metadata(v14, &mut types)?
+        let md = Metadata::from_v14_metadata(v14, &mut types)?;
+        types.try_load_schema("schemas/init_v14_types.json");
+        md
       }
       _ => {
         return Err(Error::MetadataParseFailed(format!(
