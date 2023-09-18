@@ -503,8 +503,36 @@ impl<'de> Deserialize<'de> for AccountId {
     D: de::Deserializer<'de>,
   {
     if deserializer.is_human_readable() {
-      let h = Deserialize::deserialize(deserializer)?;
-      Ok(AccountId::from_str(h).map_err(|e| de::Error::custom(e))?)
+      struct StringOrBytesVisitor;
+
+      impl<'de> de::Visitor<'de> for StringOrBytesVisitor {
+        type Value = AccountId;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+          formatter.write_str("a hex string or [u8; 32]")
+        }
+
+        fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+        where
+          E: de::Error,
+        {
+          Ok(AccountId::from_str(s).map_err(|e| de::Error::custom(e))?)
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+          A: de::SeqAccess<'de>,
+        {
+          let mut id = AccountId::default();
+          for n in 0..32 {
+            id.0[n] = seq
+              .next_element()?
+              .ok_or_else(|| de::Error::invalid_length(n, &self))?;
+          }
+          Ok(id)
+        }
+      }
+      deserializer.deserialize_any(StringOrBytesVisitor)
     } else {
       Ok(Self(Deserialize::deserialize(deserializer)?))
     }
@@ -631,11 +659,39 @@ impl<'de> Deserialize<'de> for IdentityId {
     D: de::Deserializer<'de>,
   {
     if deserializer.is_human_readable() {
-      let h: &str = Deserialize::deserialize(deserializer)?;
-      let mut id = IdentityId::default();
-      let off = if h.starts_with("0x") { 2 } else { 0 };
-      hex::decode_to_slice(&h[off..], &mut id.0).map_err(|e| de::Error::custom(e))?;
-      Ok(id)
+      struct StringOrBytesVisitor;
+
+      impl<'de> de::Visitor<'de> for StringOrBytesVisitor {
+        type Value = IdentityId;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+          formatter.write_str("a hex string or [u8; 32]")
+        }
+
+        fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+        where
+          E: de::Error,
+        {
+          let mut id = IdentityId::default();
+          let off = if s.starts_with("0x") { 2 } else { 0 };
+          hex::decode_to_slice(&s[off..], &mut id.0).map_err(|e| de::Error::custom(e))?;
+          Ok(id)
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+          A: de::SeqAccess<'de>,
+        {
+          let mut id = IdentityId::default();
+          for n in 0..32 {
+            id.0[n] = seq
+              .next_element()?
+              .ok_or_else(|| de::Error::invalid_length(n, &self))?;
+          }
+          Ok(id)
+        }
+      }
+      deserializer.deserialize_any(StringOrBytesVisitor)
     } else {
       Ok(Self(Deserialize::deserialize(deserializer)?))
     }
