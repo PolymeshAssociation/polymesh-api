@@ -9,10 +9,13 @@ use crate::error::*;
 use crate::schema::*;
 use crate::type_def::*;
 
+pub mod de;
+
 #[derive(Clone)]
 pub struct TypeCodec {
   type_lookup: TypeLookup,
   ty: Type,
+  id: TypeId,
 }
 
 impl TypeCodec {
@@ -20,6 +23,7 @@ impl TypeCodec {
     type_ref.ty.map(|ty| Self {
       type_lookup: type_lookup.clone(),
       ty,
+      id: type_ref.id,
     })
   }
 
@@ -29,6 +33,14 @@ impl TypeCodec {
 
   pub fn decode(&self, mut data: &[u8]) -> Result<Value> {
     self.decode_value(&mut data, false)
+  }
+
+  pub fn from_slice<'a, T>(&'a self, data: &'a [u8]) -> Result<T>
+  where
+    T: serde::de::Deserialize<'a>,
+  {
+    let mut deserializer = de::TypeDeserializer::from_slice(self, data);
+    Ok(T::deserialize(&mut deserializer)?)
   }
 }
 
