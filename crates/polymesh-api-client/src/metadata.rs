@@ -150,9 +150,21 @@ impl Metadata {
       Ok(())
     })?;
 
-    lookup.insert_type("RuntimeEvent", TypeDef::Variant(mod_events));
+    let event_ty = lookup.insert_type("RuntimeEvent", TypeDef::Variant(mod_events));
     lookup.insert_type("RuntimeError", TypeDef::Variant(mod_errors));
     lookup.insert_type("RuntimeCall", TypeDef::Variant(mod_calls));
+
+    // Build `EventRecords` type.
+    lookup.parse_named_type("H256", "[u8; 32]")?;
+    let phase_ty = lookup.resolve("frame_system::Phase").id;
+    let topics_ty = lookup.parse_type("Vec<H256>")?;
+
+    lookup.insert_type("EventRecord", TypeDefComposite::new(vec![
+      Field::new_named("phase", phase_ty, None),
+      Field::new_named("event", event_ty, None),
+      Field::new_named("topics", topics_ty, None),
+    ]).into());
+    lookup.parse_named_type("EventRecords", "Vec<EventRecord>")?;
 
     Ok(api_md)
   }

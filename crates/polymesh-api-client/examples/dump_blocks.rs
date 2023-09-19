@@ -261,13 +261,9 @@ async fn main() -> Result<()> {
   let mut last_types = types_registry
     .get_block_types(&client, Some(gen_version), Some(gen_hash))
     .await?;
-  let event_records_ty = last_types.resolve("EventRecords");
-  println!("event_records_ty = {:?}", event_records_ty);
   let mut event_records_ty = last_types
     .type_codec("EventRecords")
     .expect("Failed to get EventRecords type.");
-  let runtime_call_ty = last_types.resolve("RuntimeCall");
-  println!("runtime_call_ty = {:?}", runtime_call_ty);
   let mut runtime_call_ty = last_types
     .type_codec("RuntimeCall")
     .expect("Failed to get RuntimeCall type.");
@@ -297,19 +293,19 @@ async fn main() -> Result<()> {
       }
     }
     if let Some(events) = block.events {
-      //println!("decode events: {events:?}");
+      println!("decode events: {events:?}");
       let events = event_records_ty.decode(&events.0)?;
       match events.as_array() {
         // Skip empty blocks.
         Some(events) if events.len() > 1 => {
           println!("block[{}] events: {}", block.number, events.len());
-          /*
+          //*
           println!(
             "block[{}] events: {}",
             block.number,
             serde_json::to_string_pretty(&events)?
           );
-          */
+          // */
         }
         Some(_) => (),
         None => {

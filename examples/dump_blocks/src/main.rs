@@ -4,8 +4,11 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 
-use polymesh_api_client::schema::*;
-use polymesh_api_client::*;
+use polymesh_api::client::schema::*;
+use polymesh_api::client::*;
+
+//use polymesh_api::{Api, ChainApi};
+//type EventRecords = polymesh_api_client::EventRecords<<Api as ChainApi>::RuntimeEvent>;
 
 lazy_static::lazy_static! {
   static ref SYSTEM_EVENTS_KEY: StorageKey = {
@@ -270,11 +273,14 @@ async fn main() -> Result<()> {
   let mut last_types = types_registry
     .get_block_types(&client, Some(gen_version), Some(gen_hash))
     .await?;
-  let event_records_ty = last_types.resolve("EventRecords");
-  println!("event_records_ty = {:?}", event_records_ty);
+  //let event_records_ty = last_types.resolve("EventRecords");
+  //println!("event_records_ty = {:?}", event_records_ty);
   let mut event_records_ty = last_types
     .type_codec("EventRecords")
     .expect("Failed to get EventRecords type.");
+  let mut runtime_call_ty = last_types
+    .type_codec("RuntimeCall")
+    .expect("Failed to get RuntimeCall type.");
   last_types.dump_unresolved();
   while let Some(block) = process_blocks.next_block().await {
     //println!("block: {block:?}");
@@ -293,31 +299,59 @@ async fn main() -> Result<()> {
         event_records_ty = last_types
           .type_codec("EventRecords")
           .expect("Failed to get EventRecords type.");
+        runtime_call_ty = last_types
+          .type_codec("RuntimeCall")
+          .expect("Failed to get RuntimeCall type.");
         last_types.dump_unresolved();
       }
     }
     if let Some(events) = block.events {
       //println!("decode events: {events:?}");
-      let events = event_records_ty.decode(&events.0)?;
-      match events.as_array() {
+      let j_events = event_records_ty.decode(&events.0)?;
+      //println!("---- from SCALE to JSON: {}", j_events.to_string());
+      //let n_events: EventRecords = event_records_ty.from_slice(&events.0)?;
+      //println!("---- from SCALE to native: {:?}", n_events);
+      //let n_j_events = serde_json::to_value(n_events)?;
+      //println!("---- from native to JSON: {}", n_j_events.to_string());
+      //let events_from_js: EventRecords = serde_json::from_value(j_events.clone())?;
+      //println!("---- from value: {:?}", events_from_js);
+      match j_events.as_array() {
         // Skip empty blocks.
         Some(events) if events.len() > 1 => {
           println!("block[{}] events: {}", block.number, events.len());
-          /*
-          println!(
-            "block[{}] events: {}",
-            block.number,
-            serde_json::to_string_pretty(&events)?
-          );
-          */
+          for event in events {
+            if let Some(event) = event.get("event") {
+              println!(" -- {}", event.to_string());
+            }
+          }
         }
         Some(_) => (),
         None => {
           println!(
             "block[{}] events: {}",
             block.number,
-            serde_json::to_string_pretty(&events)?
+            serde_json::to_string_pretty(&j_events)?
           );
+        }
+      }
+      let scale_events = event_records_ty.encode(&j_events)?;
+      //println!("---- re-encode from JSON: orig len={}, new len={}", events.0.len(), scale_events.len());
+      assert_eq!(scale_events, events.0);
+    }
+    // Dump extrinsics.
+    if let Some(block) = &block.block {
+      let extrinsics = block.extrinsics();
+      if extrinsics.len() > 1 {
+        println!("block[{}] calls: {}", block.block_number(), extrinsics.len());
+        //println!("decode extrinsics: {extrinsics:?}");
+        for raw_xt in extrinsics {
+          let xt: ExtrinsicV4 = raw_xt.decode_as()?;
+          //println!("  -- xt={}", serde_json::to_string(&xt)?);
+          let decoded = runtime_call_ty.decode(&xt.call.0)?;
+          println!("  -- {}", decoded.to_string());
+          let scale_call = runtime_call_ty.encode(&decoded)?;
+          //println!("---- re-encode from JSON: orig len={}, new len={}", xt.call.0.len(), scale_call.len());
+          assert_eq!(scale_call, xt.call.0);
         }
       }
     }
