@@ -251,6 +251,10 @@ impl TypeDefVariant {
     // Not found.
     None
   }
+
+  pub fn get_by_name(&self, name: &str) -> Option<&Variant> {
+    self.variants.iter().find(|v| v.name == name)
+  }
 }
 
 /// Check if the variant is a tuple enum variant or struct enum variant (all fields need to have names).

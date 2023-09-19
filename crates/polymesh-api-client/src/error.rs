@@ -53,6 +53,9 @@ pub enum Error {
   #[cfg_attr(feature = "std", error("Decode type failed: {0}"))]
   DecodeTypeFailed(String),
 
+  #[cfg_attr(feature = "std", error("Encode type failed: {0}"))]
+  EncodeTypeFailed(String),
+
   #[cfg_attr(feature = "std", error("Signing transaction failed: {0}"))]
   SigningTransactionFailed(String),
 

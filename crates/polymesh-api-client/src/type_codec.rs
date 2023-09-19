@@ -1,4 +1,4 @@
-use codec::{Compact, Decode, Input};
+use codec::{Compact, Decode, Encode, Input, Output};
 use serde_json::{json, Map, Value};
 
 #[cfg(not(feature = "std"))]
@@ -35,6 +35,16 @@ impl TypeCodec {
     self.decode_value(&mut data, false)
   }
 
+  pub fn encode_to<T: Output + ?Sized>(&self, value: &Value, dest: &mut T) -> Result<()> {
+    self.ty.encode_to(&self.type_lookup, value, dest, false)
+  }
+
+  pub fn encode(&self, value: &Value) -> Result<Vec<u8>> {
+    let mut buf = Vec::with_capacity(1024);
+    self.encode_to(value, &mut buf)?;
+    Ok(buf)
+  }
+
   pub fn from_slice<'a, T>(&'a self, data: &'a [u8]) -> Result<T>
   where
     T: serde::de::Deserialize<'a>,
@@ -66,6 +76,24 @@ impl TypeLookup {
     }
     ty.decode_value(self, input, is_compact)
   }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_id: TypeId,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    let ty = self
+      .get_type(type_id)
+      .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {type_id:?}")))?;
+    if ty.path().is_empty() {
+      log::trace!("encode type[{type_id:?}]");
+    } else {
+      log::trace!("encode type[{type_id:?}]: {}", ty.path());
+    }
+    ty.encode_to(self, value, dest, is_compact)
+  }
 }
 
 impl Type {
@@ -82,6 +110,21 @@ impl Type {
       .type_def
       .decode_value(self, type_lookup, input, is_compact)
   }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    if !self.path().is_empty() {
+      log::trace!("encode type: {}", self.path());
+    }
+    self
+      .type_def
+      .encode_to(self, type_lookup, value, dest, is_compact)
+  }
 }
 
 impl TypeDef {
@@ -95,11 +138,8 @@ impl TypeDef {
     match self {
       TypeDef::Composite(def) => def.decode_value(type_lookup, input, is_compact),
       TypeDef::Variant(def) => {
-        if ty.path().segments == &["Option"] {
-          def.decode_value(type_lookup, input, is_compact, true)
-        } else {
-          def.decode_value(type_lookup, input, is_compact, false)
-        }
+        let is_option = ty.path().segments == &["Option"];
+        def.decode_value(type_lookup, input, is_compact, is_option)
       }
       TypeDef::Sequence(def) => def.decode_value(type_lookup, input, is_compact),
       TypeDef::Array(def) => def.decode_value(type_lookup, input, is_compact),
@@ -205,6 +245,225 @@ impl TypeDef {
       TypeDef::Compact(def) => def.decode_value(type_lookup, input, is_compact),
     }
   }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    ty: &Type,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    match self {
+      TypeDef::Composite(def) => def.encode_to(type_lookup, value, dest, is_compact),
+      TypeDef::Variant(def) => {
+        let is_option = ty.path().segments == &["Option"];
+        def.encode_to(type_lookup, value, dest, is_compact, is_option)
+      }
+      TypeDef::Sequence(def) => def.encode_to(type_lookup, value, dest, is_compact),
+      TypeDef::Array(def) => def.encode_to(type_lookup, value, dest, is_compact),
+      TypeDef::Tuple(def) => def.encode_to(type_lookup, value, dest, is_compact),
+      TypeDef::Primitive(prim) => {
+        log::trace!("encode Primitive: {prim:?}, is_compact: {is_compact}");
+        match prim {
+          TypeDefPrimitive::Bool => match value.as_bool() {
+            Some(v) => {
+              dest.push_byte(if v { 1 } else { 0 });
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a bool, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::Char => match value.as_str() {
+            Some(v) if v.len() == 1 => {
+              let ch = v.as_bytes()[0];
+              dest.push_byte(ch);
+              Ok(())
+            }
+            _ => Err(Error::EncodeTypeFailed(format!(
+              "Expected a char (string), got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::Str => match value.as_str() {
+            Some(v) => {
+              v.encode_to(dest);
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a string, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::U8 => match value.as_u64() {
+            Some(num) => {
+              let num: u8 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a u8 number: {e:?}")))?;
+              num.encode_to(dest);
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::U16 => match value.as_u64() {
+            Some(num) => {
+              let num: u16 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a u16 number: {e:?}")))?;
+              if is_compact {
+                Compact(num).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::U32 => match value.as_u64() {
+            Some(num) => {
+              let num: u32 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a u32 number: {e:?}")))?;
+              if is_compact {
+                Compact(num).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::U64 => match value.as_u64() {
+            Some(num) => {
+              if is_compact {
+                Compact(num).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::U128 => match value.as_u64() {
+            Some(num) => {
+              let num: u128 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a u128 number: {e:?}")))?;
+              if is_compact {
+                Compact(num).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::U256 => {
+            unimplemented!();
+          }
+          TypeDefPrimitive::I8 => match value.as_i64() {
+            Some(num) => {
+              let num: i8 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a i8 number: {e:?}")))?;
+              num.encode_to(dest);
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::I16 => match value.as_i64() {
+            Some(num) => {
+              let num: i16 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a i16 number: {e:?}")))?;
+              if is_compact {
+                Compact(num as u128).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::I32 => match value.as_i64() {
+            Some(num) => {
+              let num: i32 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a i32 number: {e:?}")))?;
+              if is_compact {
+                Compact(num as u128).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::I64 => match value.as_i64() {
+            Some(num) => {
+              if is_compact {
+                Compact(num as u128).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::I128 => match value.as_i64() {
+            Some(num) => {
+              let num: i128 = num
+                .try_into()
+                .map_err(|e| Error::EncodeTypeFailed(format!("Not a i128 number: {e:?}")))?;
+              if is_compact {
+                Compact(num as u128).encode_to(dest);
+              } else {
+                num.encode_to(dest);
+              }
+              Ok(())
+            }
+            None => Err(Error::EncodeTypeFailed(format!(
+              "Expected a number, got {:?}",
+              value
+            ))),
+          },
+          TypeDefPrimitive::I256 => {
+            unimplemented!();
+          }
+        }
+      }
+      TypeDef::Compact(def) => def.encode_to(type_lookup, value, dest, is_compact),
+    }
+  }
 }
 
 fn decode_fields<I: Input>(
@@ -247,6 +506,89 @@ fn decode_fields<I: Input>(
   }
 }
 
+fn encode_struct_fields<T: Output + ?Sized>(
+  fields: &Vec<Field>,
+  type_lookup: &TypeLookup,
+  value: &Value,
+  dest: &mut T,
+  is_compact: bool,
+) -> Result<()> {
+  let len = fields.len();
+  match value {
+    Value::Object(map) if map.len() == len => {
+      for field in fields {
+        let value = field.name.as_ref().and_then(|n| map.get(n));
+        match value {
+          Some(value) => {
+            log::trace!("encode Composite struct field: {:?}", field);
+            type_lookup.encode_to(field.ty, value, dest, is_compact)?;
+          }
+          None => {
+            return Err(Error::EncodeTypeFailed(format!(
+              "Encode struct missing field {:?}",
+              field.name
+            )));
+          }
+        }
+      }
+      Ok(())
+    }
+    Value::Object(map) => Err(Error::EncodeTypeFailed(format!(
+      "Encode struct expected {len} field, got {}",
+      map.len()
+    ))),
+    _ => Err(Error::EncodeTypeFailed(format!(
+      "Encode struct expect an object got {:?}",
+      value
+    ))),
+  }
+}
+
+fn encode_tuple_fields<T: Output + ?Sized>(
+  fields: &Vec<Field>,
+  type_lookup: &TypeLookup,
+  value: &Value,
+  dest: &mut T,
+  is_compact: bool,
+) -> Result<()> {
+  let len = fields.len();
+  if len == 1 {
+    return type_lookup.encode_to(fields[0].ty, value, dest, is_compact);
+  }
+  match value.as_array() {
+    Some(arr) if arr.len() == len => {
+      for (v, field) in arr.into_iter().zip(fields.iter()) {
+        log::trace!("encode Composite tuple field: {:?}", field);
+        type_lookup.encode_to(field.ty, v, dest, is_compact)?;
+      }
+      Ok(())
+    }
+    Some(arr) => Err(Error::EncodeTypeFailed(format!(
+      "Encode struct tuple expect array with length {len}, got {}",
+      arr.len()
+    ))),
+    None => Err(Error::EncodeTypeFailed(format!(
+      "Encode struct tuple expect array value got {:?}",
+      value
+    ))),
+  }
+}
+
+fn encode_fields<T: Output + ?Sized>(
+  fields: &Vec<Field>,
+  is_struct: bool,
+  type_lookup: &TypeLookup,
+  value: &Value,
+  dest: &mut T,
+  is_compact: bool,
+) -> Result<()> {
+  if is_struct {
+    encode_struct_fields(fields, type_lookup, value, dest, is_compact)
+  } else {
+    encode_tuple_fields(fields, type_lookup, value, dest, is_compact)
+  }
+}
+
 impl TypeDefComposite {
   pub fn decode_value<I: Input>(
     &self,
@@ -259,6 +601,23 @@ impl TypeDefComposite {
       self.is_struct(),
       type_lookup,
       input,
+      is_compact,
+    )
+  }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    encode_fields(
+      &self.fields,
+      self.is_struct(),
+      type_lookup,
+      value,
+      dest,
       is_compact,
     )
   }
@@ -310,6 +669,105 @@ impl TypeDefVariant {
       }
     }
   }
+
+  fn encode_option<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    if value.is_null() {
+      dest.push_byte(0);
+      return Ok(());
+    }
+    dest.push_byte(1);
+    let variant = self
+      .variants
+      .get(1)
+      .ok_or_else(|| Error::EncodeTypeFailed("Option type doesn't have a Some variant".into()))?;
+    encode_fields(
+      &variant.fields,
+      variant.is_struct(),
+      type_lookup,
+      value,
+      dest,
+      is_compact,
+    )
+  }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+    is_option: bool,
+  ) -> Result<()> {
+    if is_option {
+      return self.encode_option(type_lookup, value, dest, is_compact);
+    }
+    let len = self.variants.len();
+    match value {
+      Value::Null if len == 0 => {
+        // unit
+        dest.push_byte(0);
+        Ok(())
+      }
+      Value::String(s) => match self.get_by_name(&s) {
+        Some(v) if v.fields.len() == 0 => {
+          log::trace!("encode enum variant: {:?}", v);
+          dest.push_byte(v.index);
+          Ok(())
+        }
+        Some(v) => Err(Error::EncodeTypeFailed(format!(
+          "Variant {} has fields, got just the name.",
+          v.name
+        ))),
+        None => Err(Error::EncodeTypeFailed(format!("Unknown variant name {s}"))),
+      },
+      Value::Object(map) if map.len() == 1 => match map.iter().next() {
+        Some((key, value)) => match self.get_by_name(&key) {
+          Some(v) if v.fields.len() == 0 => {
+            log::trace!("encode enum variant: {:?}", v);
+            dest.push_byte(v.index);
+            Ok(())
+          }
+          Some(v) => {
+            log::trace!("encode enum variant: {:?}", v);
+            dest.push_byte(v.index);
+            if v.fields.len() > 0 {
+              encode_fields(
+                &v.fields,
+                v.is_struct(),
+                type_lookup,
+                value,
+                dest,
+                is_compact,
+              )
+            } else {
+              Ok(())
+            }
+          }
+          None => Err(Error::EncodeTypeFailed(format!(
+            "Unknown variant {:?}",
+            map
+          ))),
+        },
+        None => Err(Error::EncodeTypeFailed(format!(
+          "Unknown variant {:?}",
+          map
+        ))),
+      },
+      Value::Object(map) => Err(Error::EncodeTypeFailed(format!(
+        "Expect a variant, got a map with the wrong number of fields {}",
+        map.len()
+      ))),
+      value => Err(Error::EncodeTypeFailed(format!(
+        "Expect a variant, got {value:?}"
+      ))),
+    }
+  }
 }
 
 impl TypeDefSequence {
@@ -329,6 +787,33 @@ impl TypeDefSequence {
     }
     Ok(vec.into())
   }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    match value.as_array() {
+      Some(arr) => {
+        let len = Compact::<u64>(arr.len() as u64);
+        len.encode_to(dest);
+        log::trace!("encode sequence: len={}", arr.len());
+        let ty = type_lookup.get_type(self.type_param).ok_or_else(|| {
+          Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param))
+        })?;
+        for v in arr {
+          ty.encode_to(type_lookup, v, dest, is_compact)?;
+        }
+        Ok(())
+      }
+      None => Err(Error::EncodeTypeFailed(format!(
+        "Encode sequence expect array value got {:?}",
+        value
+      ))),
+    }
+  }
 }
 
 impl TypeDefArray {
@@ -347,6 +832,36 @@ impl TypeDefArray {
       vec.push(ty.decode_value(type_lookup, input, is_compact)?);
     }
     Ok(vec.into())
+  }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    let len = self.len as usize;
+    match value.as_array() {
+      Some(arr) if arr.len() == len => {
+        log::trace!("encode array: len={len}");
+        let ty = type_lookup.get_type(self.type_param).ok_or_else(|| {
+          Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param))
+        })?;
+        for v in arr {
+          ty.encode_to(type_lookup, v, dest, is_compact)?;
+        }
+        Ok(())
+      }
+      Some(arr) => Err(Error::EncodeTypeFailed(format!(
+        "Expect array with length {len}, got {}",
+        arr.len()
+      ))),
+      None => Err(Error::EncodeTypeFailed(format!(
+        "Expect array value got {:?}",
+        value
+      ))),
+    }
   }
 }
 
@@ -369,6 +884,36 @@ impl TypeDefTuple {
       }
     }
   }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    is_compact: bool,
+  ) -> Result<()> {
+    let len = self.fields.len();
+    log::trace!("encode tuple: len={len}");
+    if len == 1 {
+      return type_lookup.encode_to(self.fields[0], value, dest, is_compact);
+    }
+    match value.as_array() {
+      Some(arr) if arr.len() == len => {
+        for (v, field) in arr.into_iter().zip(self.fields.iter()) {
+          type_lookup.encode_to(*field, v, dest, is_compact)?;
+        }
+        Ok(())
+      }
+      Some(arr) => Err(Error::EncodeTypeFailed(format!(
+        "Encode tuple expect array with length {len}, got {}",
+        arr.len()
+      ))),
+      None => Err(Error::EncodeTypeFailed(format!(
+        "Encode tuple expect array value got {:?}",
+        value
+      ))),
+    }
+  }
 }
 
 impl TypeDefCompact {
@@ -379,5 +924,15 @@ impl TypeDefCompact {
     _is_compact: bool,
   ) -> Result<Value> {
     type_lookup.decode_value(self.type_param, input, true)
+  }
+
+  pub fn encode_to<T: Output + ?Sized>(
+    &self,
+    type_lookup: &TypeLookup,
+    value: &Value,
+    dest: &mut T,
+    _is_compact: bool,
+  ) -> Result<()> {
+    type_lookup.encode_to(self.type_param, value, dest, true)
   }
 }
