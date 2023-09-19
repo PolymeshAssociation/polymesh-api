@@ -778,14 +778,24 @@ impl TypeDefSequence {
     is_compact: bool,
   ) -> Result<Value> {
     let len = Compact::<u64>::decode(input)?.0 as usize;
-    let mut vec = Vec::with_capacity(len.max(256));
     let ty = type_lookup
       .get_type(self.type_param)
       .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param)))?;
-    for _ in 0..len {
-      vec.push(ty.decode_value(type_lookup, input, is_compact)?);
+    if ty.is_u8() {
+      log::trace!("--- decode byte sequence[{len}]: {:?}", ty);
+      let mut vec = Vec::with_capacity(len);
+      // Byte array.
+      for _ in 0..len {
+        vec.push(input.read_byte()?);
+      }
+      Ok(Value::String(hex::encode(vec)))
+    } else {
+      let mut vec = Vec::with_capacity(len.max(256));
+      for _ in 0..len {
+        vec.push(ty.decode_value(type_lookup, input, is_compact)?);
+      }
+      Ok(vec.into())
     }
-    Ok(vec.into())
   }
 
   pub fn encode_to<T: Output + ?Sized>(
@@ -795,20 +805,30 @@ impl TypeDefSequence {
     dest: &mut T,
     is_compact: bool,
   ) -> Result<()> {
-    match value.as_array() {
-      Some(arr) => {
+    let ty = type_lookup
+      .get_type(self.type_param)
+      .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param)))?;
+    match value {
+      Value::Array(arr) => {
         let len = Compact::<u64>(arr.len() as u64);
         len.encode_to(dest);
         log::trace!("encode sequence: len={}", arr.len());
-        let ty = type_lookup.get_type(self.type_param).ok_or_else(|| {
-          Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param))
-        })?;
         for v in arr {
           ty.encode_to(type_lookup, v, dest, is_compact)?;
         }
         Ok(())
       }
-      None => Err(Error::EncodeTypeFailed(format!(
+      Value::String(s) if ty.is_u8() => {
+        let off = if s.starts_with("0x") { 2 } else { 0 };
+        let arr = hex::decode(&s[off..])?;
+        log::trace!("--- encode byte sequence[{}]: {:?}", arr.len(), ty);
+        let len = Compact::<u64>(arr.len() as u64);
+        len.encode_to(dest);
+        // Try hex decoding for byte arrays.
+        dest.write(&arr[..]);
+        Ok(())
+      }
+      _ => Err(Error::EncodeTypeFailed(format!(
         "Encode sequence expect array value got {:?}",
         value
       ))),
@@ -824,14 +844,24 @@ impl TypeDefArray {
     is_compact: bool,
   ) -> Result<Value> {
     let len = self.len as usize;
-    let mut vec = Vec::with_capacity(len);
     let ty = type_lookup
       .get_type(self.type_param)
       .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param)))?;
-    for _ in 0..len {
-      vec.push(ty.decode_value(type_lookup, input, is_compact)?);
+    if ty.is_u8() {
+      log::trace!("--- decode byte array[{len}]: {:?}", ty);
+      let mut vec = Vec::with_capacity(len);
+      // Byte array.
+      for _ in 0..len {
+        vec.push(input.read_byte()?);
+      }
+      Ok(Value::String(hex::encode(vec)))
+    } else {
+      let mut vec = Vec::with_capacity(len);
+      for _ in 0..len {
+        vec.push(ty.decode_value(type_lookup, input, is_compact)?);
+      }
+      Ok(vec.into())
     }
-    Ok(vec.into())
   }
 
   pub fn encode_to<T: Output + ?Sized>(
@@ -842,22 +872,30 @@ impl TypeDefArray {
     is_compact: bool,
   ) -> Result<()> {
     let len = self.len as usize;
-    match value.as_array() {
-      Some(arr) if arr.len() == len => {
+    let ty = type_lookup
+      .get_type(self.type_param)
+      .ok_or_else(|| Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param)))?;
+    match value {
+      Value::Array(arr) if arr.len() == len => {
         log::trace!("encode array: len={len}");
-        let ty = type_lookup.get_type(self.type_param).ok_or_else(|| {
-          Error::DecodeTypeFailed(format!("Missing type_id: {:?}", self.type_param))
-        })?;
         for v in arr {
           ty.encode_to(type_lookup, v, dest, is_compact)?;
         }
         Ok(())
       }
-      Some(arr) => Err(Error::EncodeTypeFailed(format!(
+      Value::Array(arr) => Err(Error::EncodeTypeFailed(format!(
         "Expect array with length {len}, got {}",
         arr.len()
       ))),
-      None => Err(Error::EncodeTypeFailed(format!(
+      Value::String(s) if ty.is_u8() && s.len() >= 2 * len => {
+        log::trace!("--- encode byte array[{len}]: {:?}", ty);
+        // Try hex decoding for byte arrays.
+        let off = if s.starts_with("0x") { 2 } else { 0 };
+        let arr = hex::decode(&s[off..])?;
+        dest.write(&arr[..]);
+        Ok(())
+      }
+      _ => Err(Error::EncodeTypeFailed(format!(
         "Expect array value got {:?}",
         value
       ))),

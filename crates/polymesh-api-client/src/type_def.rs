@@ -110,6 +110,13 @@ impl Type {
   pub fn type_def(&self) -> &TypeDef {
     &self.type_def
   }
+
+  pub fn is_u8(&self) -> bool {
+    match &self.type_def {
+      TypeDef::Primitive(TypeDefPrimitive::U8) => true,
+      _ => false,
+    }
+  }
 }
 
 #[derive(Clone, Debug, Decode, Encode)]
