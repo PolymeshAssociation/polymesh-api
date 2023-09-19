@@ -6,7 +6,7 @@ use serde_json::to_string;
 
 use rust_decimal::prelude::*;
 
-use polymesh_api::client::{AccountId, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction};
+use polymesh_api::client::{AccountId, Call, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction};
 use polymesh_api::Api;
 
 use clap::{Args, Parser, Subcommand};
@@ -46,6 +46,17 @@ enum PrepareCommands {
     #[arg(value_parser = decode_account)]
     dest: AccountId,
     amount: Decimal,
+  },
+  /// Prepare an Identity.cddRegisterDidWithCdd.
+  IdentityRegisterDid {
+    #[arg(value_parser = decode_account)]
+    primary_key: AccountId,
+    #[arg(short, long)]
+    expiry: Option<u64>,
+  },
+  /// Prepare a transaction from json.
+  Json {
+    source: String,
   },
 }
 
@@ -114,6 +125,13 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
         .to_u128()
         .ok_or_else(|| anyhow!("Failed to convert amount to u128."))?;
       api.call().balances().transfer(dest.into(), amount)?
+    }
+    PrepareCommands::IdentityRegisterDid { primary_key, expiry } => {
+      api.call().identity().cdd_register_did_with_cdd(primary_key.into(), vec![], expiry)?
+    }
+    PrepareCommands::Json { source } => {
+      let tx = serde_json::from_str(&source)?;
+      Call::new(&api, tx)
     }
   };
   log::info!("tx = {:?}", to_string(&tx.runtime_call()));
