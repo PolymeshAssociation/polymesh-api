@@ -342,7 +342,11 @@ async fn main() -> Result<()> {
     if let Some(block) = &block.block {
       let extrinsics = block.extrinsics();
       if extrinsics.len() > 1 {
-        println!("block[{}] calls: {}", block.block_number(), extrinsics.len());
+        println!(
+          "block[{}] calls: {}",
+          block.block_number(),
+          extrinsics.len()
+        );
         //println!("decode extrinsics: {extrinsics:?}");
         for raw_xt in extrinsics {
           let xt: ExtrinsicV4 = raw_xt.decode_as()?;
