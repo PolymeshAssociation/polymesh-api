@@ -1,4 +1,6 @@
+use std::fs::File;
 use std::io::{stdin, Read};
+use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
@@ -8,7 +10,9 @@ use serde_json::to_string;
 
 use rust_decimal::prelude::*;
 
-use polymesh_api::client::{AccountId, Call, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction};
+use polymesh_api::client::{
+  AccountId, Call, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction,
+};
 use polymesh_api::Api;
 
 use clap::{Args, Parser, Subcommand};
@@ -60,7 +64,7 @@ enum PrepareCommands {
   },
   /// Prepare a transaction from json.
   Json {
-    /// Json encoded transaction to prepare (use '-' to read from stdin).
+    /// Json encoded transaction to prepare (use '-' to read from stdin, or a filename).
     transaction: String,
   },
 }
@@ -70,7 +74,7 @@ struct OfflineSignArgs {
   /// The secret key URI.
   #[arg(long = "suri", value_parser = decode_signer)]
   signer: DefaultSigner,
-  /// Hex encoded prepared transaction to sign (use '-' to read from stdin).
+  /// Hex encoded prepared transaction to sign (use '-' to read from stdin, or a filename).
   #[arg(value_parser = decode_prepared_transaction)]
   transaction: PreparedTransaction,
 }
@@ -83,19 +87,28 @@ struct SubmitArgs {
   /// Wait for the transaction to be finalized.
   #[arg(short, long, default_value = "false")]
   finalized: bool,
-  /// Hex encoded signed transaction to submit (use '-' to read from stdin).
+  /// Hex encoded signed transaction to submit (use '-' to read from stdin, or a filename).
   #[arg(value_parser = decode_extrinsic_v4)]
   transaction: ExtrinsicV4,
 }
 
-fn string_or_stdin(s: &str) -> Result<String> {
-  if s == "-" {
-    let mut buf = String::new();
-    stdin().read_to_string(&mut buf)
-      .map_err(|e| anyhow!("Failed to read from stdin: {e:?}"))?;
-    Ok(buf.trim().to_string())
-  } else {
-    Ok(s.to_string())
+fn string_or_file(s: &str) -> Result<String> {
+  match (s, Path::new(s)) {
+    ("-", _) => {
+      let mut buf = String::new();
+      stdin()
+        .read_to_string(&mut buf)
+        .map_err(|e| anyhow!("Failed to read from stdin: {e:?}"))?;
+      Ok(buf.trim().to_string())
+    }
+    (_, path) if path.exists() => {
+      let mut f = File::open(path)?;
+      let mut buf = String::new();
+      f.read_to_string(&mut buf)
+        .map_err(|e| anyhow!("Failed to read from file '{path:?}': {e:?}"))?;
+      Ok(buf.trim().to_string())
+    }
+    (s, _) => Ok(s.to_string()),
   }
 }
 
@@ -119,7 +132,7 @@ fn decode_account(s: &str) -> Result<AccountId> {
 }
 
 fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction> {
-  let s = string_or_stdin(s)?;
+  let s = string_or_file(s)?;
   let off = if s.starts_with("0x") { 2 } else { 0 };
   let buf =
     hex::decode(&s[off..]).map_err(|e| anyhow!("Prepared transaction not valid hex: {e:?}"))?;
@@ -129,7 +142,7 @@ fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction> {
 }
 
 fn decode_extrinsic_v4(s: &str) -> Result<ExtrinsicV4> {
-  let s = string_or_stdin(s)?;
+  let s = string_or_file(s)?;
   let off = if s.starts_with("0x") { 2 } else { 0 };
   let buf =
     hex::decode(&s[off..]).map_err(|e| anyhow!("Signed transaction not valid hex: {e:?}"))?;
@@ -149,11 +162,15 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
         .ok_or_else(|| anyhow!("Failed to convert amount to u128."))?;
       api.call().balances().transfer(dest.into(), amount)?
     }
-    PrepareCommands::IdentityRegisterDid { primary_key, expiry } => {
-      api.call().identity().cdd_register_did_with_cdd(primary_key.into(), vec![], expiry)?
-    }
+    PrepareCommands::IdentityRegisterDid {
+      primary_key,
+      expiry,
+    } => api
+      .call()
+      .identity()
+      .cdd_register_did_with_cdd(primary_key.into(), vec![], expiry)?,
     PrepareCommands::Json { transaction } => {
-      let transaction = string_or_stdin(&transaction)?;
+      let transaction = string_or_file(&transaction)?;
       let tx = serde_json::from_str(&transaction)?;
       Call::new(&api, tx)
     }
