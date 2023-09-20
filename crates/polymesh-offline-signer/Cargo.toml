@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-offline-signer"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -24,7 +24,7 @@ sp-keyring = "24.0.0"
 subxt-signer = "0.31"
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
-polymesh-api = { version = "2.2", path = "../../" }
+polymesh-api = { version = "2.3", path = "../../" }
 hex = "0.4.3"
 clap = { version = "4.4.3", features = ["derive"] }
 rust_decimal = "1.32.0"

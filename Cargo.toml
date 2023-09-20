@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "2.2.0"
+version = "2.3.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -33,7 +33,7 @@ serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precisi
 serde = { version = "1.0", optional = true }
 
 polymesh-api-codegen-macro = { version = "2.1.0", path = "crates/polymesh-api-codegen-macro", default-features = false }
-polymesh-api-client = { version = "2.2.0", path = "crates/polymesh-api-client", optional = true, default-features = false }
+polymesh-api-client = { version = "2.3.0", path = "crates/polymesh-api-client", optional = true, default-features = false }
 
 # For Ink! Smart Contract support.
 polymesh-api-ink = { version = "0.5.0", path = "crates/polymesh-api-ink", optional = true, default-features = false }
