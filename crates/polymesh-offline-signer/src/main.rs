@@ -1,3 +1,5 @@
+use std::io::{stdin, Read};
+
 use anyhow::{anyhow, Result};
 
 use codec::{Decode, Encode};
@@ -78,40 +80,53 @@ struct SubmitArgs {
   transaction: ExtrinsicV4,
 }
 
-fn decode_signer(s: &str) -> Result<DefaultSigner, String> {
+fn string_or_stdin(s: &str) -> Result<String> {
+  if s == "-" {
+    let mut buf = String::new();
+    stdin().read_to_string(&mut buf)
+      .map_err(|e| anyhow!("Failed to read from stdin: {e:?}"))?;
+    Ok(buf.trim().to_string())
+  } else {
+    Ok(s.to_string())
+  }
+}
+
+fn decode_signer(s: &str) -> Result<DefaultSigner> {
   let signer =
-    DefaultSigner::from_string(s, None).map_err(|e| format!("Failed to decode: {e:?}"))?;
+    DefaultSigner::from_string(s, None).map_err(|e| anyhow!("Failed to decode: {e:?}"))?;
   Ok(signer)
 }
 
-fn decode_account(s: &str) -> Result<AccountId, String> {
+fn decode_account(s: &str) -> Result<AccountId> {
   if s.starts_with("0x") {
     let mut account = AccountId::default();
     hex::decode_to_slice(&s[2..], &mut account.0)
-      .map_err(|e| format!("Invalid account id: {e:?}"))?;
+      .map_err(|e| anyhow!("Invalid account id: {e:?}"))?;
     Ok(account)
   } else {
     use sp_core::crypto::Ss58Codec;
-    let account = AccountId::from_ss58check(s).map_err(|e| format!("Invalid account id: {e:?}"))?;
+    let account = AccountId::from_ss58check(s).map_err(|e| anyhow!("Invalid account id: {e:?}"))?;
     Ok(account)
   }
 }
 
-fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction, String> {
+fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction> {
+  let s = string_or_stdin(s)?;
   let off = if s.starts_with("0x") { 2 } else { 0 };
   let buf =
-    hex::decode(&s[off..]).map_err(|e| format!("Prepared transaction not valid hex: {e:?}"))?;
+    hex::decode(&s[off..]).map_err(|e| anyhow!("Prepared transaction not valid hex: {e:?}"))?;
   let prepared = PreparedTransaction::decode(&mut buf.as_slice())
-    .map_err(|e| format!("Invalid prepared transaction: {e:?}"))?;
+    .map_err(|e| anyhow!("Invalid prepared transaction: {e:?}"))?;
   Ok(prepared)
 }
 
-fn decode_extrinsic_v4(s: &str) -> Result<ExtrinsicV4, String> {
+fn decode_extrinsic_v4(s: &str) -> Result<ExtrinsicV4> {
+  let s = string_or_stdin(s)?;
   let off = if s.starts_with("0x") { 2 } else { 0 };
   let buf =
-    hex::decode(&s[off..]).map_err(|e| format!("Signed transaction not valid hex: {e:?}"))?;
+    hex::decode(&s[off..]).map_err(|e| anyhow!("Signed transaction not valid hex: {e:?}"))?;
   let xt = ExtrinsicV4::decode(&mut buf.as_slice())
-    .map_err(|e| format!("Invalid signed transaction: {e:?}"))?;
+    .map_err(|e| anyhow!("Invalid signed transaction: {e:?}"))?;
   Ok(xt)
 }
 
@@ -130,6 +145,7 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
       api.call().identity().cdd_register_did_with_cdd(primary_key.into(), vec![], expiry)?
     }
     PrepareCommands::Json { source } => {
+      let source = string_or_stdin(&source)?;
       let tx = serde_json::from_str(&source)?;
       Call::new(&api, tx)
     }
