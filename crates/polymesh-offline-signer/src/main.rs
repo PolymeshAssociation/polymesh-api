@@ -33,8 +33,10 @@ enum Commands {
 
 #[derive(Args)]
 struct PrepareArgs {
+  /// The account that will be used to sign the transaction.
   #[arg(short, long, value_parser = decode_account)]
   account: AccountId,
+  /// Websocket url for the Polymesh node.
   #[arg(short, long)]
   url: String,
   #[command(subcommand)]
@@ -58,24 +60,30 @@ enum PrepareCommands {
   },
   /// Prepare a transaction from json.
   Json {
-    source: String,
+    /// Json encoded transaction to prepare (use '-' to read from stdin).
+    transaction: String,
   },
 }
 
 #[derive(Args)]
 struct OfflineSignArgs {
+  /// The secret key URI.
   #[arg(long = "suri", value_parser = decode_signer)]
   signer: DefaultSigner,
+  /// Hex encoded prepared transaction to sign (use '-' to read from stdin).
   #[arg(value_parser = decode_prepared_transaction)]
   transaction: PreparedTransaction,
 }
 
 #[derive(Args)]
 struct SubmitArgs {
+  /// Websocket url for the Polymesh node.
   #[arg(short, long)]
   url: String,
+  /// Wait for the transaction to be finalized.
   #[arg(short, long, default_value = "false")]
   finalized: bool,
+  /// Hex encoded signed transaction to submit (use '-' to read from stdin).
   #[arg(value_parser = decode_extrinsic_v4)]
   transaction: ExtrinsicV4,
 }
@@ -144,9 +152,9 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
     PrepareCommands::IdentityRegisterDid { primary_key, expiry } => {
       api.call().identity().cdd_register_did_with_cdd(primary_key.into(), vec![], expiry)?
     }
-    PrepareCommands::Json { source } => {
-      let source = string_or_stdin(&source)?;
-      let tx = serde_json::from_str(&source)?;
+    PrepareCommands::Json { transaction } => {
+      let transaction = string_or_stdin(&transaction)?;
+      let tx = serde_json::from_str(&transaction)?;
       Call::new(&api, tx)
     }
   };
