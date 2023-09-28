@@ -343,6 +343,7 @@ mod v14 {
           ("TransactionLegId", &ink_id_derives),
           ("ConfidentialAccount", &ink_id_derives),
           ("MediatorAccount", &ink_id_derives),
+          ("ConfidentialTransactionRole", &ink_enum_derives),
           ("CompressedElgamalPublicKey", &ink_id_derives),
         ]
         .into_iter()
