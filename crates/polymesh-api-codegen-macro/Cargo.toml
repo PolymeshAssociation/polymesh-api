@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen-macro"
-version = "2.1.0"
+version = "2.1.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -19,7 +19,7 @@ darling = "0.14.1"
 proc-macro-error = "1"
 syn = "1.0.96"
 
-polymesh-api-codegen = { version = "2.1.0", path = "../polymesh-api-codegen", default-features = false }
+polymesh-api-codegen = { version = "2.1.1", path = "../polymesh-api-codegen", default-features = false }
 polymesh-api-client = { version = "2.1.0", path = "../polymesh-api-client", default-features = false, optional = true }
 
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
