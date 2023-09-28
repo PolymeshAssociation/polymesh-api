@@ -189,8 +189,11 @@ mod v14 {
 
       let call = quote! { runtime::RuntimeCall };
       let event = quote! { runtime::RuntimeEvent };
-      let external_modules =
-        HashSet::from_iter(["sp_version", "sp_weights"].iter().map(|t| t.to_string()));
+      let external_modules = HashSet::from_iter(
+        ["sp_version", "sp_weights", "bounded_collections"]
+          .iter()
+          .map(|t| t.to_string()),
+      );
       let rename_types = HashMap::from_iter(
         [
           (
@@ -231,6 +234,22 @@ mod v14 {
           ("BTreeMap", quote!(::alloc::collections::BTreeMap)),
           ("String", quote!(::alloc::string::String)),
           ("Vec", quote!(::alloc::vec::Vec)),
+          (
+            "bounded_collections::bounded_btree_map::BoundedBTreeMap",
+            quote!(::alloc::collections::BTreeMap),
+          ),
+          (
+            "bounded_collections::bounded_btree_set::BoundedBTreeSet",
+            quote!(::alloc::collections::BTreeSet),
+          ),
+          (
+            "bounded_collections::bounded_vec::BoundedVec",
+            quote!(::alloc::vec::Vec),
+          ),
+          (
+            "bounded_collections::weak_bounded_vec::WeakBoundedVec",
+            quote!(::alloc::vec::Vec),
+          ),
           (
             "types::frame_support::storage::weak_bounded_vec::WeakBoundedVec",
             quote!(::alloc::vec::Vec),
