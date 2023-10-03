@@ -340,7 +340,7 @@ impl<Api: ChainApi> Call<Api> {
     let client = self.api.client();
     let account = signer.account();
     // Query account nonce.
-    let nonce = match signer.nonce() {
+    let nonce = match signer.nonce().await {
       Some(0) | None => self.api.get_nonce(account.clone()).await?,
       Some(nonce) => nonce,
     };
@@ -358,7 +358,7 @@ impl<Api: ChainApi> Call<Api> {
     let res = self.submit_raw_xt_and_watch(xt).await?;
 
     // Update nonce if the call was submitted.
-    signer.set_nonce(nonce + 1);
+    signer.set_nonce(nonce + 1).await;
 
     Ok(res)
   }

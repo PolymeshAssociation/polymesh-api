@@ -12,12 +12,12 @@ env_logger = "0.9"
 
 lazy_static = "1.4.0"
 
-serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
-serde = "1.0"
+serde_json = { workspace = true, features = ["preserve_order", "arbitrary_precision"] }
+serde = { workspace = true }
 
 tokio = { version = "1.19", features = ["full"] }
 
-sp-keyring = "24.0.0"
+sp-keyring = { workspace = true }
 
-polymesh-api = { version = "2.3", path = "../../", features = ["serde"] }
-polymesh-api-client = { version = "2.3", path = "../../crates/polymesh-api-client", features = ["type_info"] }
+polymesh-api = { workspace = true, default-features = true }
+polymesh-api-client = { workspace = true }

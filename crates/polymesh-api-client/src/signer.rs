@@ -17,19 +17,19 @@ pub type DefaultSigner = PairSigner<sp_core::sr25519::Pair>;
 pub type DefaultSigner = PairSigner<subxt_signer::sr25519::Keypair>;
 
 #[async_trait]
-pub trait Signer {
+pub trait Signer: Send + Sync {
   fn account(&self) -> AccountId;
 
   /// Optional - The signer can manage their `nonce` for improve transaction performance.
   /// The default implmentation will query the next `nonce` from chain storage.
-  fn nonce(&self) -> Option<u32> {
+  async fn nonce(&self) -> Option<u32> {
     None
   }
 
   /// Optional - The signer can manage their `nonce` for improve transaction performance.
   /// If the transaction is accepted by the RPC node, then the `nonce` we be increased, to
   /// allow the next transaction to be signed & submitted without waiting for the next block.
-  fn set_nonce(&mut self, _nonce: u32) {}
+  async fn set_nonce(&mut self, _nonce: u32) {}
 
   async fn sign(&self, msg: &[u8]) -> Result<MultiSignature>;
 }
@@ -150,7 +150,7 @@ impl<P: KeypairSigner> Signer for PairSigner<P> {
     self.account.clone()
   }
 
-  fn nonce(&self) -> Option<u32> {
+  async fn nonce(&self) -> Option<u32> {
     if self.nonce > 0 {
       Some(self.nonce)
     } else {
@@ -158,7 +158,7 @@ impl<P: KeypairSigner> Signer for PairSigner<P> {
     }
   }
 
-  fn set_nonce(&mut self, nonce: u32) {
+  async fn set_nonce(&mut self, nonce: u32) {
     self.nonce = nonce;
   }
 

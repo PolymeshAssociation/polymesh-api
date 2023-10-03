@@ -11,12 +11,12 @@ env_logger = "0.9"
 
 tokio = { version = "1.19", features = ["full"] }
 
-serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
+serde_json = { workspace = true, features = ["preserve_order", "arbitrary_precision"] }
 
 # substrate
-sp-runtime = { version = "24.0", default-features = false }
-sp-core = { version = "21.0", default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
-polymesh-api = { version = "2.3", path = "../../" }
-polymesh-api-client-extras = { version = "2.0", path = "../../crates/polymesh-api-client-extras" }
+polymesh-api = { workspace = true, default-features = true }
+polymesh-api-client-extras = { workspace = true }

@@ -10,11 +10,11 @@ hex = "0.4"
 dotenv = "0.15"
 env_logger = "0.9"
 
-serde_json = { version = "1.0", features = ["preserve_order"] }
-serde = "1.0"
+serde_json = { workspace = true, features = ["preserve_order"] }
+serde = { workspace = true }
 
 tokio = { version = "1.19", features = ["full"] }
 
-sp-keyring = "24.0.0"
+sp-keyring = { workspace = true }
 
-polymesh-api = { version = "2.3", path = "../../" }
+polymesh-api = { workspace = true, default-features = true }
