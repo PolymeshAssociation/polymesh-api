@@ -10,24 +10,22 @@ repository = "https://github.com/PolymeshAssociation/polymesh-api"
 homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
 [dependencies]
-thiserror = "1.0.31"
-log = "0.4"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
 # substrate
-sp-arithmetic = { version = "16.0", default-features = false }
-sp-weights = { version = "20.0", default-features = false }
-codec = { version = "3", package = "parity-scale-codec", default-features = false, features = ["full"] }
-scale-info = { version = "2.3", default-features = false, optional = true }
-primitive-types = { version = "0.11.1", default-features = false, features = ["codec"] }
+codec = { version = "3", package = "parity-scale-codec", default-features = false }
+sp-arithmetic = { workspace = true, default-features = false }
+sp-weights = { workspace = true, default-features = false }
+scale-info = { workspace = true, default-features = false, optional = true }
+primitive-types = { workspace = true, default-features = false, features = ["codec"] }
 
 # Ink!
-ink_primitives = { version = "3.0", default-features = false }
-ink_metadata = { version = "3.0", default-features = false, features = ["derive"], optional = true }
-ink_env = { version = "3.0", default-features = false }
-ink_storage = { version = "3.0", default-features = false }
-ink_lang = { version = "3.0", default-features = false }
-ink_lang_codegen = { version = "3.0", default-features = false }
+ink_primitives = { workspace = true, default-features = false }
+ink_metadata = { workspace = true, default-features = false, features = ["derive"], optional = true }
+ink_env = { workspace = true, default-features = false }
+ink_storage = { workspace = true, default-features = false }
+ink_lang = { workspace = true, default-features = false }
+ink_lang_codegen = { workspace = true, default-features = false }
 
 [features]
 default = [ "std" ]

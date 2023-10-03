@@ -1,8 +1,5 @@
 use codec::{Decode, Encode};
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 use polymesh_api::client::basic_types::{AccountId, IdentityId};
 use polymesh_api::client::error::Result;
 use polymesh_api::types::{

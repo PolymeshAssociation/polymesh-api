@@ -19,8 +19,8 @@ darling = "0.14.1"
 proc-macro-error = "1"
 syn = "1.0.96"
 
-polymesh-api-codegen = { version = "2.1.1", path = "../polymesh-api-codegen", default-features = false }
-polymesh-api-client = { version = "2.1.0", path = "../polymesh-api-client", default-features = false, optional = true }
+polymesh-api-codegen = { workspace = true, default-features = false }
+polymesh-api-client = { workspace = true , default-features = false, optional = true }
 
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 

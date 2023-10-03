@@ -14,25 +14,25 @@ thiserror = "1.0.31"
 log = "0.4"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
-async-trait = { version = "0.1" }
+async-trait = { workspace = true }
 
 http = { version = "0.2.8" }
 
-serde_json = { version = "1.0", features = ["preserve_order", "arbitrary_precision"] }
-serde = { version = "1.0" }
-impl-serde = { version = "0.3.1", default-features = false, optional = true }
-serde-big-array = { version = "0.4.1", optional = true }
+serde_json = { workspace = true, features = ["preserve_order", "arbitrary_precision"] }
+serde = { workspace = true }
+impl-serde = { workspace = true, default-features = false, optional = true }
+serde-big-array = { workspace = true, optional = true }
 
 # substrate
-sp-core = { version = "21.0", default-features = false }
-sp-std = { version = "8.0", default-features = false }
-primitive-types = { version = "0.12.0", default-features = false, features = ["codec"] }
-sp-runtime = { version = "24.0", default-features = false }
-sp-weights = { version = "20.0", default-features = false }
-sp-arithmetic = { version = "16.0", default-features = false }
-frame-metadata = { version = "15.0.0", default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
-scale-info = { version = "2.3", default-features = false, optional = true }
+frame-metadata = { workspace = true, default-features = false }
+primitive-types = { workspace = true, default-features = false, features = ["codec"] }
+scale-info = { workspace = true, default-features = false, optional = true }
+sp-arithmetic = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+sp-weights = { workspace = true, default-features = false }
 
 subxt-signer = { version = "0.31", default-features = false, features = ["sr25519", "ecdsa"] }
 
@@ -46,8 +46,8 @@ jsonrpsee = { version = "0.20", default-features = false, features = ["client"] 
 tokio = { version = "1", features = ["rt"] }
 jsonrpsee = { version = "0.20", default-features = false, features = ["wasm-client"] }
 
-sp-application-crypto = { version = "23.0", default-features = false }
-sp-io = { version = "23.0", default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
+sp-application-crypto = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }
 
 [dev-dependencies]
 anyhow = "1"
