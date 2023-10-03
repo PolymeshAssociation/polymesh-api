@@ -29,12 +29,12 @@ members = [
 ## Keep common dependencies here.
 [workspace.dependencies]
 # Our crates
-polymesh-api-codegen-macro = { path = "crates/polymesh-api-codegen-macro", default-features = false }
-polymesh-api-codegen = { path = "crates/polymesh-api-codegen", default-features = false }
-polymesh-api-client = { path = "crates/polymesh-api-client", default-features = false }
-polymesh-api-client-extras = { path = "crates/polymesh-api-client-extras", default-features = false }
-polymesh-api-ink = { path = "crates/polymesh-api-ink", default-features = false }
-polymesh-api = { path = "./", default-features = false }
+polymesh-api-codegen-macro = { version = "3.0.0", path = "crates/polymesh-api-codegen-macro", default-features = false }
+polymesh-api-codegen = { version = "2.1.1", path = "crates/polymesh-api-codegen", default-features = false }
+polymesh-api-client = { version = "3.0.0", path = "crates/polymesh-api-client", default-features = false }
+polymesh-api-client-extras = { version = "2.0.1", path = "crates/polymesh-api-client-extras", default-features = false }
+polymesh-api-ink = { version = "0.5.0", path = "crates/polymesh-api-ink", default-features = false }
+polymesh-api = { version = "3.0.0", path = "./", default-features = false }
 
 # Substrate shared deps.
 frame-metadata = { version = "15.0.0", default-features = false }
