@@ -16,6 +16,7 @@ members = [
   "crates/polymesh-api-client",
   "crates/polymesh-api-client-extras",
   "crates/polymesh-api-ink",
+  "crates/polymesh-api-tester",
   "crates/polymesh-offline-signer",
 
   "examples/simple_transfer",

@@ -1,0 +1,34 @@
+[package]
+name = "polymesh-api-tester"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+
+[dependencies]
+log = "0.4"
+env_logger = "0.9"
+
+hex = { version = "0.4" }
+rand = { version = "0.8" }
+
+thiserror = "1.0"
+
+async-trait = { workspace = true }
+tokio = { version = "1.19", features = ["full"] }
+
+sp-core = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-keyring = { workspace = true }
+
+polymesh-api = { workspace = true, default-features = true, features = ["download_metadata"] }
+polymesh-api-client-extras = { workspace = true }
+
+serde = { workspace = true, features = ["derive"] }
+
+# For accounts db.
+sqlx = { version = "0.7", features = ["runtime-tokio", "tls-native-tls", "sqlite"] }
+
+[dev-dependencies]
+anyhow = "1.0"
