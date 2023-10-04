@@ -1,33 +1,39 @@
 use sqlx::SqlitePool;
 
+use polymesh_api::{Api, ChainApi};
 use polymesh_api::client::AccountId;
 
 use crate::error::Result;
 
 #[derive(Clone)]
 pub struct Db {
+  api: Api,
   pool: SqlitePool,
 }
 
 impl Db {
-  pub async fn open(file: &str) -> Result<Self> {
+  pub async fn open(api: Api, file: &str) -> Result<Self> {
     let pool = SqlitePool::connect(file).await?;
-    Ok(Self { pool })
+    Ok(Self { api, pool })
   }
 
   pub async fn get_nonce(&self, account: AccountId) -> Result<u32> {
-    let id = account.to_string();
-    let row = sqlx::query!(
-      r#"
-      INSERT INTO accounts(account) VALUES(?)
-        ON CONFLICT(account) DO UPDATE SET nonce=nonce+1
-      RETURNING nonce
-    "#,
-      id
-    )
-    .fetch_one(&self.pool)
-    .await?;
+    // Get the nonce from the chain.  (to check if the db nonce is old).
+    let nonce = self.api.get_nonce(account).await?;
 
-    Ok(row.nonce as u32)
+    let id = account.to_string();
+    // Save the nonce to the database.
+    let rec = sqlx::query!(
+      r#"
+      INSERT INTO accounts(account, nonce) VALUES(?, ?)
+        ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce+1, excluded.nonce)
+      RETURNING nonce
+      "#,
+      id, nonce
+    )
+      .fetch_one(&self.pool)
+      .await?;
+
+    Ok(rec.nonce as u32)
   }
 }
