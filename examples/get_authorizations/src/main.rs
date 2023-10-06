@@ -31,13 +31,7 @@ async fn main() -> Result<()> {
 
   let api = Api::new(&url).await?;
 
-  let auths = api
-    .query()
-    .identity()
-    .authorizations(signatory.clone(), 0)
-    .await?;
-  println!("query.auths = {auths:?}");
-
+  // Query only the `AuthorizationId` from the storage key.
   let auths = api
     .paged_query()
     .identity()
@@ -49,6 +43,7 @@ async fn main() -> Result<()> {
     println!(" -- {}", auth_id?);
   }
 
+  // Query only the `Authorization` values.
   let auths = api
     .paged_query()
     .identity()
@@ -60,6 +55,7 @@ async fn main() -> Result<()> {
     println!(" -- {:?}", auth?);
   }
 
+  // Query both the `AuthorizationId` keys and `Authorization` values.
   let auths = api
     .paged_query()
     .identity()
