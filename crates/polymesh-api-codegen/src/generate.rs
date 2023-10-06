@@ -810,6 +810,108 @@ mod v14 {
       }
     }
 
+    fn gen_paged_storage_func(
+      &self,
+      mod_prefix: &str,
+      md: &StorageEntryMetadata<PortableForm>,
+    ) -> TokenStream {
+      let storage_name = &md.name;
+      let storage_ident = format_ident!("{}", storage_name.to_snake_case());
+      let api_interface = &self.api_interface;
+      let mut key_prefix = Vec::with_capacity(32);
+      key_prefix.extend(sp_core_hashing::twox_128(mod_prefix.as_bytes()));
+      key_prefix.extend(sp_core_hashing::twox_128(storage_name.as_bytes()));
+
+      let (mut hashers, value_ty) = match &md.ty {
+        StorageEntryType::Plain(value) => (vec![], value.id()),
+        StorageEntryType::Map {
+          hashers,
+          key,
+          value,
+        } => match hashers.as_slice() {
+          [hasher] => {
+            // 1 key.
+            (vec![(key, hasher)], value.id())
+          }
+          hashers => {
+            // >=2 keys.
+            let keys_ty = self.md.types.resolve(key.id()).unwrap();
+            let key_hashers = if let TypeDef::Tuple(ty) = keys_ty.type_def() {
+              ty.fields().iter().zip(hashers).collect()
+            } else {
+              vec![]
+            };
+            (key_hashers, value.id())
+          }
+        },
+      };
+      // Get the last key_hasher.
+      let (key_ty, key_hash_len) = if let Some((key, hasher)) = hashers.pop() {
+        let type_name = self
+          .type_name(key.id(), false, true)
+          .expect("Missing Storage key type");
+        let hash_len = match hasher {
+          StorageHasher::Blake2_128Concat => quote!{ Some(16) },
+          StorageHasher::Twox64Concat => quote!{ Some(8) },
+          StorageHasher::Identity => quote!{ Some(0) },
+          _ => quote!{ None },
+        };
+        (type_name, hash_len)
+      } else {
+        return quote!{};
+      };
+      let mut keys = TokenStream::new();
+      let mut hashing = TokenStream::new();
+      for (idx, (key, hasher)) in hashers.into_iter().enumerate() {
+        let key_ident = format_ident!("key_{}", idx);
+        let type_name = self
+          .type_name(key.id(), false, true)
+          .expect("Missing Storage key type");
+        keys.append_all(quote! {#key_ident: #type_name,});
+        hashing.append_all(match hasher {
+          StorageHasher::Blake2_128 => quote! {
+            buf.extend(#api_interface::hashing::blake2_128(&#key_ident.encode()));
+          },
+          StorageHasher::Blake2_256 => quote! {
+            buf.extend(#api_interface::hashing::blake2_256(&#key_ident.encode()));
+          },
+          StorageHasher::Blake2_128Concat => quote! {
+            let key = #key_ident.encode();
+            buf.extend(#api_interface::hashing::blake2_128(&key));
+            buf.extend(key.into_iter());
+          },
+          StorageHasher::Twox128 => quote! {
+            buf.extend(#api_interface::hashing::twox_128(&#key_ident.encode()));
+          },
+          StorageHasher::Twox256 => quote! {
+            buf.extend(#api_interface::hashing::twox_256(&#key_ident.encode()));
+          },
+          StorageHasher::Twox64Concat => quote! {
+            let key = #key_ident.encode();
+            buf.extend(#api_interface::hashing::twox_64(&key));
+            buf.extend(key.into_iter());
+          },
+          StorageHasher::Identity => quote! {
+            buf.extend(#key_ident.encode());
+          },
+        });
+      }
+      let value_ty = self.type_name(value_ty, false, true).unwrap();
+
+      let docs = &md.docs;
+      quote! {
+        #(#[doc = #docs])*
+        pub fn #storage_ident(&self, #keys) -> ::polymesh_api_client::StoragePaged<#key_ty, #value_ty> {
+          use ::codec::Encode;
+          let mut buf = ::alloc::vec::Vec::with_capacity(512);
+          buf.extend([#(#key_prefix,)*]);
+          #hashing
+          let prefix = ::polymesh_api_client::StorageKey(buf);
+          ::polymesh_api_client::StoragePaged::new(&self.api.client, prefix, #key_hash_len, self.at)
+        }
+      }
+    }
+
     fn gen_func(
       &self,
       mod_name: &str,
@@ -884,15 +986,17 @@ mod v14 {
     fn gen_module(
       &self,
       md: &frame_metadata::v14::PalletMetadata<PortableForm>,
-    ) -> (Ident, Ident, Ident, TokenStream) {
+    ) -> (Ident, Ident, Ident, Ident, TokenStream) {
       let mod_idx = md.index;
       let mod_name = &md.name;
       let mod_call_api = format_ident!("{}CallApi", mod_name);
       let mod_query_api = format_ident!("{}QueryApi", mod_name);
+      let mod_paged_query_api = format_ident!("{}PagedQueryApi", mod_name);
       let mod_ident = format_ident!("{}", mod_name.to_snake_case());
 
       let mut call_fields = TokenStream::new();
       let mut query_fields = TokenStream::new();
+      let mut paged_query_fields = TokenStream::new();
 
       // Generate module functions.
       if let Some(calls) = &md.calls {
@@ -919,8 +1023,8 @@ mod v14 {
       if let Some(storage) = &md.storage {
         let mod_prefix = &storage.prefix;
         for md in &storage.entries {
-          let code = self.gen_storage_func(mod_prefix, md);
-          query_fields.append_all(code);
+          query_fields.append_all(self.gen_storage_func(mod_prefix, md));
+          paged_query_fields.append_all(self.gen_paged_storage_func(mod_prefix, md));
         }
       }
 
@@ -953,9 +1057,21 @@ mod v14 {
           impl<'api> #mod_query_api<'api> {
             #query_fields
           }
+
+          #[derive(Clone)]
+          #[cfg(not(feature = "ink"))]
+          pub struct #mod_paged_query_api<'api> {
+            pub(crate) api: &'api super::super::Api,
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+          }
+
+          #[cfg(not(feature = "ink"))]
+          impl<'api> #mod_paged_query_api<'api> {
+            #paged_query_fields
+          }
         }
       };
-      (mod_ident, mod_call_api, mod_query_api, code)
+      (mod_ident, mod_call_api, mod_query_api, mod_paged_query_api, code)
     }
 
     fn gen_struct_fields(
@@ -1677,6 +1793,7 @@ mod v14 {
     pub fn generate(self) -> TokenStream {
       let mut call_fields = TokenStream::new();
       let mut query_fields = TokenStream::new();
+      let mut paged_query_fields = TokenStream::new();
 
       // Generate module code.
       let modules: Vec<_> = self
@@ -1684,7 +1801,7 @@ mod v14 {
         .pallets
         .iter()
         .map(|m| {
-          let (ident, call_api, query_api, code) = self.gen_module(m);
+          let (ident, call_api, query_api, paged_query_api, code) = self.gen_module(m);
           call_fields.append_all(quote! {
             pub fn #ident(&self) -> api::#ident::#call_api<'api> {
               api::#ident::#call_api::from(self.api)
@@ -1695,6 +1812,16 @@ mod v14 {
               api::#ident::#query_api {
                 api: self.api,
                 #[cfg(not(feature = "ink"))]
+                at: self.at,
+              }
+            }
+          });
+
+          paged_query_fields.append_all(quote! {
+            #[cfg(not(feature = "ink"))]
+            pub fn #ident(&self) -> api::#ident::#paged_query_api<'api> {
+              api::#ident::#paged_query_api {
+                api: self.api,
                 at: self.at,
               }
             }
@@ -1780,6 +1907,16 @@ mod v14 {
           #[cfg(not(feature = "ink"))]
           pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi {
             QueryApi { api: self, at: Some(block) }
+          }
+
+          #[cfg(not(feature = "ink"))]
+          pub fn paged_query(&self) -> PagedQueryApi {
+            PagedQueryApi { api: self, at: None }
+          }
+
+          #[cfg(not(feature = "ink"))]
+          pub fn paged_query_at(&self, block: ::polymesh_api_client::BlockHash) -> PagedQueryApi {
+            PagedQueryApi { api: self, at: Some(block) }
           }
 
           #[cfg(not(feature = "ink"))]
@@ -1871,6 +2008,18 @@ mod v14 {
 
         impl<'api> QueryApi<'api> {
           #query_fields
+        }
+
+        #[derive(Clone)]
+        #[cfg(not(feature = "ink"))]
+        pub struct PagedQueryApi<'api> {
+          api: &'api Api,
+          at: Option<::polymesh_api_client::BlockHash>,
+        }
+
+        #[cfg(not(feature = "ink"))]
+        impl<'api> PagedQueryApi<'api> {
+          #paged_query_fields
         }
       }
     }

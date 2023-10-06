@@ -19,6 +19,9 @@ pub use signer::*;
 pub mod transaction;
 pub use transaction::*;
 
+pub mod storage;
+pub use storage::*;
+
 pub mod client;
 pub use client::*;
 

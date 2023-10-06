@@ -209,6 +209,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-stream"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd56dd203fef61ac097dd65721a419ddccb106b2d2b70ba60a6b529f03961a51"
+dependencies = [
+ "async-stream-impl",
+ "futures-core",
+ "pin-project-lite",
+]
+
+[[package]]
+name = "async-stream-impl"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16e62a023e7c117e27523144c5d2459f4397fcc3cab0085af8e2224f643a0193"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.31",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2601,7 +2623,7 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
 name = "polymesh-api"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2629,13 +2651,15 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "anyhow",
+ "async-stream",
  "async-trait",
  "dotenv",
  "env_logger",
  "frame-metadata",
+ "futures-core",
  "hex",
  "http",
  "impl-serde 0.3.2",
@@ -2672,7 +2696,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "2.1.1"
+version = "3.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2699,7 +2723,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen-macro"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "darling",
  "parity-scale-codec",

@@ -246,6 +246,19 @@ impl Client {
     self.request("system_properties", rpc_params!()).await
   }
 
+  pub async fn get_storage_keys_paged(
+    &self,
+    prefix: &StorageKey,
+    count: usize,
+    start_key: Option<&StorageKey>,
+    at: Option<BlockHash>,
+  ) -> Result<Vec<StorageKey>> {
+    let params = rpc_params!(prefix, count, start_key.unwrap_or(prefix), at);
+    self
+      .request::<Vec<StorageKey>>("state_getKeysPaged", params)
+      .await
+  }
+
   pub async fn get_storage_by_key<T: Decode>(
     &self,
     key: StorageKey,
