@@ -8,9 +8,7 @@ use anyhow::Result;
 use sp_keyring::AccountKeyring;
 
 use polymesh_api::client::{AccountId, IdentityId};
-use polymesh_api::polymesh::types::{
-  polymesh_primitives::secondary_key::Signatory,
-};
+use polymesh_api::polymesh::types::polymesh_primitives::secondary_key::Signatory;
 use polymesh_api::Api;
 
 #[tokio::main]
@@ -24,7 +22,7 @@ async fn main() -> Result<()> {
       let mut id = [0u8; 32];
       hex::decode_to_slice(&s[2..], &mut id[..])?;
       Signatory::Identity(IdentityId(id))
-    },
+    }
     Some(s) => Signatory::Account(AccountId::from_str(&s)?),
     None => Signatory::Account(AccountKeyring::Bob.to_account_id().into()),
   };

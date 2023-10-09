@@ -25,7 +25,12 @@ pub struct StoragePaged<K, V> {
 }
 
 impl<K: Decode, V: Decode> StoragePaged<K, V> {
-  pub fn new(client: &Client, prefix: StorageKey, key_hash_len: Option<usize>, at: Option<BlockHash>) -> Self {
+  pub fn new(
+    client: &Client,
+    prefix: StorageKey,
+    key_hash_len: Option<usize>,
+    at: Option<BlockHash>,
+  ) -> Self {
     Self {
       client: client.clone(),
       prefix,
@@ -48,16 +53,22 @@ impl<K: Decode, V: Decode> StoragePaged<K, V> {
     let h_len = match self.key_hash_len {
       Some(l) => l,
       None => {
-        return Err(Error::DecodeTypeFailed(format!("Failed to decode storage key: hasher isn't reversible")));
+        return Err(Error::DecodeTypeFailed(format!(
+          "Failed to decode storage key: hasher isn't reversible"
+        )));
       }
     };
     let p_len = self.prefix.0.len();
     if key.0.len() < (p_len + h_len) {
-      return Err(Error::DecodeTypeFailed(format!("Failed to decode storage key: too short")));
+      return Err(Error::DecodeTypeFailed(format!(
+        "Failed to decode storage key: too short"
+      )));
     }
     let (key_prefix, key) = key.0.split_at(p_len);
     if key_prefix != self.prefix.0.as_slice() {
-      return Err(Error::DecodeTypeFailed(format!("Invalid storage key, the prefix doesn't match")));
+      return Err(Error::DecodeTypeFailed(format!(
+        "Invalid storage key, the prefix doesn't match"
+      )));
     }
     Ok(&key[h_len..])
   }
@@ -66,9 +77,15 @@ impl<K: Decode, V: Decode> StoragePaged<K, V> {
     if self.finished {
       return Ok(None);
     }
-    let keys = self.client
-        .get_storage_keys_paged(&self.prefix, self.batch_size, self.start_key.as_ref(), self.at)
-        .await?;
+    let keys = self
+      .client
+      .get_storage_keys_paged(
+        &self.prefix,
+        self.batch_size,
+        self.start_key.as_ref(),
+        self.at,
+      )
+      .await?;
     if keys.len() < self.batch_size {
       self.finished = true;
     } else {

@@ -1,7 +1,7 @@
 use sqlx::SqlitePool;
 
-use polymesh_api::{Api, ChainApi};
 use polymesh_api::client::AccountId;
+use polymesh_api::{Api, ChainApi};
 
 use crate::error::Result;
 
@@ -29,10 +29,11 @@ impl Db {
         ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce+1, excluded.nonce)
       RETURNING nonce
       "#,
-      id, nonce
+      id,
+      nonce
     )
-      .fetch_one(&self.pool)
-      .await?;
+    .fetch_one(&self.pool)
+    .await?;
 
     Ok(rec.nonce as u32)
   }

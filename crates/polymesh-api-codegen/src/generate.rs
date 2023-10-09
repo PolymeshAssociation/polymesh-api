@@ -851,14 +851,14 @@ mod v14 {
           .type_name(key.id(), false, true)
           .expect("Missing Storage key type");
         let hash_len = match hasher {
-          StorageHasher::Blake2_128Concat => quote!{ Some(16) },
-          StorageHasher::Twox64Concat => quote!{ Some(8) },
-          StorageHasher::Identity => quote!{ Some(0) },
-          _ => quote!{ None },
+          StorageHasher::Blake2_128Concat => quote! { Some(16) },
+          StorageHasher::Twox64Concat => quote! { Some(8) },
+          StorageHasher::Identity => quote! { Some(0) },
+          _ => quote! { None },
         };
         (type_name, hash_len)
       } else {
-        return quote!{};
+        return quote! {};
       };
       let mut keys = TokenStream::new();
       let mut hashing = TokenStream::new();
@@ -1071,7 +1071,13 @@ mod v14 {
           }
         }
       };
-      (mod_ident, mod_call_api, mod_query_api, mod_paged_query_api, code)
+      (
+        mod_ident,
+        mod_call_api,
+        mod_query_api,
+        mod_paged_query_api,
+        code,
+      )
     }
 
     fn gen_struct_fields(

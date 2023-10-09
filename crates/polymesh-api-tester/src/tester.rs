@@ -2,12 +2,7 @@ use std::collections::HashMap;
 
 use polymesh_api::{
   client::{AccountId, IdentityId},
-  polymesh::types::{
-    polymesh_primitives::{
-      secondary_key::KeyRecord,
-      ticker::Ticker,
-    },
-  },
+  polymesh::types::polymesh_primitives::{secondary_key::KeyRecord, ticker::Ticker},
   Api,
 };
 use polymesh_api_client_extras::*;
