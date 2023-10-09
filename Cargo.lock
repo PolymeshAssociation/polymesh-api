@@ -2639,7 +2639,7 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
 name = "polymesh-api"
-version = "3.1.0"
+version = "3.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2667,7 +2667,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client"
-version = "3.1.0"
+version = "3.2.0"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -2791,7 +2791,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-offline-signer"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "clap",

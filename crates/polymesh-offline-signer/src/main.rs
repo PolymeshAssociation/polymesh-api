@@ -11,7 +11,7 @@ use serde_json::to_string;
 use rust_decimal::prelude::*;
 
 use polymesh_api::client::{
-  AccountId, Call, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction, Signer,
+  AccountId, Call, ChainApi, DefaultSigner, ExtrinsicV4, PreparedTransaction,
 };
 use polymesh_api::Api;
 
@@ -31,9 +31,6 @@ enum Commands {
   Prepare(PrepareArgs),
   /// Sign a prepared transaction offline and return a full signed transaction.
   OfflineSign(OfflineSignArgs),
-  /// Sign raw data offline and return just the signature.
-  /// This is for use with Polkadot/Polymesh signing managers.
-  OfflineSignRaw(OfflineSignRawArgs),
   /// Submit a signed transaction.
   Submit(SubmitArgs),
 }
@@ -80,19 +77,6 @@ struct OfflineSignArgs {
   /// Hex encoded prepared transaction to sign (use '-' to read from stdin, or a filename).
   #[arg(value_parser = decode_prepared_transaction)]
   transaction: PreparedTransaction,
-}
-
-#[derive(Clone)]
-struct RawData(Vec<u8>);
-
-#[derive(Args)]
-struct OfflineSignRawArgs {
-  /// The secret key URI.
-  #[arg(long = "suri", value_parser = decode_signer)]
-  signer: DefaultSigner,
-  /// Hex encoded raw data to sign (use '-' to read from stdin, or a filename).
-  #[arg(value_parser = decode_raw)]
-  raw: RawData,
 }
 
 #[derive(Args)]
@@ -147,19 +131,12 @@ fn decode_account(s: &str) -> Result<AccountId> {
   }
 }
 
-fn decode_raw(s: &str) -> Result<RawData> {
-  let s = string_or_file(s)?;
-  let off = if s.starts_with("0x") { 2 } else { 0 };
-  let raw = hex::decode(&s[off..]).map_err(|e| anyhow!("Raw data not valid hex: {e:?}"))?;
-  Ok(RawData(raw))
-}
-
 fn decode_prepared_transaction(s: &str) -> Result<PreparedTransaction> {
   let s = string_or_file(s)?;
   let off = if s.starts_with("0x") { 2 } else { 0 };
   let buf =
     hex::decode(&s[off..]).map_err(|e| anyhow!("Prepared transaction not valid hex: {e:?}"))?;
-  let prepared = PreparedTransaction::decode(&mut buf.as_slice())
+  let prepared = PreparedTransaction::decode_signed_payload::<Api, _>(&mut buf.as_slice())
     .map_err(|e| anyhow!("Invalid prepared transaction: {e:?}"))?;
   Ok(prepared)
 }
@@ -214,14 +191,6 @@ async fn offline_sign(args: OfflineSignArgs) -> Result<()> {
   Ok(())
 }
 
-async fn offline_sign_raw(args: OfflineSignRawArgs) -> Result<()> {
-  let signer = args.signer;
-  let signed_tx = signer.sign(&args.raw.0[..]).await?;
-  let encoded = signed_tx.encode();
-  println!("0x{}", hex::encode(encoded));
-  Ok(())
-}
-
 async fn submit(args: SubmitArgs) -> Result<()> {
   let api = Api::new(&args.url).await?;
 
@@ -260,9 +229,6 @@ async fn main() -> Result<()> {
     }
     Commands::OfflineSign(args) => {
       offline_sign(args).await?;
-    }
-    Commands::OfflineSignRaw(args) => {
-      offline_sign_raw(args).await?;
     }
     Commands::Submit(args) => {
       submit(args).await?;

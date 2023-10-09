@@ -323,10 +323,10 @@ impl<'a> Encode for SignedPayload<'a> {
 #[derive(Clone, Debug, Encode, Decode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PreparedTransaction {
-  pub account: AccountId,
-  pub additional: AdditionalSigned,
-  pub extra: Extra,
   pub call: Encoded,
+  pub extra: Extra,
+  pub additional: AdditionalSigned,
+  pub account: Option<AccountId>,
 }
 
 impl PreparedTransaction {
@@ -337,28 +337,48 @@ impl PreparedTransaction {
     call: Encoded,
   ) -> Self {
     Self {
-      account,
+      account: Some(account),
       additional,
       extra,
       call,
     }
   }
 
+  /// Decode from a `SignedPayload` with optional `AccountId`.
+  pub fn decode_signed_payload<Api: ChainApi, I: codec::Input>(input: &mut I) -> Result<Self> {
+    let call = Api::RuntimeCall::decode(input)?;
+    let extra = Decode::decode(input)?;
+    let additional = Decode::decode(input)?;
+    // Try decode optional `AccountId`.
+    let account = match input.remaining_len()? {
+      Some(33) => Decode::decode(input)?,
+      _ => None,
+    };
+    Ok(Self {
+      call: Encoded(call.encode()),
+      extra,
+      additional,
+      account,
+    })
+  }
+
   pub async fn sign(self, signer: &mut impl Signer) -> Result<ExtrinsicV4> {
-    // Ensure the signer's account matches the transaction.
     let account = signer.account();
-    if account != self.account {
-      use sp_core::crypto::Ss58Codec;
-      let version = 12u16.into(); // Polymesh
-      let a1 = account.to_ss58check_with_version(version);
-      let a2 = self.account.to_ss58check_with_version(version);
-      return Err(Error::WrongSignerAccount(a1, a2));
+    if let Some(tx_account) = &self.account {
+      // Ensure the signer's account matches the transaction.
+      if account != *tx_account {
+        use sp_core::crypto::Ss58Codec;
+        let version = 12u16.into(); // Polymesh
+        let a1 = account.to_ss58check_with_version(version);
+        let a2 = tx_account.to_ss58check_with_version(version);
+        return Err(Error::WrongSignerAccount(a1, a2));
+      }
     }
     let payload = SignedPayload::new(&self.call, &self.extra, self.additional);
     let payload = payload.encode();
     let sig = signer.sign(&payload[..]).await?;
 
-    let xt = ExtrinsicV4::signed(self.account, sig, self.extra, self.call);
+    let xt = ExtrinsicV4::signed(account, sig, self.extra, self.call);
     Ok(xt)
   }
 }
