@@ -74,6 +74,9 @@ struct OfflineSignArgs {
   /// The secret key URI.
   #[arg(long = "suri", value_parser = decode_signer)]
   signer: DefaultSigner,
+  /// Only return the signature, instead of the full signed transaction.
+  #[arg(long)]
+  only_signature: bool,
   /// Hex encoded prepared transaction to sign (use '-' to read from stdin, or a filename).
   #[arg(value_parser = decode_prepared_transaction)]
   transaction: PreparedTransaction,
@@ -186,7 +189,12 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
 async fn offline_sign(args: OfflineSignArgs) -> Result<()> {
   let mut signer = args.signer;
   let signed_tx = args.transaction.sign(&mut signer).await?;
-  let encoded = signed_tx.encode();
+  let encoded = if args.only_signature {
+    let sig = signed_tx.signature.expect("Signed transaction");
+    sig.signature.encode()
+  } else {
+    signed_tx.encode()
+  };
   println!("0x{}", hex::encode(encoded));
   Ok(())
 }
