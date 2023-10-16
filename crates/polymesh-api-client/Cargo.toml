@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "3.2.0"
+version = "3.2.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -58,7 +58,7 @@ env_logger = "0.9"
 
 lazy_static = "1.4.0"
 
-frame-metadata = { version = "15.0.0", default-features = false, features = ["v14"] }
+frame-metadata = { workspace = true, default-features = false, features = ["v14"] }
 
 [features]
 default = [ "std", "serde", "type_info", "v12", "v13", "v14" ]
