@@ -10,7 +10,7 @@ use polymesh_api_codegen_macro::*;
 )]
 #[cfg_attr(
   feature = "download_metadata",
-  codegen_api(metadata_url = "ws://localhost:9944")
+  codegen_api(metadata_url = "POLYMESH_NODE_URL")
 )]
 mod polymesh {}
 

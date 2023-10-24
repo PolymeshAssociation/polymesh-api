@@ -41,6 +41,11 @@ pub fn codegen_api(args: TokenStream, input: TokenStream) -> TokenStream {
       metadata_file: None,
       metadata_url: Some(url),
     } => {
+      let url = if &url == "POLYMESH_NODE_URL" {
+        std::env::var("POLYMESH_NODE_URL").unwrap_or_else(|_| "ws://localhost:9944".into())
+      } else {
+        url
+      };
       let rt = tokio::runtime::Runtime::new().unwrap();
       rt.block_on(async {
         use codec::Encode;
