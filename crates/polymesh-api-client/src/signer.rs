@@ -145,6 +145,25 @@ where
 }
 
 #[async_trait]
+impl Signer for Box<dyn Signer> {
+  fn account(&self) -> AccountId {
+    self.as_ref().account()
+  }
+
+  async fn nonce(&self) -> Option<u32> {
+    self.as_ref().nonce().await
+  }
+
+  async fn set_nonce(&mut self, nonce: u32) {
+    self.as_mut().set_nonce(nonce).await
+  }
+
+  async fn sign(&self, msg: &[u8]) -> Result<MultiSignature> {
+    self.as_ref().sign(msg).await
+  }
+}
+
+#[async_trait]
 impl<P: KeypairSigner> Signer for PairSigner<P> {
   fn account(&self) -> AccountId {
     self.account.clone()
