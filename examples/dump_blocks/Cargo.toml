@@ -20,4 +20,4 @@ tokio = { version = "1.19", features = ["full"] }
 sp-keyring = { workspace = true }
 
 polymesh-api = { workspace = true, default-features = true }
-polymesh-api-client = { workspace = true }
+polymesh-api-client = { workspace = true, default-features = true }

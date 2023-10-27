@@ -275,12 +275,14 @@ async fn main() -> Result<()> {
     .await?;
   //let event_records_ty = last_types.resolve("EventRecords");
   //println!("event_records_ty = {:?}", event_records_ty);
+  /*
   let mut event_records_ty = last_types
     .type_codec("EventRecords")
     .expect("Failed to get EventRecords type.");
   let mut runtime_call_ty = last_types
     .type_codec("RuntimeCall")
     .expect("Failed to get RuntimeCall type.");
+  */
   last_types.dump_unresolved();
   while let Some(block) = process_blocks.next_block().await {
     //println!("block: {block:?}");
@@ -296,15 +298,18 @@ async fn main() -> Result<()> {
         last_types = types_registry
           .get_block_types(&client, block.version, block.parent)
           .await?;
+        /*
         event_records_ty = last_types
           .type_codec("EventRecords")
           .expect("Failed to get EventRecords type.");
         runtime_call_ty = last_types
           .type_codec("RuntimeCall")
           .expect("Failed to get RuntimeCall type.");
+        */
         last_types.dump_unresolved();
       }
     }
+    /*
     if let Some(events) = block.events {
       //println!("decode events: {events:?}");
       let j_events = event_records_ty.decode(&events.0)?;
@@ -338,7 +343,9 @@ async fn main() -> Result<()> {
       //println!("---- re-encode from JSON: orig len={}, new len={}", events.0.len(), scale_events.len());
       assert_eq!(scale_events, events.0);
     }
+    */
     // Dump extrinsics.
+    /*
     if let Some(block) = &block.block {
       let extrinsics = block.extrinsics();
       if extrinsics.len() > 1 {
@@ -359,6 +366,7 @@ async fn main() -> Result<()> {
         }
       }
     }
+    */
     last_number = block.number;
     if stat_counter >= 10000 {
       stat_counter = 0;
