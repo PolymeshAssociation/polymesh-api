@@ -243,6 +243,18 @@ impl<Api: ChainApi> TransactionResults<Api> {
     self.tx_hash
   }
 
+  pub fn api(&self) -> &Api {
+    &self.api
+  }
+
+  /// Get block header for this transaction.
+  pub async fn get_block_header(&self) -> Result<Option<Header>> {
+    match self.block {
+      None => Ok(None),
+      block => self.api.client().get_block_header(block).await,
+    }
+  }
+
   /// Wait for the transaction to be included in a block.
   pub async fn wait_in_block(&mut self) -> Result<Option<BlockHash>> {
     // Wait for call to be included in a block.
