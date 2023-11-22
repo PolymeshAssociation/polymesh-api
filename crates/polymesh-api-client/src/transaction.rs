@@ -239,6 +239,10 @@ impl<Api: ChainApi> TransactionResults<Api> {
     self.status.as_ref()
   }
 
+  pub fn hash(&self) -> TxHash {
+    self.tx_hash
+  }
+
   /// Wait for the transaction to be included in a block.
   pub async fn wait_in_block(&mut self) -> Result<Option<BlockHash>> {
     // Wait for call to be included in a block.
