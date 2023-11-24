@@ -1,5 +1,4 @@
-use ink_env::{AccountId, Environment};
-use ink_lang as ink;
+use ink::env::Environment;
 
 use codec::{Decode, Encode};
 
@@ -8,35 +7,35 @@ use scale_info::TypeInfo;
 
 use alloc::vec::Vec;
 
-use crate::{Encoded, IdentityId};
+use crate::{Encoded, IdentityId, AccountId};
 
 #[ink::chain_extension]
 #[derive(Clone, Copy)]
 pub trait PolymeshRuntime {
   type ErrorCode = PolymeshRuntimeErr;
 
-  #[ink(extension = 0x00_00_00_01, returns_result = false)]
+  #[ink(extension = 0x00_00_00_01)]
   fn call_runtime(call: Encoded);
 
-  #[ink(extension = 0x00_00_00_02, returns_result = false)]
+  #[ink(extension = 0x00_00_00_02)]
   fn read_storage(key: Encoded) -> Option<Vec<u8>>;
 
-  #[ink(extension = 0x00_00_00_03, returns_result = false)]
+  #[ink(extension = 0x00_00_00_03)]
   fn get_spec_version() -> u32;
 
-  #[ink(extension = 0x00_00_00_04, returns_result = false)]
+  #[ink(extension = 0x00_00_00_04)]
   fn get_transaction_version() -> u32;
 
-  #[ink(extension = 0x00_00_00_05, returns_result = false)]
+  #[ink(extension = 0x00_00_00_05)]
   fn get_key_did(key: AccountId) -> Option<IdentityId>;
 
-  #[ink(extension = 0x00_00_00_10, returns_result = false)]
+  #[ink(extension = 0x00_00_00_10)]
   fn twox_64(data: Encoded) -> [u8; 8];
 
-  #[ink(extension = 0x00_00_00_11, returns_result = false)]
+  #[ink(extension = 0x00_00_00_11)]
   fn twox_128(data: Encoded) -> [u8; 16];
 
-  #[ink(extension = 0x00_00_00_12, returns_result = false)]
+  #[ink(extension = 0x00_00_00_12)]
   fn twox_256(data: Encoded) -> [u8; 32];
 }
 
@@ -52,7 +51,7 @@ pub enum PolymeshRuntimeErr {
   Unknown,
 }
 
-impl ink_env::chain_extension::FromStatusCode for PolymeshRuntimeErr {
+impl ink::env::chain_extension::FromStatusCode for PolymeshRuntimeErr {
   fn from_status_code(status_code: u32) -> Result<(), Self> {
     match status_code {
       0 => Ok(()),
@@ -66,13 +65,13 @@ impl ink_env::chain_extension::FromStatusCode for PolymeshRuntimeErr {
 pub enum PolymeshEnvironment {}
 
 impl Environment for PolymeshEnvironment {
-  const MAX_EVENT_TOPICS: usize = <ink_env::DefaultEnvironment as Environment>::MAX_EVENT_TOPICS;
+  const MAX_EVENT_TOPICS: usize = <ink::env::DefaultEnvironment as Environment>::MAX_EVENT_TOPICS;
 
-  type AccountId = <ink_env::DefaultEnvironment as Environment>::AccountId;
-  type Balance = <ink_env::DefaultEnvironment as Environment>::Balance;
-  type Hash = <ink_env::DefaultEnvironment as Environment>::Hash;
-  type BlockNumber = <ink_env::DefaultEnvironment as Environment>::BlockNumber;
-  type Timestamp = <ink_env::DefaultEnvironment as Environment>::Timestamp;
+  type AccountId = <ink::env::DefaultEnvironment as Environment>::AccountId;
+  type Balance = <ink::env::DefaultEnvironment as Environment>::Balance;
+  type Hash = <ink::env::DefaultEnvironment as Environment>::Hash;
+  type BlockNumber = <ink::env::DefaultEnvironment as Environment>::BlockNumber;
+  type Timestamp = <ink::env::DefaultEnvironment as Environment>::Timestamp;
 
   type ChainExtension = PolymeshRuntime;
 }

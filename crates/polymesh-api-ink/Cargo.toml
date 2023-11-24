@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "0.5.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -20,12 +20,7 @@ scale-info = { workspace = true, default-features = false, optional = true }
 primitive-types = { workspace = true, default-features = false, features = ["codec"] }
 
 # Ink!
-ink_primitives = { workspace = true, default-features = false }
-ink_metadata = { workspace = true, default-features = false, features = ["derive"], optional = true }
-ink_env = { workspace = true, default-features = false }
-ink_storage = { workspace = true, default-features = false }
-ink_lang = { workspace = true, default-features = false }
-ink_lang_codegen = { workspace = true, default-features = false }
+ink = { workspace = true, default-features = false }
 
 [features]
 default = [ "std" ]
@@ -36,8 +31,5 @@ std = [
   "codec/std",
   "scale-info/std",
   "primitive-types/std",
-  "ink_metadata/std",
-  "ink_env/std",
-  "ink_storage/std",
-  "ink_primitives/std",
+  "ink/std",
 ]

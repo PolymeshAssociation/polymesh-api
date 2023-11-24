@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "3.2.1"
+version = "3.3.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -34,7 +34,7 @@ polymesh-api-codegen-macro = { version = "3.2.0", path = "crates/polymesh-api-co
 polymesh-api-codegen = { version = "3.1.0", path = "crates/polymesh-api-codegen", default-features = false }
 polymesh-api-client = { version = "3.2.2", path = "crates/polymesh-api-client", default-features = false }
 polymesh-api-client-extras = { version = "3.0.0", path = "crates/polymesh-api-client-extras", default-features = false }
-polymesh-api-ink = { version = "0.5.0", path = "crates/polymesh-api-ink", default-features = false }
+polymesh-api-ink = { version = "1.0.0", path = "crates/polymesh-api-ink", default-features = false }
 polymesh-api = { version = "3.2.0", path = "./", default-features = false }
 
 # Substrate shared deps.
@@ -52,12 +52,7 @@ sp-std = { version = "8.0", default-features = false }
 sp-weights = { version = "20.0", default-features = false }
 
 # Ink!
-ink_primitives = { version = "3.0", default-features = false }
-ink_metadata = { version = "3.0", default-features = false }
-ink_env = { version = "3.0", default-features = false }
-ink_storage = { version = "3.0", default-features = false }
-ink_lang = { version = "3.0", default-features = false }
-ink_lang_codegen = { version = "3.0", default-features = false }
+ink = { version = "4.3", default-features = false }
 
 # Other shared deps.
 serde_json = { version = "1.0", default-features = false }
@@ -74,12 +69,7 @@ polymesh-api-client = { workspace = true, optional = true, default-features = fa
 
 # For Ink! Smart Contract support.
 polymesh-api-ink = { workspace = true, optional = true, default-features = false }
-ink_primitives = { workspace = true, optional = true, default-features = false }
-ink_metadata = { workspace = true, optional = true, default-features = false, features = ["derive"] }
-ink_env = { workspace = true, optional = true, default-features = false }
-ink_storage = { workspace = true, optional = true, default-features = false }
-ink_lang = { workspace = true, optional = true, default-features = false }
-ink_lang_codegen = { workspace = true, optional = true, default-features = false }
+ink = { workspace = true, optional = true, default-features = false }
 
 # substrate
 sp-arithmetic = { workspace = true, default-features = false }
@@ -126,11 +116,7 @@ ink = [
   "polymesh-api-ink",
   "polymesh-api-codegen-macro/ink",
   "polymesh-api-codegen-macro/no_std",
-  "ink_primitives",
-  "ink_env",
-  "ink_storage",
-  "ink_lang",
-  "ink_lang_codegen",
+  "dep:ink",
   "type_info",
 ]
 
@@ -160,8 +146,5 @@ std = [
   "polymesh-api-client?/std",
   "polymesh-api-ink?/std",
   "scale-info?/std",
-  "ink_primitives?/std",
-  "ink_metadata/std",
-  "ink_env?/std",
-  "ink_storage?/std",
+  "ink?/std",
 ]

@@ -1,4 +1,4 @@
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, CompactAs};
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -8,12 +8,18 @@ use alloc::fmt;
 #[cfg(feature = "std")]
 use scale_info::TypeInfo;
 
-pub use sp_arithmetic::per_things;
-
-pub use ink_env::AccountId;
 #[cfg(feature = "std")]
-use ink_storage::traits::StorageLayout;
-use ink_storage::traits::{PackedLayout, SpreadAllocate, SpreadLayout};
+use ink::storage::traits::StorageLayout;
+
+pub use sp_arithmetic::per_things;
+pub use ink::primitives::AccountId;
+
+// Re-impl `OldWeight`
+#[derive(
+  Clone, Copy, Debug, Encode, Decode, CompactAs, Default, PartialEq, Eq, PartialOrd, Ord,
+)]
+#[cfg_attr(feature = "std", derive(TypeInfo))]
+pub struct OldWeight(pub u64);
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Hash))]
@@ -53,9 +59,6 @@ impl<AccountId, AccountIndex> From<AccountId> for MultiAddress<AccountId, Accoun
   Ord,
   Encode,
   Decode,
-  SpreadAllocate,
-  SpreadLayout,
-  PackedLayout,
 )]
 #[cfg_attr(feature = "std", derive(TypeInfo, StorageLayout))]
 pub struct IdentityId(pub [u8; 32]);

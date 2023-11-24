@@ -276,29 +276,19 @@ mod v14 {
         .map(|(name, code)| (name.to_string(), code)),
       );
       let ink_derives = quote! {
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
-        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let ink_enum_derives = quote! {
         #[derive(Copy)]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
-        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let ink_extra_derives = quote! {
         #[derive(Default)]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadAllocate))]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
-        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let ink_id_derives = quote! {
         #[derive(Copy, Default)]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadAllocate))]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::SpreadLayout))]
-        #[cfg_attr(feature = "ink", derive(::ink_storage::traits::PackedLayout))]
-        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink_storage::traits::StorageLayout))]
+        #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let custom_derives = HashMap::from_iter(
         [
