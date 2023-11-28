@@ -37,6 +37,9 @@ pub trait PolymeshRuntime {
 
   #[ink(extension = 0x00_00_00_12)]
   fn twox_256(data: Encoded) -> [u8; 32];
+
+  #[ink(extension = 0x00_00_00_13)]
+  fn get_latest_api_upgrade(api: Encoded) -> [u8; 32];
 }
 
 pub type PolymeshRuntimeInstance = <PolymeshRuntime as ink::ChainExtensionInstance>::Instance;
