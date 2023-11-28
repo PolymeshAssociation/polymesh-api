@@ -24,6 +24,3 @@ pub use polymesh_api_client::{ChainApi, Client};
 
 #[cfg(feature = "ink")]
 pub use polymesh_api_ink as ink;
-
-#[cfg(feature = "polymesh_v5")]
-pub mod v5_to_v6;
