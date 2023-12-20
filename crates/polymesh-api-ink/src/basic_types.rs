@@ -1,4 +1,4 @@
-use codec::{Decode, Encode, CompactAs};
+use codec::{CompactAs, Decode, Encode};
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -11,8 +11,8 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use ink::storage::traits::StorageLayout;
 
-pub use sp_arithmetic::per_things;
 pub use ink::primitives::AccountId;
+pub use sp_arithmetic::per_things;
 
 // Re-impl `OldWeight`
 #[derive(
@@ -49,17 +49,7 @@ impl<AccountId, AccountIndex> From<AccountId> for MultiAddress<AccountId, Accoun
   }
 }
 
-#[derive(
-  Clone,
-  Copy,
-  Default,
-  PartialEq,
-  Eq,
-  PartialOrd,
-  Ord,
-  Encode,
-  Decode,
-)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(TypeInfo, StorageLayout))]
 pub struct IdentityId(pub [u8; 32]);
 

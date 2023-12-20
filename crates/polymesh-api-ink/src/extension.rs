@@ -5,9 +5,11 @@ use codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use scale_info::TypeInfo;
 
+#[cfg(not(feature = "std"))]
+use alloc::{format, string::String};
 use alloc::vec::Vec;
 
-use crate::{Encoded, IdentityId, AccountId};
+use crate::{AccountId, Encoded, Error, IdentityId};
 
 #[ink::chain_extension]
 #[derive(Clone, Copy)]
@@ -15,7 +17,7 @@ pub trait PolymeshRuntime {
   type ErrorCode = PolymeshRuntimeErr;
 
   #[ink(extension = 0x00_00_00_01)]
-  fn call_runtime(call: Encoded);
+  fn call_runtime(call: Encoded) -> Result<Result<(), String>, CallRuntimeError>;
 
   #[ink(extension = 0x00_00_00_02)]
   fn read_storage(key: Encoded) -> Option<Vec<u8>>;
@@ -48,18 +50,41 @@ pub fn new_instance() -> PolymeshRuntimeInstance {
   <PolymeshRuntime as ink::ChainExtensionInstance>::instantiate()
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Encode, Decode)]
+#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
+pub struct CallRuntimeError(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(TypeInfo))]
 pub enum PolymeshRuntimeErr {
-  Unknown,
+  Generic { status_code: u32 },
+  ExtrinsicCallFailed { error_msg: String },
+}
+
+impl From<PolymeshRuntimeErr> for CallRuntimeError {
+  fn from(runtime_err: PolymeshRuntimeErr) -> Self {
+    CallRuntimeError(format!("{:?}", runtime_err))
+  }
+}
+
+impl From<codec::Error> for CallRuntimeError {
+  fn from(codec_error: codec::Error) -> Self {
+    CallRuntimeError(format!("{:?}", codec_error))
+  }
+}
+
+impl From<CallRuntimeError> for Error {
+  fn from(call_runtime_err: CallRuntimeError) -> Self {
+    Error::RuntimeError(PolymeshRuntimeErr::ExtrinsicCallFailed {
+      error_msg: call_runtime_err.0,
+    })
+  }
 }
 
 impl ink::env::chain_extension::FromStatusCode for PolymeshRuntimeErr {
   fn from_status_code(status_code: u32) -> Result<(), Self> {
     match status_code {
       0 => Ok(()),
-      1 => Err(Self::Unknown),
-      _ => panic!("encountered unknown status code"),
+      _ => Err(Self::Generic { status_code }),
     }
   }
 }

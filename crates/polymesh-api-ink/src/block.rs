@@ -6,6 +6,7 @@ use codec::{Decode, Encode, Output};
 
 use primitive_types::H256;
 
+use crate::extension::PolymeshRuntimeErr;
 use crate::*;
 
 pub type TxHash = H256;
@@ -78,7 +79,12 @@ impl Call {
 
   pub fn submit(&self) -> Result<()> {
     let runtime = crate::extension::new_instance();
-    Ok(runtime.call_runtime(self.into())?)
+    if let Err(error_msg) = runtime.call_runtime(self.into())? {
+      return Err(Error::RuntimeError(
+        PolymeshRuntimeErr::ExtrinsicCallFailed { error_msg },
+      ));
+    }
+    Ok(())
   }
 }
 
