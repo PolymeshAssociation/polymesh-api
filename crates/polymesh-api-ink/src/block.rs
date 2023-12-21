@@ -79,7 +79,7 @@ impl Call {
 
   pub fn submit(&self) -> Result<()> {
     let runtime = crate::extension::new_instance();
-    if let Err(error_msg) = runtime.call_runtime(self.into())? {
+    if let Err(error_msg) = runtime.call_runtime_with_error(self.into())? {
       return Err(Error::RuntimeError(
         PolymeshRuntimeErr::ExtrinsicCallFailed { error_msg },
       ));

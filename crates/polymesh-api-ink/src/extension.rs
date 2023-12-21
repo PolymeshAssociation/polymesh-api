@@ -5,9 +5,9 @@ use codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use scale_info::TypeInfo;
 
+use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
 use alloc::{format, string::String};
-use alloc::vec::Vec;
 
 use crate::{AccountId, Encoded, Error, IdentityId};
 
@@ -17,7 +17,7 @@ pub trait PolymeshRuntime {
   type ErrorCode = PolymeshRuntimeErr;
 
   #[ink(extension = 0x00_00_00_01)]
-  fn call_runtime(call: Encoded) -> Result<Result<(), String>, CallRuntimeError>;
+  fn call_runtime(call: Encoded);
 
   #[ink(extension = 0x00_00_00_02)]
   fn read_storage(key: Encoded) -> Option<Vec<u8>>;
@@ -42,6 +42,9 @@ pub trait PolymeshRuntime {
 
   #[ink(extension = 0x00_00_00_13)]
   fn get_latest_api_upgrade(api: Encoded) -> [u8; 32];
+
+  #[ink(extension = 0x00_00_00_14)]
+  fn call_runtime_with_error(call: Encoded) -> Result<Result<(), String>, CallRuntimeError>;
 }
 
 pub type PolymeshRuntimeInstance = <PolymeshRuntime as ink::ChainExtensionInstance>::Instance;
