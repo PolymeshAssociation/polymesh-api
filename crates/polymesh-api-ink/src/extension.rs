@@ -2,9 +2,6 @@ use ink::env::Environment;
 
 use codec::{Decode, Encode};
 
-#[cfg(feature = "std")]
-use scale_info::TypeInfo;
-
 use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
 use alloc::{format, string::String};
@@ -14,7 +11,7 @@ use crate::{AccountId, Encoded, Error, IdentityId};
 #[ink::chain_extension]
 #[derive(Clone, Copy)]
 pub trait PolymeshRuntime {
-  type ErrorCode = PolymeshRuntimeErr;
+  type ErrorCode = Error;
 
   #[ink(extension = 0x00_00_00_01)]
   fn call_runtime(call: Encoded);
@@ -44,7 +41,7 @@ pub trait PolymeshRuntime {
   fn get_latest_api_upgrade(api: Encoded) -> [u8; 32];
 
   #[ink(extension = 0x00_00_00_14)]
-  fn call_runtime_with_error(call: Encoded) -> Result<Result<(), String>, CallRuntimeError>;
+  fn call_runtime_with_error(call: Encoded) -> Result<Result<(), CallRuntimeError>, Error>;
 }
 
 pub type PolymeshRuntimeInstance = <PolymeshRuntime as ink::ChainExtensionInstance>::Instance;
@@ -56,39 +53,9 @@ pub fn new_instance() -> PolymeshRuntimeInstance {
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct CallRuntimeError(pub String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(TypeInfo))]
-pub enum PolymeshRuntimeErr {
-  Generic { status_code: u32 },
-  ExtrinsicCallFailed { error_msg: String },
-}
-
-impl From<PolymeshRuntimeErr> for CallRuntimeError {
-  fn from(runtime_err: PolymeshRuntimeErr) -> Self {
-    CallRuntimeError(format!("{:?}", runtime_err))
-  }
-}
-
-impl From<codec::Error> for CallRuntimeError {
-  fn from(codec_error: codec::Error) -> Self {
-    CallRuntimeError(format!("{:?}", codec_error))
-  }
-}
-
 impl From<CallRuntimeError> for Error {
-  fn from(call_runtime_err: CallRuntimeError) -> Self {
-    Error::RuntimeError(PolymeshRuntimeErr::ExtrinsicCallFailed {
-      error_msg: call_runtime_err.0,
-    })
-  }
-}
-
-impl ink::env::chain_extension::FromStatusCode for PolymeshRuntimeErr {
-  fn from_status_code(status_code: u32) -> Result<(), Self> {
-    match status_code {
-      0 => Ok(()),
-      _ => Err(Self::Generic { status_code }),
-    }
+  fn from(err: CallRuntimeError) -> Self {
+    Self::ExtrinsicCallFailed { error_msg: err.0 }
   }
 }
 
