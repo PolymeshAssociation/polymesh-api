@@ -2677,7 +2677,7 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
 name = "polymesh-api"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2746,7 +2746,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2773,7 +2773,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen-macro"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "darling",
  "parity-scale-codec",
@@ -2786,7 +2786,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "hex",
  "ink",
