@@ -621,7 +621,11 @@ pub type GenericAddress = MultiAddress<AccountId, u32>;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
-pub struct IdentityId(pub [u8; 32]);
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct IdentityId(
+  #[cfg_attr(feature = "utoipa", schema(example = "0x0600000000000000000000000000000000000000000000000000000000000000"))]
+  pub [u8; 32]
+);
 
 impl fmt::Display for IdentityId {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -644,7 +648,7 @@ impl Serialize for IdentityId {
     S: ser::Serializer,
   {
     if serializer.is_human_readable() {
-      let h = hex::encode(&self.0);
+      let h = format!("0x{}", hex::encode(&self.0));
       serializer.serialize_str(&h)
     } else {
       self.0.serialize(serializer)

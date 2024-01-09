@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "3.2.5"
+version = "3.3.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -37,6 +37,8 @@ sp-std = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 
 subxt-signer = { version = "0.32", default-features = false, features = ["sr25519", "ecdsa"] }
+
+utoipa = { version = "4.1", optional = true, default-features = false }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
