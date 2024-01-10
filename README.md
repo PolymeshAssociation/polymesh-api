@@ -4,7 +4,7 @@ The Rust client API for the [Polymesh](https://polymesh.network/) securities tok
 
 # Versions
 
-- Polymesh 6.0: `polymesh-api = 2.3`
+- Polymesh 6.x: `polymesh-api = 3.6`
 - Polymesh 5.x: `polymesh-api = 0.3.9`
 
 ## Examples
