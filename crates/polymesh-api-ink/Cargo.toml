@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"

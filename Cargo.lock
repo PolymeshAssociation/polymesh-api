@@ -2761,7 +2761,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "hex",
  "ink",
