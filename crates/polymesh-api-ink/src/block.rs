@@ -78,6 +78,12 @@ impl Call {
 
   pub fn submit(&self) -> Result<()> {
     let runtime = crate::extension::new_instance();
+    #[cfg(feature = "use_call_runtime_with_error")]
+    {
+      let call_runtime_res = runtime.call_runtime_with_error(self.into())?;
+      Ok(call_runtime_res?)
+    }
+    #[cfg(not(feature = "use_call_runtime_with_error"))]
     Ok(runtime.call_runtime(self.into())?)
   }
 }
