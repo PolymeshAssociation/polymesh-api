@@ -36,19 +36,21 @@ sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 
-subxt-signer = { version = "0.32", default-features = false, features = ["sr25519", "ecdsa"] }
+subxt-signer = { version = "0.33", default-features = false, features = ["sr25519", "ecdsa"] }
 
 utoipa = { version = "4.1", optional = true, default-features = false }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.19", features = ["full"] }
-jsonrpsee = { version = "0.20", default-features = false, features = ["client"] }
+jsonrpsee = { version = "0.21", default-features = false, features = ["client"] }
+subxt-signer = { version = "0.33", default-features = false, features = ["native"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { version = "1", features = ["rt"] }
-jsonrpsee = { version = "0.20", default-features = false, features = ["wasm-client"] }
+jsonrpsee = { version = "0.21", default-features = false, features = ["wasm-client"] }
+subxt-signer = { version = "0.33", default-features = false, features = ["web"] }
 
 sp-application-crypto = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"] }

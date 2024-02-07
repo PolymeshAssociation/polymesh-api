@@ -24,7 +24,7 @@ serde_json = { workspace = true }
 
 sp-core = { workspace = true, default-features = false }
 sp-keyring = { workspace = true }
-subxt-signer = "0.32"
+subxt-signer = "0.33"
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
 polymesh-api = { workspace = true, default-features = true }

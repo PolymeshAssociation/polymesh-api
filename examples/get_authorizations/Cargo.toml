@@ -15,6 +15,6 @@ futures-util = { version = "0.3" }
 tokio = { version = "1.19", features = ["full"] }
 
 sp-keyring = { workspace = true }
-subxt-signer = "0.32"
+subxt-signer = "0.33"
 
 polymesh-api = { workspace = true, default-features = true }

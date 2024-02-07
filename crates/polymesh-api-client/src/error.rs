@@ -60,7 +60,7 @@ pub enum Error {
   SigningTransactionFailed(String),
 
   #[cfg_attr(feature = "std", error("Jsonrpsee error: {0}"))]
-  Jsonrpsee(jsonrpsee::core::Error),
+  JsonrpseeClient(jsonrpsee::core::client::error::Error),
 
   #[cfg_attr(
     feature = "std",
@@ -106,9 +106,9 @@ impl From<codec::Error> for Error {
   }
 }
 
-impl From<jsonrpsee::core::Error> for Error {
-  fn from(e: jsonrpsee::core::Error) -> Self {
-    Self::Jsonrpsee(e)
+impl From<jsonrpsee::core::client::error::Error> for Error {
+  fn from(e: jsonrpsee::core::client::error::Error) -> Self {
+    Self::JsonrpseeClient(e)
   }
 }
 
