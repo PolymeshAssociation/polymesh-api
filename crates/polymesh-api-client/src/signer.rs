@@ -16,6 +16,66 @@ pub type DefaultSigner = PairSigner<sp_core::sr25519::Pair>;
 #[cfg(not(feature = "std"))]
 pub type DefaultSigner = PairSigner<subxt_signer::sr25519::Keypair>;
 
+pub mod dev {
+  use super::DefaultSigner;
+
+  pub fn alice() -> DefaultSigner {
+    DefaultSigner::from_string("//Alice", None).expect("Const seed")
+  }
+
+  pub fn bob() -> DefaultSigner {
+    DefaultSigner::from_string("//Bob", None).expect("Const seed")
+  }
+
+  pub fn charlie() -> DefaultSigner {
+    DefaultSigner::from_string("//Charlie", None).expect("Const seed")
+  }
+
+  pub fn dave() -> DefaultSigner {
+    DefaultSigner::from_string("//Dave", None).expect("Const seed")
+  }
+
+  pub fn eve() -> DefaultSigner {
+    DefaultSigner::from_string("//Eve", None).expect("Const seed")
+  }
+
+  pub fn ferdie() -> DefaultSigner {
+    DefaultSigner::from_string("//Ferdie", None).expect("Const seed")
+  }
+
+  pub fn one() -> DefaultSigner {
+    DefaultSigner::from_string("//One", None).expect("Const seed")
+  }
+
+  pub fn two() -> DefaultSigner {
+    DefaultSigner::from_string("//Two", None).expect("Const seed")
+  }
+
+  pub fn alice_stash() -> DefaultSigner {
+    DefaultSigner::from_string("//Alice//stash", None).expect("Const seed")
+  }
+
+  pub fn bob_stash() -> DefaultSigner {
+    DefaultSigner::from_string("//Bob//stash", None).expect("Const seed")
+  }
+
+  pub fn charlie_stash() -> DefaultSigner {
+    DefaultSigner::from_string("//Charlie//stash", None).expect("Const seed")
+  }
+
+  pub fn dave_stash() -> DefaultSigner {
+    DefaultSigner::from_string("//Dave//stash", None).expect("Const seed")
+  }
+
+  pub fn eve_stash() -> DefaultSigner {
+    DefaultSigner::from_string("//Eve//stash", None).expect("Const seed")
+  }
+
+  pub fn ferdie_stash() -> DefaultSigner {
+    DefaultSigner::from_string("//Ferdie//stash", None).expect("Const seed")
+  }
+}
+
 #[async_trait]
 pub trait Signer: Send + Sync {
   fn account(&self) -> AccountId;

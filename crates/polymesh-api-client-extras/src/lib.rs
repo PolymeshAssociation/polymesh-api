@@ -10,6 +10,11 @@ use polymesh_api::types::{
 };
 use polymesh_api::TransactionResults;
 
+mod user;
+pub use user::*;
+
+pub const ONE_POLYX: u128 = 1_000_000;
+
 pub type Moment = u64;
 pub type AuthorizationNonce = u64;
 
