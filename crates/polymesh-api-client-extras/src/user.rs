@@ -2,12 +2,17 @@ use core::ops::{Deref, DerefMut};
 
 use polymesh_api::{
   client::{AccountId, IdentityId, DefaultSigner, Signer, Result, dev},
-  polymesh::types::polymesh_primitives::secondary_key::KeyRecord,
+  polymesh::types::{
+    frame_system::AccountInfo,
+    polymesh_primitives::secondary_key::KeyRecord,
+    polymesh_common_utilities::traits::balances::AccountData,
+  },
   Api,
 };
 
 use crate::*;
 
+#[derive(Clone)]
 pub struct PolymeshHelper {
   api: Api,
   pub init_polyx: u128,
@@ -24,14 +29,49 @@ impl PolymeshHelper {
     })
   }
 
-  async fn load_dids(&self, users: &mut [PolymeshUser]) -> Result<()> {
-    for user in users {
-      // Skip users that have an identity.
-      if user.did.is_some() {
-        continue;
+  async fn batch_load_did_balance(&self, users: &mut [PolymeshUser]) -> Result<Vec<u128>> {
+    let mut balances = Vec::with_capacity(users.len());
+    for users in users.chunks_mut(200) {
+      let mut tasks = Vec::with_capacity(200);
+      for user in users.iter() {
+        let account = user.account();
+        let need_did = user.did.is_none();
+        let helper = self.clone();
+        let task = tokio::spawn(async move {
+          helper.get_did_and_balance(account, need_did).await
+        });
+        tasks.push(task);
       }
-      // Try getting the user's identity from the chain.
-      user.did = self.get_did(user.account()).await?;
+      for (idx, task) in tasks.into_iter().enumerate() {
+        let (did, balance) = task.await.unwrap()?;
+        if did.is_some() {
+          users[idx].did = did;
+        }
+        balances.push(balance);
+      }
+    }
+    Ok(balances)
+  }
+
+  async fn batch_load_dids(&self, users: &mut [PolymeshUser]) -> Result<()> {
+    for users in users.chunks_mut(200) {
+      let mut tasks = Vec::with_capacity(200);
+      for (idx, user) in users.iter().enumerate() {
+        let account = user.account();
+        let helper = self.clone();
+        if user.did.is_none() {
+          let task = tokio::spawn(async move {
+            helper.get_did(account).await
+          });
+          tasks.push((idx, task));
+        }
+      }
+      for (idx, task) in tasks {
+        let did = task.await.unwrap()?;
+        if did.is_some() {
+          users[idx].did = did;
+        }
+      }
     }
     Ok(())
   }
@@ -65,56 +105,70 @@ impl PolymeshHelper {
   }
 
   async fn onboard_users(&mut self, users: &mut [PolymeshUser]) -> Result<()> {
-    self.load_dids(users).await?;
-    // Calls for registering users and funding them.
-    let mut calls = Vec::new();
-    // Add calls to register users missing identities.
-    let mut need_dids = Vec::new();
-    for (idx, user) in users.iter().enumerate() {
-      if user.did.is_some() {
-        continue;
-      }
-      need_dids.push(idx);
-      // User needs an identity.
-      calls.push(
-        self
-          .api
-          .call()
-          .identity()
-          .cdd_register_did_with_cdd(user.account(), vec![], None)?
-          .into(),
-      );
-    }
-    // Add calls to fund the users.
-    for user in users.iter() {
-      // Transfer some funds to the user.
-      calls.push(
-        self
-          .api
-          .call()
-          .balances()
-          .transfer(user.account().into(), self.init_polyx)?
-          .into(),
-      );
-    }
-    // Execute batch.
-    let mut res = self
-      .api
-      .call()
-      .utility()
-      .batch(calls)?
-      .execute(&mut self.cdd)
-      .await?;
-    // Get new identities from batch events.
-    let ids = get_created_ids(&mut res).await?;
-    for idx in need_dids {
-      match &ids[idx] {
-        CreatedIds::IdentityCreated(did) => {
-          users[idx].did = Some(*did);
+    let mut batches = Vec::new();
+    for users in users.chunks_mut(200) {
+      let balances = self.batch_load_did_balance(users).await?;
+      // Calls for registering users and funding them.
+      let mut did_calls = Vec::new();
+      let mut fund_calls = Vec::new();
+      for (idx, user) in users.iter_mut().enumerate() {
+        let account = user.account();
+        // If the user doesn't have an identity, then register them.
+        if user.did.is_none() {
+          // User needs an identity.
+          did_calls.push(self
+              .api
+              .call()
+              .identity()
+              .cdd_register_did_with_cdd(account, vec![], None)?
+              .into()
+          );
         }
-        _ => (),
+        // Add calls to fund the users.
+        let balance = balances[idx];
+        if balance < self.init_polyx {
+          // Transfer some funds to the user.
+          fund_calls.push(
+            self
+              .api
+              .call()
+              .balances()
+              .set_balance(account.into(), self.init_polyx, 0)?
+              .into(),
+          );
+        }
+      }
+      if did_calls.len() > 0 {
+        let res = self
+          .api
+          .call()
+          .utility()
+          .batch(did_calls)?
+          .submit_and_watch(&mut self.cdd)
+          .await?;
+        batches.push(res);
+      }
+      if fund_calls.len() > 0 {
+        let res = self
+          .api
+          .call()
+          .sudo()
+          .sudo(self.api.call().utility().batch(fund_calls)?.into())?
+          .submit_and_watch(&mut self.cdd)
+          .await?;
+        batches.push(res);
       }
     }
+    // Check if we have any batches to process.
+    if batches.len() == 0 {
+      return Ok(());
+    }
+    // Wait for all batches to be finalized.
+    for mut res in batches {
+      res.wait_finalized().await?;
+    }
+    // Get new identities.
+    self.batch_load_dids(users).await?;
     Ok(())
   }
 
@@ -129,6 +183,24 @@ impl PolymeshHelper {
       _ => None,
     };
     Ok(did)
+  }
+
+  pub async fn get_account_info(&self, account: AccountId) -> Result<AccountInfo<u32, AccountData>> {
+    Ok(self.api.query().system().account(account).await?)
+  }
+
+  pub async fn get_account_balance(&self, account: AccountId) -> Result<u128> {
+    self.get_account_info(account).await.map(|info| info.data.free)
+  }
+
+  async fn get_did_and_balance(&self, account: AccountId, need_did: bool) -> Result<(Option<IdentityId>, u128)> {
+    let did: Option<IdentityId> = if need_did {
+      self.get_did(account).await?
+    } else {
+      None
+    };
+    let balance = self.get_account_balance(account).await?;
+    Ok((did, balance))
   }
 
   pub async fn register_and_fund(&mut self, account: AccountId) -> Result<IdentityId> {

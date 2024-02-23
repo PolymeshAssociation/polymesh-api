@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client-extras"
-version = "3.1.0"
+version = "3.1.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -11,6 +11,8 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 
 [dependencies]
 polymesh-api = { workspace = true, default-features = false, features = ["rpc", "v14"] }
+
+tokio = { version = "1.19", default-features = false, features = ["rt"] }
 
 serde_json = { workspace = true, features = ["preserve_order"] }
 serde = { workspace = true }

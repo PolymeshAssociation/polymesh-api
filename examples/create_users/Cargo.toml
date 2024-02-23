@@ -1,0 +1,21 @@
+[package]
+name = "create_users"
+version = "0.1.1"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+log = "0.4"
+hex = "0.4"
+dotenv = "0.15"
+env_logger = "0.9"
+
+lazy_static = "1.4.0"
+
+serde_json = { workspace = true, features = ["preserve_order", "arbitrary_precision"] }
+serde = { workspace = true }
+
+tokio = { version = "1.19", features = ["full"] }
+
+polymesh-api = { workspace = true, default-features = true, features = ["download_metadata"] }
+polymesh-api-client-extras = { workspace = true, default-features = true }

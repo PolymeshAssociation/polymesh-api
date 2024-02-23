@@ -25,6 +25,7 @@ members = [
   "examples/subscribe_blocks",
   "examples/test_api",
   "examples/dump_blocks",
+  "examples/create_users",
 ]
 
 ## Keep common dependencies here.
@@ -33,7 +34,7 @@ members = [
 polymesh-api-codegen-macro = { version = "3.3.0", path = "crates/polymesh-api-codegen-macro", default-features = false }
 polymesh-api-codegen = { version = "3.3.0", path = "crates/polymesh-api-codegen", default-features = false }
 polymesh-api-client = { version = "3.4.0", path = "crates/polymesh-api-client", default-features = false }
-polymesh-api-client-extras = { version = "3.1.0", path = "crates/polymesh-api-client-extras", default-features = false }
+polymesh-api-client-extras = { version = "3.1.1", path = "crates/polymesh-api-client-extras", default-features = false }
 polymesh-api-ink = { version = "1.2.1", path = "crates/polymesh-api-ink", default-features = false }
 polymesh-api = { version = "3.6.0", path = "./", default-features = false }
 
