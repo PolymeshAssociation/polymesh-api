@@ -63,5 +63,3 @@ impl User {
     self.signer.account()
   }
 }
-
-pub const ONE_POLYX: u128 = 1_000_000;
