@@ -12,6 +12,8 @@ homepage = "https://github.com/PolymeshAssociation/polymesh-api"
 [features]
 default = []
 
+download_metadata = [ "polymesh-api/download_metadata" ]
+
 [dependencies]
 log = "0.4"
 env_logger = "0.9"
@@ -28,7 +30,7 @@ sp-core = { workspace = true, features = ["std"] }
 sp-runtime = { workspace = true, features = ["std"] }
 sp-keyring = { workspace = true }
 
-polymesh-api = { workspace = true, default-features = true, features = ["download_metadata"] }
+polymesh-api = { workspace = true, default-features = true }
 polymesh-api-client-extras = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
