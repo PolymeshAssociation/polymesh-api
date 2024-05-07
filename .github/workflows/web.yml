@@ -1,4 +1,4 @@
-name: Cargo Build
+name: Cargo Build for Web
 
 on:
   push:
@@ -20,14 +20,6 @@ jobs:
             os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
 
-          - name: Windows-x86_64-msvc
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
-
-          - name: MacOS-x86_64
-            os: macOS-latest
-            target: x86_64-apple-darwin
-
     runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v3
@@ -36,5 +28,5 @@ jobs:
             rustup update ${{ matrix.toolchain }}
             rustup default ${{ matrix.toolchain }}
             rustup target add ${{ matrix.platform.target }}
-      - name: check default features
-        run: cargo check --target ${{ matrix.platform.target }} --verbose
+      - name: check Wasm
+        run: cargo check --target ${{ matrix.platform.target }} --no-default-features --features wasm,serde --target wasm32-unknown-unknown
