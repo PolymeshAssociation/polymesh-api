@@ -3399,7 +3399,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api"
-version = "3.6.0"
+version = "3.7.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3422,7 +3422,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client"
-version = "3.4.0"
+version = "3.5.0"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -3458,7 +3458,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client-extras"
-version = "3.1.1"
+version = "3.2.0"
 dependencies = [
  "parity-scale-codec",
  "polymesh-api",
@@ -3469,7 +3469,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "3.3.0"
+version = "3.4.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3496,7 +3496,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen-macro"
-version = "3.3.0"
+version = "3.4.0"
 dependencies = [
  "darling 0.14.4",
  "parity-scale-codec",
@@ -3509,7 +3509,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "1.2.2"
+version = "1.3.0"
 dependencies = [
  "hex",
  "ink",
@@ -3522,7 +3522,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-tester"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3543,7 +3543,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-offline-signer"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
