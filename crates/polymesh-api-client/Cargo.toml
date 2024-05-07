@@ -36,7 +36,7 @@ sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 
-subxt-signer = { version = "0.32", default-features = false, features = ["sr25519", "ecdsa"] }
+subxt-signer = { workspace = true, default-features = false, features = ["sr25519", "ecdsa"] }
 
 utoipa = { version = "4.1", optional = true, default-features = false }
 
@@ -103,4 +103,5 @@ std = [
   "sp-weights/std",
   "sp-arithmetic/std",
   "scale-info/std",
+	"subxt-signer/native",
 ]

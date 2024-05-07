@@ -12,6 +12,6 @@ env_logger = "0.9"
 tokio = { version = "1.19", features = ["full"] }
 
 sp-keyring = { workspace = true }
-subxt-signer = "0.32"
+subxt-signer = { workspace = true }
 
 polymesh-api = { workspace = true, default-features = true }
