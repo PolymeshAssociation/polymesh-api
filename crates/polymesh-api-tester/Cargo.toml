@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-tester"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -36,7 +36,7 @@ polymesh-api-client-extras = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 
 # For accounts db.
-sqlx = { version = "0.7", features = ["runtime-tokio", "tls-native-tls", "sqlite"] }
+sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio", "tls-native-tls", "sqlite", "macros"] }
 
 [dev-dependencies]
 anyhow = "1.0"
