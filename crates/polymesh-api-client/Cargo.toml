@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "3.5.0"
+version = "3.5.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"

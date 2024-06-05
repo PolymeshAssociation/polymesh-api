@@ -74,6 +74,7 @@ impl RpcClient {
       url.to_string()
     };
     let client = WsClientBuilder::default()
+      .max_concurrent_requests(16 * 1024)
       .max_request_size(1024 * 1024 * 1024)
       .build(&url)
       .await?;
