@@ -30,6 +30,7 @@ pub async fn client_api() -> Result<Api> {
 
 #[derive(Clone)]
 pub struct User {
+  pub api: Api,
   /// Primary key signer.
   pub primary_key: AccountSigner,
   /// User's secondary keys.
@@ -58,8 +59,9 @@ impl Signer for User {
 }
 
 impl User {
-  pub fn new(primary_key: AccountSigner) -> Self {
+  pub fn new(api: &Api, primary_key: AccountSigner) -> Self {
     Self {
+      api: api.clone(),
       primary_key,
       secondary_keys: Vec::new(),
       did: None,

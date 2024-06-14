@@ -7,7 +7,6 @@ use polymesh_api::client::{AccountId, KeypairSigner, PairSigner, Signer};
 
 use crate::error::Result;
 use crate::Db;
-use crate::User;
 
 /// AccountSigner is wrapper for signing keys (sr25519, ed25519, etc...).
 #[derive(Clone)]
@@ -42,16 +41,6 @@ impl AccountSigner {
       db,
       <sr25519::sr25519::Pair as KeypairSigner>::from_string(s, None)?,
     ))
-  }
-}
-
-impl From<AccountSigner> for User {
-  fn from(primary_key: AccountSigner) -> User {
-    User {
-      primary_key,
-      secondary_keys: Vec::new(),
-      did: None,
-    }
   }
 }
 

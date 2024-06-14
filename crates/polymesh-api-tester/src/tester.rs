@@ -92,7 +92,7 @@ impl PolymeshTester {
           Some(self.db.clone()),
           &format!("//{}_{}", self.seed, entry.key()),
         )?;
-        let user = User::new(signer);
+        let user = User::new(&self.api, signer);
         Ok(entry.insert(user).clone())
       }
     }
