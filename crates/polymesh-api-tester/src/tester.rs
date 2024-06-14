@@ -2,12 +2,26 @@ use std::collections::HashMap;
 
 use polymesh_api::{
   client::{AccountId, IdentityId},
-  polymesh::types::polymesh_primitives::{secondary_key::KeyRecord, ticker::Ticker},
+  polymesh::types::polymesh_primitives::{
+    secondary_key::{KeyRecord, Permissions, SecondaryKey},
+    subset::SubsetRestriction,
+    ticker::Ticker,
+  },
   Api,
 };
 use polymesh_api_client_extras::*;
 
 use crate::*;
+
+async fn get_sudo_signer(api: &Api, signer: &AccountSigner) -> Option<AccountSigner> {
+  api.query().sudo().key().await.ok()?.and_then(|key| {
+    if key == signer.account() {
+      Some(signer.clone())
+    } else {
+      None
+    }
+  })
+}
 
 pub struct PolymeshTester {
   pub api: Api,
@@ -15,6 +29,7 @@ pub struct PolymeshTester {
   init_polyx: u128,
   db: Db,
   cdd: AccountSigner,
+  sudo: Option<AccountSigner>,
   users: HashMap<String, User>,
 }
 
@@ -29,11 +44,14 @@ impl PolymeshTester {
       .as_nanos();
     let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "accounts.db".into());
     let db = Db::open(api.clone(), &url).await?;
+    let cdd = AccountSigner::alice(Some(db.clone()));
+    let sudo = get_sudo_signer(&api, &cdd).await;
     Ok(Self {
       api,
       init_polyx: 10_000 * ONE_POLYX,
       seed: format!("{}", ts),
-      cdd: AccountSigner::alice(Some(db.clone())),
+      cdd,
+      sudo,
       users: Default::default(),
       db,
     })
@@ -44,10 +62,25 @@ impl PolymeshTester {
     self.init_polyx = val * ONE_POLYX;
   }
 
+  pub fn has_sudo(&self) -> bool {
+    self.sudo.is_some()
+  }
+
   fn set_user_did(&mut self, name: &str, did: IdentityId) {
     if let Some(user) = self.users.get_mut(name) {
       user.did = Some(did);
     }
+  }
+
+  fn update_user(&mut self, name: &str, user: &User) {
+    self.users.insert(name.to_string(), user.clone());
+  }
+
+  fn new_signer_idx(&self, name: &str, idx: usize) -> Result<AccountSigner> {
+    AccountSigner::from_string(
+      Some(self.db.clone()),
+      &format!("//{}_{}_{}", self.seed, name, idx),
+    )
   }
 
   fn get_user(&mut self, name: &str) -> Result<User> {
@@ -92,58 +125,152 @@ impl PolymeshTester {
   /// Get the users if they exist, or create them.  Make sure the users
   /// have identities.
   pub async fn users(&mut self, names: &[&str]) -> Result<Vec<User>> {
-    let mut users = Vec::with_capacity(names.len());
-    for name in names {
+    let names = names.iter().map(|name| (*name, 0)).collect::<Vec<_>>();
+    self.users_with_secondary_keys(names.as_slice()).await
+  }
+
+  /// Get the users if they exist, or create them.  Make sure the users
+  /// have identities.
+  pub async fn users_with_secondary_keys(&mut self, names: &[(&str, usize)]) -> Result<Vec<User>> {
+    let mut users = Vec::new();
+    let mut accounts = Vec::new();
+    for (name, sk) in names {
       // Get or create user.
-      users.push(self.get_user(name)?);
+      let mut user = self.get_user(name)?;
+      if user.secondary_keys.len() < *sk {
+        for idx in 0..*sk {
+          let sk = self.new_signer_idx(name, idx)?;
+          accounts.push(sk.account());
+          user.secondary_keys.push(sk);
+        }
+        self.update_user(name, &user);
+      }
+      accounts.push(user.account());
+      users.push(user);
     }
     self.load_dids(users.as_mut_slice()).await?;
     // Calls for registering users and funding them.
     let mut calls = Vec::new();
+    let has_sudo = self.has_sudo();
     // Add calls to register users missing identities.
     let mut need_dids = Vec::new();
+    let mut has_secondary_keys = false;
     for (idx, user) in users.iter().enumerate() {
       if user.did.is_some() {
         continue;
       }
       need_dids.push(idx);
+      if user.secondary_keys.len() > 0 {
+        has_secondary_keys = true;
+      }
+      let secondary_keys = user
+        .secondary_keys
+        .iter()
+        .map(|key| SecondaryKey {
+          key: key.account(),
+          permissions: Permissions {
+            asset: SubsetRestriction::Whole,
+            extrinsic: SubsetRestriction::Whole,
+            portfolio: SubsetRestriction::Whole,
+          },
+        })
+        .collect();
       // User needs an identity.
       calls.push(
         self
           .api
           .call()
           .identity()
-          .cdd_register_did_with_cdd(user.account(), vec![], None)?
+          .cdd_register_did_with_cdd(user.account(), secondary_keys, None)?
           .into(),
       );
     }
     // Add calls to fund the users.
-    for user in &users {
-      // Transfer some funds to the user.
-      calls.push(
-        self
-          .api
-          .call()
-          .balances()
-          .transfer(user.account().into(), self.init_polyx)?
-          .into(),
-      );
+    let mut sudos = Vec::new();
+    for account in accounts {
+      if has_sudo {
+        // We have sudo, just set their balance.
+        sudos.push(
+          self
+            .api
+            .call()
+            .balances()
+            .set_balance(account.into(), self.init_polyx, 0)?
+            .into(),
+        );
+      } else {
+        // Transfer some funds to the user.
+        calls.push(
+          self
+            .api
+            .call()
+            .balances()
+            .transfer(account.into(), self.init_polyx)?
+            .into(),
+        );
+      }
     }
+    let signer = self.sudo.as_mut().unwrap_or_else(|| &mut self.cdd);
     // Execute batch.
     let mut res = self
       .api
       .call()
       .utility()
       .batch(calls)?
-      .execute(&mut self.cdd)
+      .submit_and_watch(signer)
       .await?;
+    let sudo_res = if sudos.len() > 0 {
+      Some(
+        self
+          .api
+          .call()
+          .sudo()
+          .sudo(self.api.call().utility().batch(sudos)?.into())?
+          .submit_and_watch(signer)
+          .await?,
+      )
+    } else {
+      None
+    };
+    let mut auths = HashMap::new();
+    if has_secondary_keys {
+      if let Some(events) = res.events().await? {
+        for rec in &events.0 {
+          match &rec.event {
+            RuntimeEvent::Identity(IdentityEvent::AuthorizationAdded(
+              _,
+              _,
+              Some(sk),
+              auth,
+              _,
+              _,
+            )) => {
+              auths.insert(*sk, *auth);
+            }
+            _ => (),
+          }
+        }
+      }
+    }
     // Get new identities from batch events.
     let ids = get_created_ids(&mut res).await?;
     for idx in need_dids {
-      let name = names[idx];
+      let (name, _) = names[idx];
       match &ids[idx] {
         CreatedIds::IdentityCreated(did) => {
-          users[idx].did = Some(*did);
+          let user = &mut users[idx];
+          user.did = Some(*did);
+          for sk in &mut user.secondary_keys {
+            if let Some(auth) = auths.remove(&sk.account()) {
+              self
+                .api
+                .call()
+                .identity()
+                .join_identity_as_key(auth)?
+                .submit_and_watch(sk)
+                .await?;
+            }
+          }
           self.set_user_did(name, *did);
         }
         id => {
@@ -151,6 +278,11 @@ impl PolymeshTester {
         }
       }
     }
+    // Wait for both batches to finalize.
+    if let Some(mut res) = sudo_res {
+      res.wait_finalized().await?;
+    }
+    res.wait_finalized().await?;
     Ok(users)
   }
 

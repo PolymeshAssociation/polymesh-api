@@ -46,8 +46,12 @@ impl AccountSigner {
 }
 
 impl From<AccountSigner> for User {
-  fn from(signer: AccountSigner) -> User {
-    User { signer, did: None }
+  fn from(primary_key: AccountSigner) -> User {
+    User {
+      primary_key,
+      secondary_keys: Vec::new(),
+      did: None,
+    }
   }
 }
 

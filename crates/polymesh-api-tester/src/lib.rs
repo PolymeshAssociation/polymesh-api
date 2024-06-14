@@ -1,6 +1,5 @@
-use polymesh_api::client::Signer;
 pub use polymesh_api::{
-  client::{AccountId, IdentityId},
+  client::{AccountId, IdentityId, Signer},
   polymesh::types::{
     polymesh_primitives::{
       secondary_key::{KeyRecord, Permissions, SecondaryKey},
@@ -31,35 +30,43 @@ pub async fn client_api() -> Result<Api> {
 
 #[derive(Clone)]
 pub struct User {
-  pub signer: AccountSigner,
+  /// Primary key signer.
+  pub primary_key: AccountSigner,
+  /// User's secondary keys.
+  pub secondary_keys: Vec<AccountSigner>,
+  /// User's identity if they have been onboarded.
   pub did: Option<IdentityId>,
 }
 
 #[async_trait::async_trait]
 impl Signer for User {
   fn account(&self) -> AccountId {
-    self.signer.account()
+    self.primary_key.account()
   }
 
   async fn nonce(&self) -> Option<u32> {
-    self.signer.nonce().await
+    self.primary_key.nonce().await
   }
 
   async fn set_nonce(&mut self, nonce: u32) {
-    self.signer.set_nonce(nonce).await
+    self.primary_key.set_nonce(nonce).await
   }
 
   async fn sign(&self, msg: &[u8]) -> polymesh_api::client::Result<sp_runtime::MultiSignature> {
-    Ok(self.signer.sign(msg).await?)
+    Ok(self.primary_key.sign(msg).await?)
   }
 }
 
 impl User {
-  pub fn new(signer: AccountSigner) -> Self {
-    Self { signer, did: None }
+  pub fn new(primary_key: AccountSigner) -> Self {
+    Self {
+      primary_key,
+      secondary_keys: Vec::new(),
+      did: None,
+    }
   }
 
   pub fn account(&self) -> AccountId {
-    self.signer.account()
+    self.primary_key.account()
   }
 }

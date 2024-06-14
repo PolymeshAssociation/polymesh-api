@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use polymesh_api_client_extras::*;
 use polymesh_api_tester::*;
 
 #[tokio::test]
