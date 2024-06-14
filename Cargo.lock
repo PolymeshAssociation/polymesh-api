@@ -3365,7 +3365,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client-extras"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "parity-scale-codec",
  "polymesh-api",
@@ -3429,7 +3429,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-tester"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "anyhow",
  "async-trait",

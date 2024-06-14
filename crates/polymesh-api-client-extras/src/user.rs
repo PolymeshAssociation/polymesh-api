@@ -179,7 +179,10 @@ impl PolymeshHelper {
   pub async fn get_did(&self, account: AccountId) -> Result<Option<IdentityId>> {
     let did = match self.key_records(account).await? {
       Some(KeyRecord::PrimaryKey(did)) => Some(did),
+      #[cfg(feature = "v6")]
       Some(KeyRecord::SecondaryKey(did, _)) => Some(did),
+      #[cfg(feature = "v7")]
+      Some(KeyRecord::SecondaryKey(did)) => Some(did),
       _ => None,
     };
     Ok(did)
