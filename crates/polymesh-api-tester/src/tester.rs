@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "v7")]
+use polymesh_api::polymesh::types::polymesh_primitives::secondary_key::ExtrinsicPermissions;
 use polymesh_api::{
   client::{AccountId, IdentityId},
   polymesh::types::polymesh_primitives::{
@@ -170,7 +172,10 @@ impl PolymeshTester {
           key: key.account(),
           permissions: Permissions {
             asset: SubsetRestriction::Whole,
+            #[cfg(feature = "v6")]
             extrinsic: SubsetRestriction::Whole,
+            #[cfg(feature = "v7")]
+            extrinsic: ExtrinsicPermissions::Whole,
             portfolio: SubsetRestriction::Whole,
           },
         })
