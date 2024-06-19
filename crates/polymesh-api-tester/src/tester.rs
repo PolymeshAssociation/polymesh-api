@@ -30,8 +30,8 @@ pub struct PolymeshTester {
   seed: String,
   init_polyx: u128,
   db: Db,
-  cdd: AccountSigner,
-  sudo: Option<AccountSigner>,
+  pub cdd: AccountSigner,
+  pub sudo: Option<AccountSigner>,
   users: HashMap<String, User>,
 }
 
@@ -66,6 +66,10 @@ impl PolymeshTester {
 
   pub fn has_sudo(&self) -> bool {
     self.sudo.is_some()
+  }
+
+  pub fn dev_user(&self, name: &str) -> Result<AccountSigner> {
+    AccountSigner::from_string(Some(self.db.clone()), &format!("//{}", name))
   }
 
   fn set_user_did(&mut self, name: &str, did: IdentityId) {
