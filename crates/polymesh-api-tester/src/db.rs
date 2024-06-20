@@ -26,7 +26,7 @@ impl Db {
     let rec = sqlx::query!(
       r#"
       INSERT INTO accounts(account, nonce) VALUES(?, ?)
-        ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce+1, excluded.nonce)
+        ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce, excluded.nonce)
       RETURNING nonce
       "#,
       id,

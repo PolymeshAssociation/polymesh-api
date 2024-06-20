@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n      INSERT INTO accounts(account, nonce) VALUES(?, ?)\n        ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce, excluded.nonce)\n      RETURNING nonce\n      ",
+  "describe": {
+    "columns": [
+      {
+        "name": "nonce",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c84d7fee185984829c841be4cee9e01cb598e6296c18da1a79a37119734c298c"
+}
