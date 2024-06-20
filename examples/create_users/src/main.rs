@@ -10,9 +10,7 @@ async fn main() -> Result<()> {
   env_logger::init();
 
   let url = env::args().nth(1).expect("Missing ws url");
-  let prefix = env::args()
-    .nth(2)
-    .expect("User prefix");
+  let prefix = env::args().nth(2).expect("User prefix");
   let count = env::args()
     .nth(3)
     .and_then(|v| v.parse().ok())

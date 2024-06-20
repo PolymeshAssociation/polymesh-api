@@ -1,11 +1,10 @@
 use core::ops::{Deref, DerefMut};
 
 use polymesh_api::{
-  client::{AccountId, IdentityId, DefaultSigner, Signer, Result, dev},
+  client::{dev, AccountId, DefaultSigner, IdentityId, Result, Signer},
   polymesh::types::{
-    frame_system::AccountInfo,
+    frame_system::AccountInfo, polymesh_common_utilities::traits::balances::AccountData,
     polymesh_primitives::secondary_key::KeyRecord,
-    polymesh_common_utilities::traits::balances::AccountData,
   },
   Api,
 };
@@ -37,9 +36,7 @@ impl PolymeshHelper {
         let account = user.account();
         let need_did = user.did.is_none();
         let helper = self.clone();
-        let task = tokio::spawn(async move {
-          helper.get_did_and_balance(account, need_did).await
-        });
+        let task = tokio::spawn(async move { helper.get_did_and_balance(account, need_did).await });
         tasks.push(task);
       }
       for (idx, task) in tasks.into_iter().enumerate() {
@@ -60,9 +57,7 @@ impl PolymeshHelper {
         let account = user.account();
         let helper = self.clone();
         if user.did.is_none() {
-          let task = tokio::spawn(async move {
-            helper.get_did(account).await
-          });
+          let task = tokio::spawn(async move { helper.get_did(account).await });
           tasks.push((idx, task));
         }
       }
@@ -94,7 +89,11 @@ impl PolymeshHelper {
   ///
   /// The users will be onboarded with the CDD provider, if they don't have an identity.
   /// Also they will be funded with `init_polyx` POLYX.
-  pub async fn generate_prefix_users(&mut self, prefix: &str, count: usize) -> Result<Vec<PolymeshUser>> {
+  pub async fn generate_prefix_users(
+    &mut self,
+    prefix: &str,
+    count: usize,
+  ) -> Result<Vec<PolymeshUser>> {
     let mut users = Vec::with_capacity(count);
     for idx in 0..count {
       // Get or create user.
@@ -116,12 +115,13 @@ impl PolymeshHelper {
         // If the user doesn't have an identity, then register them.
         if user.did.is_none() {
           // User needs an identity.
-          did_calls.push(self
+          did_calls.push(
+            self
               .api
               .call()
               .identity()
               .cdd_register_did_with_cdd(account, vec![], None)?
-              .into()
+              .into(),
           );
         }
         // Add calls to fund the users.
@@ -188,15 +188,25 @@ impl PolymeshHelper {
     Ok(did)
   }
 
-  pub async fn get_account_info(&self, account: AccountId) -> Result<AccountInfo<u32, AccountData>> {
+  pub async fn get_account_info(
+    &self,
+    account: AccountId,
+  ) -> Result<AccountInfo<u32, AccountData>> {
     Ok(self.api.query().system().account(account).await?)
   }
 
   pub async fn get_account_balance(&self, account: AccountId) -> Result<u128> {
-    self.get_account_info(account).await.map(|info| info.data.free)
+    self
+      .get_account_info(account)
+      .await
+      .map(|info| info.data.free)
   }
 
-  async fn get_did_and_balance(&self, account: AccountId, need_did: bool) -> Result<(Option<IdentityId>, u128)> {
+  async fn get_did_and_balance(
+    &self,
+    account: AccountId,
+    need_did: bool,
+  ) -> Result<(Option<IdentityId>, u128)> {
     let did: Option<IdentityId> = if need_did {
       self.get_did(account).await?
     } else {
@@ -250,13 +260,13 @@ impl Deref for PolymeshUser {
   type Target = DefaultSigner;
 
   fn deref(&self) -> &Self::Target {
-      &self.signer
+    &self.signer
   }
 }
 
 impl DerefMut for PolymeshUser {
   fn deref_mut(&mut self) -> &mut Self::Target {
-      &mut self.signer
+    &mut self.signer
   }
 }
 
@@ -265,7 +275,7 @@ impl PolymeshUser {
     Ok(Self {
       name: name.to_string(),
       signer: DefaultSigner::from_string(&format!("//{name}"), None)?,
-      did: None
+      did: None,
     })
   }
 
@@ -273,7 +283,7 @@ impl PolymeshUser {
     Self {
       name: name.to_string(),
       signer,
-      did: None
+      did: None,
     }
   }
 }
