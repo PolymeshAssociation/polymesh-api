@@ -353,6 +353,17 @@ impl<Api: ChainApi> Call<Api> {
     &self,
     signer: &mut impl Signer,
   ) -> Result<TransactionResults<Api>> {
+    // First try using a locked signer.
+    if let Some(mut signer) = signer.lock().await {
+      return self.submit_and_watch_inner(&mut signer).await;
+    }
+    self.submit_and_watch_inner(signer).await
+  }
+
+  async fn submit_and_watch_inner(
+    &self,
+    signer: &mut impl Signer,
+  ) -> Result<TransactionResults<Api>> {
     let client = self.api.client();
     let account = signer.account();
     // Query account nonce.

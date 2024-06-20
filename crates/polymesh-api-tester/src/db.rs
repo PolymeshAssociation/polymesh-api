@@ -37,4 +37,21 @@ impl Db {
 
     Ok(rec.nonce as u32)
   }
+
+  pub async fn set_nonce(&self, account: AccountId, nonce: u32) -> Result<bool> {
+    let id = account.to_string();
+    // Save the nonce to the database.
+    let rows = sqlx::query!(
+      r#"
+      UPDATE accounts SET nonce = ? WHERE account = ?
+      "#,
+      nonce,
+      id
+    )
+    .execute(&self.pool)
+    .await?
+    .rows_affected();
+
+    Ok(rows > 0)
+  }
 }

@@ -623,8 +623,11 @@ pub type GenericAddress = MultiAddress<AccountId, u32>;
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct IdentityId(
-  #[cfg_attr(feature = "utoipa", schema(example = "0x0600000000000000000000000000000000000000000000000000000000000000"))]
-  pub [u8; 32]
+  #[cfg_attr(
+    feature = "utoipa",
+    schema(example = "0x0600000000000000000000000000000000000000000000000000000000000000")
+  )]
+  pub [u8; 32],
 );
 
 impl fmt::Display for IdentityId {

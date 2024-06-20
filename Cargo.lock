@@ -3329,7 +3329,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client"
-version = "3.5.1"
+version = "3.6.0"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -3429,7 +3429,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-tester"
-version = "0.4.4"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n      UPDATE accounts SET nonce = ? WHERE account = ?\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3b6dde8f8a3f67635c5d4b6079447e206a346499321ba14b9198bdede4ebb4af"
+}

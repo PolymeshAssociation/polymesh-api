@@ -4,6 +4,8 @@ use sp_core::Pair;
 use sp_runtime::MultiSignature;
 use sp_std::prelude::*;
 
+use tokio::sync::{Mutex, MutexGuard};
+
 use async_trait::async_trait;
 
 #[cfg(not(feature = "std"))]
@@ -76,6 +78,39 @@ pub mod dev {
   }
 }
 
+pub struct LockableSigner(Mutex<Box<dyn Signer>>);
+
+impl LockableSigner {
+  pub fn new<S: Signer + 'static>(signer: S) -> Self {
+    Self(Mutex::new(Box::new(signer)))
+  }
+
+  pub async fn lock(&self) -> LockedSigner<'_> {
+    LockedSigner(self.0.lock().await)
+  }
+}
+
+pub struct LockedSigner<'a>(MutexGuard<'a, Box<dyn Signer>>);
+
+#[async_trait]
+impl<'a> Signer for LockedSigner<'a> {
+  fn account(&self) -> AccountId {
+    self.0.account()
+  }
+
+  async fn nonce(&self) -> Option<u32> {
+    self.0.nonce().await
+  }
+
+  async fn set_nonce(&mut self, nonce: u32) {
+    self.0.set_nonce(nonce).await
+  }
+
+  async fn sign(&self, msg: &[u8]) -> Result<MultiSignature> {
+    self.0.sign(msg).await
+  }
+}
+
 #[async_trait]
 pub trait Signer: Send + Sync {
   fn account(&self) -> AccountId;
@@ -92,6 +127,10 @@ pub trait Signer: Send + Sync {
   async fn set_nonce(&mut self, _nonce: u32) {}
 
   async fn sign(&self, msg: &[u8]) -> Result<MultiSignature>;
+
+  async fn lock(&self) -> Option<LockedSigner<'_>> {
+    None
+  }
 }
 
 pub trait KeypairSigner: Send + Sync + Sized + Clone {
