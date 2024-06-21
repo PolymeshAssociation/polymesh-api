@@ -16,6 +16,11 @@ pub use block::*;
 pub mod signer;
 pub use signer::*;
 
+#[cfg(feature = "std")]
+pub mod lockable_signer;
+#[cfg(feature = "std")]
+pub use lockable_signer::*;
+
 pub mod transaction;
 pub use transaction::*;
 
