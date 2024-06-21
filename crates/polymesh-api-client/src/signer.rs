@@ -1,10 +1,13 @@
 #[cfg(feature = "std")]
 use sp_core::Pair;
 
+use core::ops::{Deref, DerefMut};
+use std::sync::Arc;
+
 use sp_runtime::MultiSignature;
 use sp_std::prelude::*;
 
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::{Mutex, OwnedMutexGuard};
 
 use async_trait::async_trait;
 
@@ -78,22 +81,37 @@ pub mod dev {
   }
 }
 
-pub struct LockableSigner(Mutex<Box<dyn Signer>>);
+#[derive(Clone)]
+pub struct LockableSigner<S>(Arc<Mutex<S>>);
 
-impl LockableSigner {
-  pub fn new<S: Signer + 'static>(signer: S) -> Self {
-    Self(Mutex::new(Box::new(signer)))
+impl<S: Signer + 'static> LockableSigner<S> {
+  pub fn new(signer: S) -> Self {
+    Self(Arc::new(Mutex::new(signer)))
   }
 
-  pub async fn lock(&self) -> LockedSigner<'_> {
-    LockedSigner(self.0.lock().await)
+  pub async fn lock(&self) -> LockedSigner<S> {
+    LockedSigner(self.0.clone().lock_owned().await)
   }
 }
 
-pub struct LockedSigner<'a>(MutexGuard<'a, Box<dyn Signer>>);
+pub struct LockedSigner<S>(OwnedMutexGuard<S>);
+
+impl<S> Deref for LockedSigner<S> {
+  type Target = S;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl<S> DerefMut for LockedSigner<S> {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.0
+  }
+}
 
 #[async_trait]
-impl<'a> Signer for LockedSigner<'a> {
+impl<S: Signer> Signer for LockedSigner<S> {
   fn account(&self) -> AccountId {
     self.0.account()
   }
@@ -128,7 +146,8 @@ pub trait Signer: Send + Sync {
 
   async fn sign(&self, msg: &[u8]) -> Result<MultiSignature>;
 
-  async fn lock(&self) -> Option<LockedSigner<'_>> {
+  /// Optional support for locking the signer.
+  async fn lock(&self) -> Option<Box<dyn Signer>> {
     None
   }
 }
@@ -259,6 +278,10 @@ impl Signer for Box<dyn Signer> {
 
   async fn sign(&self, msg: &[u8]) -> Result<MultiSignature> {
     self.as_ref().sign(msg).await
+  }
+
+  async fn lock(&self) -> Option<Box<dyn Signer>> {
+    self.as_ref().lock().await
   }
 }
 

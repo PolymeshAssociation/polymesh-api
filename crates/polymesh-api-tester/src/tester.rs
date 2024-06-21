@@ -15,7 +15,7 @@ use polymesh_api_client_extras::*;
 
 use crate::*;
 
-async fn get_sudo_signer(api: &Api, signer: &AccountSigner) -> Option<AccountSigner> {
+async fn get_sudo_signer(api: &Api, signer: &DbAccountSigner) -> Option<DbAccountSigner> {
   api.query().sudo().key().await.ok()?.and_then(|key| {
     if key == signer.account() {
       Some(signer.clone())
@@ -30,8 +30,8 @@ pub struct PolymeshTester {
   seed: String,
   init_polyx: u128,
   db: Db,
-  pub cdd: AccountSigner,
-  pub sudo: Option<AccountSigner>,
+  pub cdd: DbAccountSigner,
+  pub sudo: Option<DbAccountSigner>,
   users: HashMap<String, User>,
 }
 
@@ -46,7 +46,7 @@ impl PolymeshTester {
       .as_nanos();
     let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "accounts.db".into());
     let db = Db::open(api.clone(), &url).await?;
-    let cdd = AccountSigner::alice(Some(db.clone()));
+    let cdd = DbAccountSigner::alice(db.clone());
     let sudo = get_sudo_signer(&api, &cdd).await;
     Ok(Self {
       api,
@@ -68,8 +68,8 @@ impl PolymeshTester {
     self.sudo.is_some()
   }
 
-  pub fn dev_user(&self, name: &str) -> Result<AccountSigner> {
-    AccountSigner::from_string(Some(self.db.clone()), &format!("//{}", name))
+  pub fn dev_user(&self, name: &str) -> Result<DbAccountSigner> {
+    DbAccountSigner::from_string(self.db.clone(), &format!("//{}", name))
   }
 
   fn set_user_did(&mut self, name: &str, did: IdentityId) {
@@ -83,10 +83,7 @@ impl PolymeshTester {
   }
 
   fn new_signer_idx(&self, name: &str, idx: usize) -> Result<AccountSigner> {
-    AccountSigner::from_string(
-      Some(self.db.clone()),
-      &format!("//{}_{}_{}", self.seed, name, idx),
-    )
+    AccountSigner::from_string(&format!("//{}_{}_{}", self.seed, name, idx))
   }
 
   fn get_user(&mut self, name: &str) -> Result<User> {
@@ -94,10 +91,7 @@ impl PolymeshTester {
     match self.users.entry(name.to_string()) {
       Entry::Occupied(entry) => Ok(entry.get().clone()),
       Entry::Vacant(entry) => {
-        let signer = AccountSigner::from_string(
-          Some(self.db.clone()),
-          &format!("//{}_{}", self.seed, entry.key()),
-        )?;
+        let signer = AccountSigner::from_string(&format!("//{}_{}", self.seed, entry.key()))?;
         let user = User::new(&self.api, signer);
         Ok(entry.insert(user).clone())
       }
@@ -263,6 +257,7 @@ impl PolymeshTester {
     }
     // Get new identities from batch events.
     let ids = get_created_ids(&mut res).await?;
+    let mut joins = Vec::new();
     for idx in need_dids {
       let (name, _) = names[idx];
       match &ids[idx] {
@@ -271,13 +266,7 @@ impl PolymeshTester {
           user.did = Some(*did);
           for sk in &mut user.secondary_keys {
             if let Some(auth) = auths.remove(&sk.account()) {
-              self
-                .api
-                .call()
-                .identity()
-                .join_identity_as_key(auth)?
-                .submit_and_watch(sk)
-                .await?;
+              joins.push((auth, sk.clone()));
             }
           }
           self.set_user_did(name, *did);
@@ -292,6 +281,26 @@ impl PolymeshTester {
       res.wait_finalized().await?;
     }
     res.wait_finalized().await?;
+
+    // Join Secondary keys to their identity.
+    if joins.len() > 0 {
+      let mut results = Vec::new();
+      for (auth, mut sk) in joins {
+        results.push(
+          self
+            .api
+            .call()
+            .identity()
+            .join_identity_as_key(auth)?
+            .submit_and_watch(&mut sk)
+            .await?,
+        );
+      }
+      // Wait for joins to execute.
+      for mut res in results {
+        res.ok().await?;
+      }
+    }
     Ok(users)
   }
 

@@ -1,4 +1,4 @@
-use sqlx::SqlitePool;
+use sqlx::sqlite::*;
 
 use polymesh_api::client::AccountId;
 use polymesh_api::{Api, ChainApi};
@@ -17,7 +17,7 @@ impl Db {
     Ok(Self { api, pool })
   }
 
-  pub async fn get_nonce(&self, account: AccountId) -> Result<u32> {
+  pub async fn get_next_nonce(&self, account: AccountId) -> Result<u32> {
     // Get the nonce from the chain.  (to check if the db nonce is old).
     let nonce = self.api.get_nonce(account).await?;
 
@@ -26,7 +26,7 @@ impl Db {
     let rec = sqlx::query!(
       r#"
       INSERT INTO accounts(account, nonce) VALUES(?, ?)
-        ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce, excluded.nonce)
+        ON CONFLICT(account) DO UPDATE SET nonce=MAX(nonce+1, excluded.nonce)
       RETURNING nonce
       "#,
       id,
@@ -36,22 +36,5 @@ impl Db {
     .await?;
 
     Ok(rec.nonce as u32)
-  }
-
-  pub async fn set_nonce(&self, account: AccountId, nonce: u32) -> Result<bool> {
-    let id = account.to_string();
-    // Save the nonce to the database.
-    let rows = sqlx::query!(
-      r#"
-      UPDATE accounts SET nonce = ? WHERE account = ?
-      "#,
-      nonce,
-      id
-    )
-    .execute(&self.pool)
-    .await?
-    .rows_affected();
-
-    Ok(rows > 0)
   }
 }

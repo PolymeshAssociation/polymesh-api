@@ -56,6 +56,10 @@ impl Signer for User {
   async fn sign(&self, msg: &[u8]) -> polymesh_api::client::Result<sp_runtime::MultiSignature> {
     Ok(self.primary_key.sign(msg).await?)
   }
+
+  async fn lock(&self) -> Option<Box<dyn Signer>> {
+    self.primary_key.lock().await
+  }
 }
 
 impl User {
