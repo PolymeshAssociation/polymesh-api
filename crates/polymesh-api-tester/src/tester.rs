@@ -68,6 +68,10 @@ impl PolymeshTester {
     self.sudo.is_some()
   }
 
+  pub fn get_seed(&self) -> &str {
+    &self.seed
+  }
+
   pub fn dev_user(&self, name: &str) -> Result<DbAccountSigner> {
     DbAccountSigner::from_string(self.db.clone(), &format!("//{}", name))
   }
@@ -82,7 +86,7 @@ impl PolymeshTester {
     self.users.insert(name.to_string(), user.clone());
   }
 
-  fn new_signer_idx(&self, name: &str, idx: usize) -> Result<AccountSigner> {
+  pub fn new_signer_idx(&self, name: &str, idx: usize) -> Result<AccountSigner> {
     AccountSigner::from_string(&format!("//{}_{}_{}", self.seed, name, idx))
   }
 
