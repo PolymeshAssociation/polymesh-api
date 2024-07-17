@@ -67,8 +67,8 @@ pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<Created
             RuntimeEvent::Identity(IdentityEvent::ChildDidCreated(_, id, ..)) => {
               ids.push(CreatedIds::ChildIdentityCreated(*id));
             }
-            RuntimeEvent::MultiSig(MultiSigEvent::MultiSigCreated(_, id, ..)) => {
-              ids.push(CreatedIds::MultiSigCreated(*id));
+            RuntimeEvent::MultiSig(MultiSigEvent::MultiSigCreated { multisig, .. }) => {
+              ids.push(CreatedIds::MultiSigCreated(*multisig));
             }
             _ => (),
           }
