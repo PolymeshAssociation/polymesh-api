@@ -287,7 +287,7 @@ mod v14 {
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let ink_id_derives = quote! {
-        #[derive(Copy, Default, Ord)]
+        #[derive(Copy, Default)]
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let custom_derives = HashMap::from_iter(
@@ -355,6 +355,8 @@ mod v14 {
         v2_weights: false,
         api_interface,
       };
+      // Manually enable `Ord` for `Ticker`.
+      gen.ord_types.insert("Ticker".into());
       // Try a limited number of times to mark all types needing the `Ord` type.
       let mut ord_type_ids = HashSet::new();
       for _ in 0..10 {
