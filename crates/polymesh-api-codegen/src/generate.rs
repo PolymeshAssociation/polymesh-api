@@ -287,7 +287,7 @@ mod v14 {
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let ink_id_derives = quote! {
-        #[derive(Copy, Default)]
+        #[derive(Copy, Default, Ord)]
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
       let custom_derives = HashMap::from_iter(
@@ -300,6 +300,7 @@ mod v14 {
           ("CustomAssetTypeId", &ink_id_derives),
           ("FundingRoundName", &ink_extra_derives),
           ("Ticker", &ink_id_derives),
+          ("AssetId", &ink_id_derives),
           // Settlement leg and portfolio move types.
           ("Fund", &ink_derives),
           ("FundDescription", &ink_derives),

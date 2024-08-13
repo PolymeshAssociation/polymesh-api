@@ -5,6 +5,7 @@ use polymesh_api::polymesh::types::polymesh_primitives::secondary_key::Extrinsic
 use polymesh_api::{
   client::{AccountId, IdentityId},
   polymesh::types::polymesh_primitives::{
+    asset::AssetId,
     secondary_key::{KeyRecord, Permissions, SecondaryKey},
     subset::SubsetRestriction,
     ticker::Ticker,
@@ -362,5 +363,13 @@ impl PolymeshTester {
     thread_rng().fill(&mut data[..]);
     let name = hex::encode_upper(data);
     Ticker(name.as_bytes().try_into().unwrap())
+  }
+
+  pub fn gen_asset_id(&self) -> AssetId {
+    use rand::{thread_rng, Rng};
+    let mut data = [0u8; 8];
+    thread_rng().fill(&mut data[..]);
+    let fake_name = hex::encode_upper(data);
+    AssetId(fake_name.as_bytes().try_into().unwrap())
   }
 }

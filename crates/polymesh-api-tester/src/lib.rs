@@ -2,6 +2,7 @@ pub use polymesh_api::{
   client::{AccountId, IdentityId, Signer},
   polymesh::types::{
     polymesh_primitives::{
+      asset::AssetId,
       secondary_key::{KeyRecord, Permissions, SecondaryKey},
       ticker::Ticker,
     },
