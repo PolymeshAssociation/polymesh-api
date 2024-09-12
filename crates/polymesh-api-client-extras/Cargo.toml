@@ -21,10 +21,10 @@ serde = { workspace = true }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
 [features]
-default = [ "std", "serde", "v6" ]
+default = [ "std", "serde", "polymesh_v6" ]
 
-v6 = []
-v7 = []
+polymesh_v6 = ["polymesh-api/polymesh_v6"]
+polymesh_v7 = ["polymesh-api/polymesh_v7"]
 
 serde = [
   "polymesh-api/serde",

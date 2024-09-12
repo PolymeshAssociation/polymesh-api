@@ -1,8 +1,11 @@
+#[cfg(feature = "polymesh_v7")]
+pub use polymesh_api::polymesh::types::polymesh_primitives::{
+  asset::AssetID,
+};
 pub use polymesh_api::{
   client::{AccountId, IdentityId, Signer},
   polymesh::types::{
     polymesh_primitives::{
-      asset::AssetID,
       secondary_key::{KeyRecord, Permissions, SecondaryKey},
       ticker::Ticker,
     },

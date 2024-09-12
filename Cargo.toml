@@ -96,7 +96,10 @@ env_logger = "0.9"
 tokio = { version = "1.19", features = ["rt"] }
 
 [features]
-default = [ "std", "rpc", "serde", "v14" ]
+default = [ "std", "polymesh_v6", "rpc", "serde", "v14" ]
+
+polymesh_v6 = []
+polymesh_v7 = []
 
 # Download the chain metadata from a RPC node.
 download_metadata = [
