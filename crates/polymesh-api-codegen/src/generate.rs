@@ -300,7 +300,7 @@ mod v14 {
           ("CustomAssetTypeId", &ink_id_derives),
           ("FundingRoundName", &ink_extra_derives),
           ("Ticker", &ink_id_derives),
-          ("AssetId", &ink_id_derives),
+          ("AssetID", &ink_id_derives),
           // Settlement leg and portfolio move types.
           ("Fund", &ink_derives),
           ("FundDescription", &ink_derives),
