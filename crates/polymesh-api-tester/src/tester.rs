@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 #[cfg(feature = "polymesh_v7")]
 use polymesh_api::polymesh::types::polymesh_primitives::{
-  asset::AssetID,
+  asset::AssetId,
   secondary_key::ExtrinsicPermissions,
 };
 use polymesh_api::{
@@ -368,11 +368,11 @@ impl PolymeshTester {
   }
 
   #[cfg(feature = "polymesh_v7")]
-  pub fn gen_asset_id(&self) -> AssetID {
+  pub fn gen_asset_id(&self) -> AssetId {
     use rand::{thread_rng, Rng};
     let mut data = [0u8; 8];
     thread_rng().fill(&mut data[..]);
     let fake_name = hex::encode_upper(data);
-    AssetID(fake_name.as_bytes().try_into().unwrap())
+    AssetId(fake_name.as_bytes().try_into().unwrap())
   }
 }
