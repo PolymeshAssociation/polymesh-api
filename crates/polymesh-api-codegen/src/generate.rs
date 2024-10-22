@@ -205,6 +205,10 @@ mod v14 {
             quote!(#api_interface::IdentityId),
           ),
           (
+            "polymesh_primitives::asset::AssetId",
+            quote!(#api_interface::AssetId),
+          ),
+          (
             "sp_runtime::multiaddress::MultiAddress",
             quote!(#api_interface::MultiAddress),
           ),
