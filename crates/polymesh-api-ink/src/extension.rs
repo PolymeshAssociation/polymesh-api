@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
 use alloc::{format, string::String};
 
-use crate::{AccountId, Encoded, Error, IdentityId};
+use crate::{AccountId, AssetId, Encoded, Error, IdentityId};
 
 #[ink::chain_extension]
 #[derive(Clone, Copy)]
@@ -42,6 +42,9 @@ pub trait PolymeshRuntime {
 
   #[ink(extension = 0x00_00_00_14)]
   fn call_runtime_with_error(call: Encoded) -> Result<Result<(), CallRuntimeError>, Error>;
+
+  #[ink(extension = 0x00_00_00_15)]
+  fn get_next_asset_id(account_id: AccountId) -> AssetId;
 }
 
 pub type PolymeshRuntimeInstance = <PolymeshRuntime as ink::ChainExtensionInstance>::Instance;

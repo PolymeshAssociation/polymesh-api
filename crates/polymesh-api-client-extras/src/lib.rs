@@ -68,7 +68,7 @@ pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<Created
               ids.push(CreatedIds::ChildIdentityCreated(*id));
             }
             #[cfg(feature = "polymesh_v6")]
-            RuntimeEvent::MultiSig(MultiSigEvent::MultiSigCreated(_, multisig, .. )) => {
+            RuntimeEvent::MultiSig(MultiSigEvent::MultiSigCreated(_, multisig, ..)) => {
               ids.push(CreatedIds::MultiSigCreated(*multisig));
             }
             #[cfg(feature = "polymesh_v7")]

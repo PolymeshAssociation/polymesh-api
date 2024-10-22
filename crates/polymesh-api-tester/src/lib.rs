@@ -1,7 +1,5 @@
 #[cfg(feature = "polymesh_v7")]
-pub use polymesh_api::polymesh::types::polymesh_primitives::{
-  asset::AssetId,
-};
+pub use polymesh_api::polymesh::types::polymesh_primitives::asset::AssetId;
 pub use polymesh_api::{
   client::{AccountId, IdentityId, Signer},
   polymesh::types::{
