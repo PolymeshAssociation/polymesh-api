@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 #[cfg(feature = "polymesh_v7")]
 use polymesh_api::polymesh::types::polymesh_primitives::{
-  asset::AssetId,
-  secondary_key::ExtrinsicPermissions,
+  asset::AssetId, secondary_key::ExtrinsicPermissions,
 };
 use polymesh_api::{
   client::{AccountId, IdentityId},

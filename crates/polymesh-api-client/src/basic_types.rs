@@ -705,6 +705,21 @@ impl<'de> Deserialize<'de> for IdentityId {
   }
 }
 
+#[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+#[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
+pub struct AssetId([u8; 16]);
+
+impl From<[u8; 16]> for AssetId {
+  fn from(mut value: [u8; 16]) -> Self {
+    // Version 8.
+    value[6] = (value[6] & 0x0f) | 0x80;
+    // Standard RFC4122 variant (bits 10xx)
+    value[8] = (value[8] & 0x3f) | 0x80;
+
+    AssetId(value)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
