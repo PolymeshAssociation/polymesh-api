@@ -705,6 +705,10 @@ impl<'de> Deserialize<'de> for IdentityId {
   }
 }
 
+#[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+#[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
+pub struct AssetId([u8; 16]);
+
 #[cfg(test)]
 mod tests {
   use super::*;

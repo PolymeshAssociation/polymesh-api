@@ -23,7 +23,7 @@ primitive-types = { workspace = true, default-features = false, features = ["cod
 ink = { workspace = true, default-features = false }
 
 [features]
-default = [ "std" ]
+default = ["std", "use_call_runtime_with_error"]
 
 use_call_runtime_with_error = []
 

@@ -65,3 +65,7 @@ impl From<[u8; 32]> for IdentityId {
     Self(raw)
   }
 }
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(TypeInfo, StorageLayout))]
+pub struct AssetId([u8; 16]);
