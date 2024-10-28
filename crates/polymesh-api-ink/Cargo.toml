@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "1.4.0"
+version = "1.5.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -23,9 +23,7 @@ primitive-types = { workspace = true, default-features = false, features = ["cod
 ink = { workspace = true, default-features = false }
 
 [features]
-default = ["std", "use_call_runtime_with_error"]
-
-use_call_runtime_with_error = []
+default = ["std"]
 
 std = [
   "sp-arithmetic/std",
