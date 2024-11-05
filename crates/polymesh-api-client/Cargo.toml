@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "3.8.0"
+version = "3.8.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -24,6 +24,7 @@ serde_json = { workspace = true, features = ["preserve_order", "arbitrary_precis
 serde = { workspace = true }
 impl-serde = { workspace = true, default-features = false, optional = true }
 serde-big-array = { workspace = true, optional = true }
+uuid = { version = "1.11", default-features = false }
 
 # substrate
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
@@ -81,6 +82,7 @@ serde = [
   "impl-serde",
   "serde-big-array",
   "hex/serde",
+  "uuid/serde",
   "sp-core/serde",
   "sp-core/impl-serde",
   "sp-weights/serde",
@@ -96,6 +98,7 @@ v14 = ["frame-metadata/v14"]
 
 std = [
   "codec/std",
+  "uuid/std",
   "frame-metadata/std",
   "sp-core/std",
   "sp-std/std",

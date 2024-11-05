@@ -707,7 +707,77 @@ impl<'de> Deserialize<'de> for IdentityId {
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
-pub struct AssetId([u8; 16]);
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct AssetId(
+  #[cfg_attr(
+    feature = "utoipa",
+    schema(example = "67e55044-10b1-426f-9247-bb680e5fe0c8")
+  )]
+  pub [u8; 16],
+);
+
+impl AssetId {
+  pub fn as_uuid(&self) -> uuid::Uuid {
+    uuid::Uuid::from_bytes(self.0)
+  }
+}
+
+impl fmt::Display for AssetId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    self.as_uuid().fmt(f)
+  }
+}
+
+impl fmt::Debug for AssetId {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    self.as_uuid().fmt(f)
+  }
+}
+
+impl From<uuid::Uuid> for AssetId {
+  fn from(uuid: uuid::Uuid) -> Self {
+    Self(uuid.into_bytes())
+  }
+}
+
+impl std::str::FromStr for AssetId {
+  type Err = uuid::Error;
+
+  fn from_str(uuid_str: &str) -> Result<Self, Self::Err> {
+    let uuid = uuid::Uuid::parse_str(uuid_str)?;
+    Ok(uuid.into())
+  }
+}
+
+impl TryFrom<&'_ str> for AssetId {
+  type Error = uuid::Error;
+
+  fn try_from(uuid_str: &'_ str) -> Result<Self, Self::Error> {
+    let uuid = uuid::Uuid::parse_str(uuid_str)?;
+    Ok(uuid.into())
+  }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for AssetId {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: ser::Serializer,
+  {
+    self.as_uuid().serialize(serializer)
+  }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for AssetId {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: de::Deserializer<'de>,
+  {
+    let uuid: uuid::Uuid = Deserialize::deserialize(deserializer)?;
+    Ok(Self(uuid.into_bytes()))
+  }
+}
 
 #[cfg(test)]
 mod tests {
@@ -734,6 +804,24 @@ mod tests {
     let data = serde_json::to_string(&account).expect("encode json");
     let decoded: AccountId = serde_json::from_str(&data).expect("decode as json");
     assert_eq!(decoded, account);
+  }
+
+  #[test]
+  fn asset_id_roundtrip() {
+    let asset: AssetId = "67e55044-10b1-426f-9247-bb680e5fe0c8"
+      .parse()
+      .expect("AssetId");
+    let data = serde_json::to_string(&asset).expect("encode json");
+    let decoded: AssetId = serde_json::from_str(&data).expect("decode as json");
+    assert_eq!(decoded, asset);
+  }
+
+  #[test]
+  fn asset_id_display() {
+    let str_id = "67e55044-10b1-426f-9247-bb680e5fe0c8";
+    let asset: AssetId = str_id.parse().expect("AssetId");
+    let display_id = format!("{asset}");
+    assert_eq!(display_id, str_id);
   }
 
   #[test]
