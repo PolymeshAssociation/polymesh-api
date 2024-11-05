@@ -663,7 +663,7 @@ impl InnerTypesRegistry {
     }
   }
 
-  #[cfg(any(feature = "v12", feature = "v32"))]
+  #[cfg(any(feature = "v12", feature = "v13"))]
   fn load_custom_types(&self, prefix: &str, spec: u32, types: &mut Types) -> Result<()> {
     // Load standard substrate types.
     if !types.try_load_schema(&format!("{}/init_{}.json", prefix, spec)) {
@@ -693,7 +693,7 @@ impl InnerTypesRegistry {
     };
     // build schema path.
     let spec_name = runtime_version.spec_name.to_string();
-    #[cfg(any(feature = "v12", feature = "v32"))]
+    #[cfg(any(feature = "v12", feature = "v13"))]
     let spec_version = runtime_version.spec_version;
     let name = if let Some((spec_name, _chain_type)) = spec_name.split_once("_") {
       spec_name
