@@ -18,5 +18,5 @@
 4. `crates/polymesh-api-codegen-macro`
 5. `polymesh-api`
 6. `crates/polymesh-api-client-extras`
-6. `crates/polymesh-api-tester`
-6. `crates/polymesh-api-offline-signer`
+7. `crates/polymesh-api-tester`
+8. `crates/polymesh-offline-signer`

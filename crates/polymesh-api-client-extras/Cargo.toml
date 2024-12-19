@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client-extras"
-version = "3.4.2"
+version = "3.5.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ serde = { workspace = true }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
 [features]
-default = [ "std", "serde", "polymesh_v6" ]
+default = [ "std", "serde", "polymesh_v7" ]
 
 polymesh_v6 = ["polymesh-api/polymesh_v6"]
 polymesh_v7 = ["polymesh-api/polymesh_v7"]
