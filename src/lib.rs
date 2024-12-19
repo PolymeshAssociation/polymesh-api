@@ -10,7 +10,7 @@ use polymesh_api_codegen_macro::*;
 )]
 #[cfg_attr(
   all(not(feature = "download_metadata"), feature = "polymesh_v7"),
-  codegen_api(metadata_file = "specs/polymesh_dev_spec_7000003.meta")
+  codegen_api(metadata_file = "specs/polymesh_dev_spec_7000005.meta")
 )]
 #[cfg_attr(
   feature = "download_metadata",
