@@ -3,7 +3,7 @@ use core::ops::{Deref, DerefMut};
 use polymesh_api::{
   client::{dev, AccountId, DefaultSigner, IdentityId, Result, Signer},
   polymesh::types::{
-    frame_system::AccountInfo, polymesh_primitives::balances::AccountData,
+    frame_system::AccountInfo, pallet_balances::AccountData,
     polymesh_primitives::secondary_key::KeyRecord,
   },
   Api,

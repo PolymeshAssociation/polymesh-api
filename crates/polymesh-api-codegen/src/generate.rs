@@ -282,7 +282,7 @@ mod v14 {
       );
       let remap_namespaces = HashMap::from_iter(
         [
-          ("polymesh_common_utilities::traits::balances", "polymesh_primitives::balances"),
+          ("polymesh_common_utilities::traits::balances", "pallet_balances"),
           ("polymesh_common_utilities::traits::checkpoint", "polymesh_primitives::checkpoint"),
           ("polymesh_common_utilities::traits::identity", "polymesh_primitives::identity"),
           ("polymesh_common_utilities::traits::group", "polymesh_primitives::group"),
