@@ -8,7 +8,7 @@ use codec::Encode;
 
 use polymesh_api::client::{DefaultSigner, Signer};
 use polymesh_api::polymesh::types::{
-  polymesh_common_utilities::traits::identity::SecondaryKeyWithAuth,
+  polymesh_primitives::identity::SecondaryKeyWithAuth,
   polymesh_primitives::secondary_key::{KeyRecord, Permissions, SecondaryKey},
   primitive_types::H512,
 };

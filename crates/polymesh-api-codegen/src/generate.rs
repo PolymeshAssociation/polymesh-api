@@ -168,6 +168,7 @@ mod v14 {
     pallet_types: HashMap<u32, (String, String)>,
     max_error_size: usize,
     rename_types: HashMap<String, TokenStream>,
+    remap_namespaces: HashMap<String, String>,
     ord_types: HashSet<String>,
     custom_derives: HashMap<String, TokenStream>,
     runtime_namespace: Vec<String>,
@@ -279,6 +280,15 @@ mod v14 {
         .into_iter()
         .map(|(name, code)| (name.to_string(), code)),
       );
+      let remap_namespaces = HashMap::from_iter(
+        [
+          ("polymesh_common_utilities::traits::balances", "polymesh_primitives::balances"),
+          ("polymesh_common_utilities::traits::checkpoint", "polymesh_primitives::checkpoint"),
+          ("polymesh_common_utilities::traits::identity", "polymesh_primitives::identity"),
+          ("polymesh_common_utilities::traits::group", "polymesh_primitives::group"),
+        ].into_iter()
+        .map(|(old, new)| (old.to_string(), new.to_string()))
+      );
       let ink_derives = quote! {
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
@@ -353,6 +363,7 @@ mod v14 {
         pallet_types: HashMap::new(),
         max_error_size: 4,
         rename_types,
+        remap_namespaces,
         ord_types: Default::default(),
         custom_derives,
         call,
@@ -360,6 +371,10 @@ mod v14 {
         v2_weights: false,
         api_interface,
       };
+
+      // Process namespace remappings.
+      gen.remap_namespaces();
+
       // Manually enable `Ord` for `Ticker`.
       gen.ord_types.insert("Ticker".into());
       // Try a limited number of times to mark all types needing the `Ord` type.
@@ -388,15 +403,43 @@ mod v14 {
       gen
     }
 
+    fn remap_namespaces(&mut self) {
+      for ty in self.md.types.types() {
+        let path = ty.ty.path();
+        let ns = path.namespace().join("::");
+        if ns.is_empty() {
+          continue;
+        }
+        if let Some(new_ns) = self.remap_namespaces.get(&ns) {
+          let name = path.ident().expect("Namespace wasn't empty, so there should be an ident.");
+          let mut new_segments = new_ns.split("::").map(|s| s.to_string()).collect::<Vec<_>>();
+          new_segments.push(name.clone());
+          let old_name = format!("{ns}::{name}");
+          let new_name = segments_ident(&new_segments, false);
+          self.rename_types.insert(old_name, new_name);
+        }
+      }
+    }
+
     fn rename_pallet_type(&mut self, id: u32, p_name: &str, kind: &str) {
       let ty = self.md.types.resolve(id).unwrap();
       let path = ty.path();
       let mut segments: Vec<_> = path.segments().into_iter().cloned().collect();
       let old_name = segments.join("::");
-      let new_name = format!("{}{}", p_name, kind);
-      if let Some(last) = segments.last_mut() {
-        *last = new_name.clone();
+      // pop ident.
+      segments.pop();
+
+      // Check for remapped namespace
+      let ns = segments.join("::");
+      if let Some(new_ns) = self.remap_namespaces.get(&ns) {
+        segments = new_ns.split("::").map(|s| s.to_string()).collect();
       }
+
+      // Build new name.
+      let new_name = format!("{}{}", p_name, kind);
+      segments.push(new_name.clone());
+
+      // Add mapping from old name to new name.
       let new_ident = segments_ident(&segments, false);
       self.rename_types.insert(old_name, new_ident);
       self.pallet_types.insert(id, (p_name.to_string(), new_name));
@@ -1785,7 +1828,19 @@ mod v14 {
             };
 
             if let Some(code) = self.gen_type(ty_id, ty, &ident, is_runtime_type) {
-              modules.add_type(ty_ns, ident, code);
+              if ty_ns.is_empty() {
+                // No namespace
+                modules.add_type(ty_ns, ident, code);
+              } else {
+                let old_ns = ty_ns.join("::");
+                if let Some(new_ns) = self.remap_namespaces.get(&old_ns) {
+                  let remapped = new_ns.split("::").map(|s| s.to_string()).collect::<Vec<_>>();
+                  modules.add_type(&remapped, ident, code);
+                } else {
+                  // No remap.
+                  modules.add_type(ty_ns, ident, code);
+                }
+              }
             }
           }
         }

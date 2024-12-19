@@ -3,7 +3,7 @@ use codec::{Decode, Encode};
 use polymesh_api::client::basic_types::{AccountId, IdentityId};
 use polymesh_api::client::error::Result;
 use polymesh_api::types::{
-  polymesh_common_utilities::traits::checkpoint::ScheduleId,
+  polymesh_primitives::checkpoint::ScheduleId,
   polymesh_primitives::asset::CheckpointId,
   polymesh_primitives::settlement::{InstructionId, VenueId},
   runtime::{events::*, RuntimeEvent},
