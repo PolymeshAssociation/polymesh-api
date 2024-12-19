@@ -740,7 +740,7 @@ impl From<uuid::Uuid> for AssetId {
   }
 }
 
-impl std::str::FromStr for AssetId {
+impl FromStr for AssetId {
   type Err = uuid::Error;
 
   fn from_str(uuid_str: &str) -> Result<Self, Self::Err> {
