@@ -1542,8 +1542,13 @@ mod v14 {
           ConsumerRemaining,
           NoProviders,
           TooManyConsumers,
-          Token(TokenError),
+          Token(::sp_runtime::TokenError),
           Arithmetic(::sp_arithmetic::ArithmeticError),
+          Transactional(::sp_runtime::TransactionalError),
+          Exhausted,
+          Corruption,
+          Unavailable,
+          RootNotAllowed,
         }
 
         impl #ty_ident {
@@ -1556,24 +1561,13 @@ mod v14 {
               Self::ConsumerRemaining => "ConsumerRemaining",
               Self::NoProviders => "NoProviders",
               Self::TooManyConsumers => "TooManyConsumers",
-              Self::Token(err) => {
-                match err {
-                  TokenError::NoFunds => "Token::NoFunds",
-                  TokenError::WouldDie => "Token::WouldDie",
-                  TokenError::BelowMinimum => "Token::BelowMinimum",
-                  TokenError::CannotCreate => "Token::CannotCreate",
-                  TokenError::UnknownAsset => "Token::UnknownAsset",
-                  TokenError::Frozen => "Token::Frozen",
-                  TokenError::Unsupported => "Token::Unsupported",
-                }
-              },
-              Self::Arithmetic(err) => {
-                match err {
-                  ::sp_arithmetic::ArithmeticError::Underflow => "Arithmetic::Underflow",
-                  ::sp_arithmetic::ArithmeticError::Overflow => "Arithmetic::Overflow",
-                  ::sp_arithmetic::ArithmeticError::DivisionByZero => "Arithmetic::DivisionByZero",
-                }
-              },
+              Self::Token(err) => (*err).into(),
+              Self::Arithmetic(err) => (*err).into(),
+              Self::Transactional(err) => (*err).into(),
+              Self::Exhausted => "Exhausted",
+              Self::Corruption => "Corruption",
+              Self::Unavailable => "Unavailable",
+              Self::RootNotAllowed => "RootNotAllowed",
             }
           }
         }
@@ -1605,24 +1599,13 @@ mod v14 {
               Self::ConsumerRemaining => &["At least one consumer is remaining so the account cannot be destroyed."],
               Self::NoProviders => &["There are no providers so the account cannot be created."],
               Self::TooManyConsumers => &["There are too many consumers so the account cannot be created."],
-              Self::Token(err) => {
-                match err {
-                  TokenError::NoFunds => &["Funds are unavailable."],
-                  TokenError::WouldDie => &["Account that must exist would die."],
-                  TokenError::BelowMinimum => &["Account cannot exist with the funds that would be given."],
-                  TokenError::CannotCreate => &["Account cannot be created."],
-                  TokenError::UnknownAsset => &["The asset in question is unknown."],
-                  TokenError::Frozen => &["Funds exist but are frozen."],
-                  TokenError::Unsupported => &["Operation is not supported by the asset."],
-                }
-              },
-              Self::Arithmetic(err) => {
-                match err {
-                  ::sp_arithmetic::ArithmeticError::Underflow => &["Arithmetic underflow"],
-                  ::sp_arithmetic::ArithmeticError::Overflow => &["Arithmetic overflow"],
-                  ::sp_arithmetic::ArithmeticError::DivisionByZero => &["Arithmetic divide by zero"],
-                }
-              },
+              Self::Token(err) => &["An error to do with tokens."],
+              Self::Arithmetic(err) => &["An arithmetic error."],
+              Self::Transactional(err) => &["The number of transactional layers has been reached, or we are not in a transactional layer."],
+              Self::Exhausted => &["Resources exhausted, e.g. attempt to read/write data which is too large to manipulate."],
+              Self::Corruption => &["The state is corrupt; this is generally not going to fix itself."],
+              Self::Unavailable => &["Some resource (e.g. a preimage) is unavailable right now. This might fix itself later."],
+              Self::RootNotAllowed => &["Root origin is not allowed."],
             }
           }
         }
