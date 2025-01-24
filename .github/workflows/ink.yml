@@ -29,4 +29,4 @@ jobs:
             rustup default ${{ matrix.toolchain }}
             rustup target add ${{ matrix.platform.target }}
       - name: check Ink!
-        run: cargo check --target ${{ matrix.platform.target }} --no-default-features --features ink --target wasm32-unknown-unknown
+        run: cargo check --target ${{ matrix.platform.target }} --no-default-features --features ink,polymesh_v7 --target wasm32-unknown-unknown
