@@ -46,8 +46,8 @@ sp-keyring = { workspace = true }
 default = [ "std", "serde", "v12", "v13", "v14" ]
 
 serde = []
-
 ink = []
+type_info = []
 
 no_std = [
 	"scale-info/decode",
