@@ -1,5 +1,5 @@
 #![allow(deprecated)]
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 use heck::ToSnakeCase;
 
@@ -26,16 +26,16 @@ fn segments_ident(segments: &[String], import_types: bool) -> TokenStream {
 
 struct ModuleCode {
   name: String,
-  sub_modules: HashMap<String, ModuleCode>,
-  types: HashMap<String, TokenStream>,
+  sub_modules: BTreeMap<String, ModuleCode>,
+  types: BTreeMap<String, TokenStream>,
 }
 
 impl ModuleCode {
   fn new(name: String) -> Self {
     Self {
       name,
-      sub_modules: HashMap::new(),
-      types: HashMap::new(),
+      sub_modules: BTreeMap::new(),
+      types: BTreeMap::new(),
     }
   }
 
@@ -49,9 +49,9 @@ impl ModuleCode {
     }
   }
 
-  fn gen(mut self) -> TokenStream {
+  fn gen(self) -> TokenStream {
     let mut code = TokenStream::new();
-    for (name, sub) in self.sub_modules.drain() {
+    for (name, sub) in self.sub_modules {
       let ident = format_ident!("{name}");
       let sub_code = sub.gen();
       code.append_all(quote! {
@@ -61,7 +61,7 @@ impl ModuleCode {
         }
       });
     }
-    for (_, ty_code) in self.types.drain() {
+    for (_, ty_code) in self.types {
       code.append_all(ty_code);
     }
     code
@@ -79,8 +79,8 @@ mod v14 {
   #[derive(Default)]
   struct TypeParameters {
     names: IndexMap<u32, String>,
-    used: HashSet<String>,
-    need_bounds: HashMap<u32, HashMap<String, TokenStream>>,
+    used: BTreeSet<String>,
+    need_bounds: BTreeMap<u32, BTreeMap<String, TokenStream>>,
   }
 
   impl TypeParameters {
@@ -164,13 +164,13 @@ mod v14 {
 
   struct Generator {
     md: RuntimeMetadataV14,
-    external_modules: HashSet<String>,
-    pallet_types: HashMap<u32, (String, String)>,
+    external_modules: BTreeSet<String>,
+    pallet_types: BTreeMap<u32, (String, String)>,
     max_error_size: usize,
-    rename_types: HashMap<String, TokenStream>,
-    remap_namespaces: HashMap<String, String>,
-    ord_types: HashSet<String>,
-    custom_derives: HashMap<String, TokenStream>,
+    rename_types: BTreeMap<String, TokenStream>,
+    remap_namespaces: BTreeMap<String, String>,
+    ord_types: BTreeSet<String>,
+    custom_derives: BTreeMap<String, TokenStream>,
     runtime_namespace: Vec<String>,
     call: TokenStream,
     event: TokenStream,
@@ -190,12 +190,12 @@ mod v14 {
 
       let call = quote! { runtime::RuntimeCall };
       let event = quote! { runtime::RuntimeEvent };
-      let external_modules = HashSet::from_iter(
+      let external_modules = BTreeSet::from_iter(
         ["sp_version", "sp_weights", "bounded_collections"]
           .iter()
           .map(|t| t.to_string()),
       );
-      let rename_types = HashMap::from_iter(
+      let rename_types = BTreeMap::from_iter(
         [
           (
             "sp_core::crypto::AccountId32",
@@ -280,7 +280,7 @@ mod v14 {
         .into_iter()
         .map(|(name, code)| (name.to_string(), code)),
       );
-      let remap_namespaces = HashMap::from_iter(
+      let remap_namespaces = BTreeMap::from_iter(
         [
           ("polymesh_common_utilities::traits::balances", "pallet_balances"),
           ("polymesh_common_utilities::traits::checkpoint", "polymesh_primitives::checkpoint"),
@@ -304,7 +304,7 @@ mod v14 {
         #[derive(Copy, Default)]
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
       };
-      let custom_derives = HashMap::from_iter(
+      let custom_derives = BTreeMap::from_iter(
         [
           // Asset types.
           ("AssetName", &ink_extra_derives),
@@ -360,7 +360,7 @@ mod v14 {
         runtime_namespace: runtime_namespace.iter().cloned().collect(),
         md,
         external_modules,
-        pallet_types: HashMap::new(),
+        pallet_types: BTreeMap::new(),
         max_error_size: 4,
         rename_types,
         remap_namespaces,
@@ -378,7 +378,7 @@ mod v14 {
       // Manually enable `Ord` for `Ticker`.
       gen.ord_types.insert("Ticker".into());
       // Try a limited number of times to mark all types needing the `Ord` type.
-      let mut ord_type_ids = HashSet::new();
+      let mut ord_type_ids = BTreeSet::new();
       for _ in 0..10 {
         if !gen.check_for_ord_types(&mut ord_type_ids) {
           // Finished, no new ord types.
@@ -496,7 +496,7 @@ mod v14 {
       }
     }
 
-    fn check_for_ord_types(&self, ord_type_ids: &mut HashSet<u32>) -> bool {
+    fn check_for_ord_types(&self, ord_type_ids: &mut BTreeSet<u32>) -> bool {
       let count = ord_type_ids.len();
       for ty in self.md.types.types() {
         let id = ty.id();
