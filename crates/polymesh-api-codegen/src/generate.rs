@@ -231,10 +231,6 @@ mod v14 {
             "sp_arithmetic::per_things::Percent",
             quote!(#api_interface::per_things::Percent),
           ),
-          (
-            "sp_arithmetic::ArithmeticError",
-            quote!(::sp_arithmetic::ArithmeticError),
-          ),
           ("BTreeSet", quote!(::alloc::collections::BTreeSet)),
           ("BTreeMap", quote!(::alloc::collections::BTreeMap)),
           ("String", quote!(::alloc::string::String)),
@@ -282,12 +278,25 @@ mod v14 {
       );
       let remap_namespaces = BTreeMap::from_iter(
         [
-          ("polymesh_common_utilities::traits::balances", "pallet_balances"),
-          ("polymesh_common_utilities::traits::checkpoint", "polymesh_primitives::checkpoint"),
-          ("polymesh_common_utilities::traits::identity", "polymesh_primitives::identity"),
-          ("polymesh_common_utilities::traits::group", "polymesh_primitives::group"),
-        ].into_iter()
-        .map(|(old, new)| (old.to_string(), new.to_string()))
+          (
+            "polymesh_common_utilities::traits::balances",
+            "pallet_balances",
+          ),
+          (
+            "polymesh_common_utilities::traits::checkpoint",
+            "polymesh_primitives::checkpoint",
+          ),
+          (
+            "polymesh_common_utilities::traits::identity",
+            "polymesh_primitives::identity",
+          ),
+          (
+            "polymesh_common_utilities::traits::group",
+            "polymesh_primitives::group",
+          ),
+        ]
+        .into_iter()
+        .map(|(old, new)| (old.to_string(), new.to_string())),
       );
       let ink_derives = quote! {
         #[cfg_attr(all(feature = "ink", feature = "std"), derive(::ink::storage::traits::StorageLayout))]
@@ -411,8 +420,13 @@ mod v14 {
           continue;
         }
         if let Some(new_ns) = self.remap_namespaces.get(&ns) {
-          let name = path.ident().expect("Namespace wasn't empty, so there should be an ident.");
-          let mut new_segments = new_ns.split("::").map(|s| s.to_string()).collect::<Vec<_>>();
+          let name = path
+            .ident()
+            .expect("Namespace wasn't empty, so there should be an ident.");
+          let mut new_segments = new_ns
+            .split("::")
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>();
           new_segments.push(name.clone());
           let old_name = format!("{ns}::{name}");
           let new_name = segments_ident(&new_segments, false);
@@ -1247,7 +1261,7 @@ mod v14 {
       ty_ident: &Ident,
       params: &TokenStream,
       ty: &Type<PortableForm>,
-      prefix: Option<&str>,
+      prefix: Option<&String>,
     ) -> Option<TokenStream> {
       let mut as_str_arms = TokenStream::new();
       let mut as_docs_arms = TokenStream::new();
@@ -1257,28 +1271,43 @@ mod v14 {
             let top_name = variant.name();
             let top_ident = format_ident!("{}", top_name);
             let fields = variant.fields().len();
-            if fields == 1 {
-              as_str_arms.append_all(quote! {
-                Self::#top_ident(val) => {
-                  val.as_static_str()
-                },
-              });
-              as_docs_arms.append_all(quote! {
-                Self::#top_ident(val) => {
-                  val.as_docs()
-                },
-              });
-            } else {
-              as_str_arms.append_all(quote! {
-                Self::#top_ident(_) => {
-                  #top_name
-                },
-              });
-              as_docs_arms.append_all(quote! {
-                Self::#top_ident(_) => {
-                  &[""]
-                },
-              });
+            match fields {
+              0 => {
+                as_str_arms.append_all(quote! {
+                  Self::#top_ident => {
+                    #top_name
+                  },
+                });
+                as_docs_arms.append_all(quote! {
+                  Self::#top_ident => {
+                    &[""]
+                  },
+                });
+              }
+              1 => {
+                as_str_arms.append_all(quote! {
+                  Self::#top_ident(val) => {
+                    val.as_static_str()
+                  },
+                });
+                as_docs_arms.append_all(quote! {
+                  Self::#top_ident(val) => {
+                    val.as_docs()
+                  },
+                });
+              }
+              _ => {
+                as_str_arms.append_all(quote! {
+                  Self::#top_ident(_) => {
+                    #top_name
+                  },
+                });
+                as_docs_arms.append_all(quote! {
+                  Self::#top_ident(_) => {
+                    &[""]
+                  },
+                });
+              }
             }
           }
         }
@@ -1542,9 +1571,9 @@ mod v14 {
           ConsumerRemaining,
           NoProviders,
           TooManyConsumers,
-          Token(::sp_runtime::TokenError),
-          Arithmetic(::sp_arithmetic::ArithmeticError),
-          Transactional(::sp_runtime::TransactionalError),
+          Token(sp_runtime::TokenError),
+          Arithmetic(sp_arithmetic::ArithmeticError),
+          Transactional(sp_runtime::TransactionalError),
           Exhausted,
           Corruption,
           Unavailable,
@@ -1561,9 +1590,9 @@ mod v14 {
               Self::ConsumerRemaining => "ConsumerRemaining",
               Self::NoProviders => "NoProviders",
               Self::TooManyConsumers => "TooManyConsumers",
-              Self::Token(err) => (*err).into(),
-              Self::Arithmetic(err) => (*err).into(),
-              Self::Transactional(err) => (*err).into(),
+              Self::Token(err) => err.as_static_str(),
+              Self::Arithmetic(err) => err.as_static_str(),
+              Self::Transactional(err) => err.as_static_str(),
               Self::Exhausted => "Exhausted",
               Self::Corruption => "Corruption",
               Self::Unavailable => "Unavailable",
@@ -1599,9 +1628,9 @@ mod v14 {
               Self::ConsumerRemaining => &["At least one consumer is remaining so the account cannot be destroyed."],
               Self::NoProviders => &["There are no providers so the account cannot be created."],
               Self::TooManyConsumers => &["There are too many consumers so the account cannot be created."],
-              Self::Token(err) => &["An error to do with tokens."],
-              Self::Arithmetic(err) => &["An arithmetic error."],
-              Self::Transactional(err) => &["The number of transactional layers has been reached, or we are not in a transactional layer."],
+              Self::Token(err) => err.as_docs(),
+              Self::Arithmetic(err) => err.as_docs(),
+              Self::Transactional(err) => err.as_docs(),
               Self::Exhausted => &["Resources exhausted, e.g. attempt to read/write data which is too large to manipulate."],
               Self::Corruption => &["The state is corrupt; this is generally not going to fix itself."],
               Self::Unavailable => &["Some resource (e.g. a preimage) is unavailable right now. This might fix itself later."],
@@ -1769,21 +1798,28 @@ mod v14 {
         }
       };
 
-      // Special handling for pallet types.
-      if let Some(pallet_name) = pallet_name {
+      let is_error_sub_type = match full_name.as_str() {
+        "sp_runtime::TokenError" => true,
+        "sp_runtime::TransactionalError" => true,
+        "sp_arithmetic::ArithmeticError" => true,
+        _ => false,
+      };
+      // Generate `as_static_str` for some enum types:
+      // * Pallet types: *Call, *Event, *Error.
+      // * Runtime types: RuntimeCall, RuntimeEvent.
+      // * Sub error type: TokenError, TransactionalError, ArithmeticError.
+      let gen_as_static_str = pallet_name.is_some()
+        || (is_runtime_type && (ident == "RuntimeCall" || ident == "RuntimeEvent"))
+        || is_error_sub_type;
+
+      if gen_as_static_str {
         if let Some(as_static_str) =
-          self.gen_enum_as_static_str(&ty_ident, &params, ty, Some(pallet_name))
+          self.gen_enum_as_static_str(&ty_ident, &params, ty, pallet_name)
         {
           code.append_all(as_static_str);
         }
       }
 
-      // For runtime types generate enum -> static string helpers.
-      if is_runtime_type && (ident == "RuntimeCall" || ident == "RuntimeEvent") {
-        if let Some(as_static_str) = self.gen_enum_as_static_str(&ty_ident, &params, ty, None) {
-          code.append_all(as_static_str);
-        }
-      }
       Some(code)
     }
 
@@ -1817,7 +1853,10 @@ mod v14 {
               } else {
                 let old_ns = ty_ns.join("::");
                 if let Some(new_ns) = self.remap_namespaces.get(&old_ns) {
-                  let remapped = new_ns.split("::").map(|s| s.to_string()).collect::<Vec<_>>();
+                  let remapped = new_ns
+                    .split("::")
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>();
                   modules.add_type(&remapped, ident, code);
                 } else {
                   // No remap.

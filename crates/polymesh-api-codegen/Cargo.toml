@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen"
-version = "3.6.3"
+version = "3.6.4"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -40,7 +40,6 @@ polymesh-api-client = { workspace = true, default-features = true }
 rustfmt-wrapper = "0.2.0"
 
 # substrate
-sp-arithmetic = { workspace = true }
 sp-keyring = { workspace = true }
 
 [features]

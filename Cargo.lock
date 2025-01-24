@@ -3306,7 +3306,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api"
-version = "3.10.1"
+version = "3.10.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3323,8 +3323,6 @@ dependencies = [
  "serde",
  "serde-big-array",
  "serde_json",
- "sp-arithmetic",
- "sp-runtime",
  "tokio",
 ]
 
@@ -3378,7 +3376,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "3.6.3"
+version = "3.6.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3397,7 +3395,6 @@ dependencies = [
  "scale-info",
  "serde",
  "serde-big-array",
- "sp-arithmetic",
  "sp-core-hashing",
  "sp-keyring",
  "tokio",
@@ -3405,7 +3402,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen-macro"
-version = "3.6.3"
+version = "3.6.4"
 dependencies = [
  "darling 0.14.4",
  "parity-scale-codec",
