@@ -631,6 +631,14 @@ impl TypeLookup {
   pub fn dump_unresolved(&self) {
     self.types.read().unwrap().dump_unresolved();
   }
+
+  pub fn get_runtime_version(&self) -> RuntimeVersion {
+    self.types.read().unwrap().get_runtime_version()
+  }
+
+  pub fn get_metadata(&self) -> Option<Metadata> {
+    self.types.read().unwrap().get_metadata()
+  }
 }
 
 pub struct InitRegistryFn(Box<dyn Fn(&mut Types) -> Result<()> + Send + Sync + 'static>);
