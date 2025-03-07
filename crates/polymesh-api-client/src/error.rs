@@ -56,6 +56,9 @@ pub enum Error {
   #[cfg_attr(feature = "std", error("Encode type failed: {0}"))]
   EncodeTypeFailed(String),
 
+  #[cfg_attr(feature = "std", error("Storage key generation failed: {0}"))]
+  StorageKeyGenerationFailed(String),
+
   #[cfg_attr(feature = "std", error("Signing transaction failed: {0}"))]
   SigningTransactionFailed(String),
 
