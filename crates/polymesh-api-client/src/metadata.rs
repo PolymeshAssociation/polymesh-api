@@ -183,20 +183,24 @@ impl Metadata {
   pub fn get_module(&self, name: &str) -> Option<&ModuleMetadata> {
     self.modules.get(name)
   }
+
+  pub fn modules(&self) -> impl Iterator<Item = &ModuleMetadata> {
+    self.modules.values()
+  }
 }
 
 #[derive(Clone)]
 pub struct ModuleMetadata {
-  name: String,
-  index: u8,
-  funcs: BTreeMap<String, FuncMetadata>,
-  events: BTreeMap<String, EventMetadata>,
-  errors: BTreeMap<String, ErrorMetadata>,
-  err_idx_map: BTreeMap<u8, String>,
-  event_ref: Option<TypeId>,
-  error_ref: Option<TypeId>,
-  call_ref: Option<TypeId>,
-  storage: Option<StorageMetadata>,
+  pub name: String,
+  pub index: u8,
+  pub funcs: BTreeMap<String, FuncMetadata>,
+  pub events: BTreeMap<String, EventMetadata>,
+  pub errors: BTreeMap<String, ErrorMetadata>,
+  pub err_idx_map: BTreeMap<u8, String>,
+  pub event_ref: Option<TypeId>,
+  pub error_ref: Option<TypeId>,
+  pub call_ref: Option<TypeId>,
+  pub storage: Option<StorageMetadata>,
 }
 
 impl ModuleMetadata {
