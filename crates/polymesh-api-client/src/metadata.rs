@@ -1,5 +1,3 @@
-#![allow(deprecated)]
-
 #[cfg(not(feature = "std"))]
 use alloc::collections::btree_map::BTreeMap;
 #[cfg(feature = "std")]
@@ -11,6 +9,8 @@ use frame_metadata::decode_different::{DecodeDifferent, DecodeDifferentArray};
 #[cfg(feature = "v14")]
 use scale_info::form::PortableForm;
 
+use codec::{Decode, Encode};
+
 #[cfg(not(feature = "std"))]
 use alloc::{
   format,
@@ -18,18 +18,25 @@ use alloc::{
 };
 use sp_std::prelude::*;
 
+mod storage;
+pub use storage::*;
+
 use crate::error::*;
 use crate::schema::*;
 use crate::type_def::*;
 use crate::*;
 
 #[cfg(any(feature = "v13", feature = "v12",))]
-fn decode_meta<B: 'static, O: 'static>(encoded: &DecodeDifferent<B, O>) -> Result<&O> {
+pub(crate) fn decode_meta<B: Encode + 'static, O: Decode + Clone + 'static>(
+  encoded: &DecodeDifferent<B, O>,
+) -> Result<O> {
   match encoded {
-    DecodeDifferent::Decoded(val) => Ok(val),
-    _ => Err(Error::MetadataParseFailed(format!(
-      "Failed to decode value."
-    ))),
+    DecodeDifferent::Decoded(val) => Ok(val.clone()),
+    DecodeDifferent::Encode(val) => {
+      let encoded = val.encode();
+      O::decode(&mut &encoded[..])
+        .map_err(|_| Error::MetadataParseFailed(format!("Failed to decode value.")))
+    }
   }
 }
 
@@ -189,6 +196,7 @@ pub struct ModuleMetadata {
   event_ref: Option<TypeId>,
   error_ref: Option<TypeId>,
   call_ref: Option<TypeId>,
+  storage: Option<StorageMetadata>,
 }
 
 impl ModuleMetadata {
@@ -206,6 +214,7 @@ impl ModuleMetadata {
       event_ref: None,
       error_ref: None,
       call_ref: None,
+      storage: None,
     };
 
     // Decode module functions.
@@ -272,6 +281,12 @@ impl ModuleMetadata {
       TypeDef::Variant(raw_errors),
     ));
 
+    // Parse storage metadata
+    if let Some(storage) = &md.storage {
+      let storage = decode_meta(storage)?;
+      module.storage = Some(StorageMetadata::from_v12_meta(storage, lookup)?);
+    }
+
     Ok(module)
   }
 
@@ -289,6 +304,7 @@ impl ModuleMetadata {
       event_ref: None,
       error_ref: None,
       call_ref: None,
+      storage: None,
     };
 
     // Decode module functions.
@@ -355,6 +371,12 @@ impl ModuleMetadata {
       TypeDef::Variant(raw_errors),
     ));
 
+    // Parse storage metadata
+    if let Some(storage) = &md.storage {
+      let storage = decode_meta(storage)?;
+      module.storage = Some(StorageMetadata::from_v13_meta(storage, lookup)?);
+    }
+
     Ok(module)
   }
 
@@ -375,11 +397,12 @@ impl ModuleMetadata {
       event_ref: None,
       error_ref: None,
       call_ref: None,
+      storage: None,
     };
 
     // Decode module functions.
     if let Some(calls) = &md.calls {
-      let id = calls.ty.id();
+      let id = calls.ty.id;
       module.call_ref = Some(id.into());
 
       let call_ty = types.resolve(id).expect("Missing Pallet call type");
@@ -400,7 +423,7 @@ impl ModuleMetadata {
 
     // Decode module events.
     if let Some(events) = &md.event {
-      let id = events.ty.id();
+      let id = events.ty.id;
       module.event_ref = Some(id.into());
 
       let event_ty = types.resolve(id).expect("Missing Pallet event type");
@@ -421,7 +444,7 @@ impl ModuleMetadata {
 
     // Decode module errors.
     if let Some(error) = &md.error {
-      let id = error.ty.id();
+      let id = error.ty.id;
       module.error_ref = Some(id.into());
 
       let error_ty = types.resolve(id).expect("Missing Pallet error type");
@@ -439,6 +462,11 @@ impl ModuleMetadata {
           unimplemented!("Only Variant type supported for Pallet Error type.");
         }
       }
+    }
+
+    // Parse storage metadata
+    if let Some(storage) = &md.storage {
+      module.storage = Some(StorageMetadata::from_v14_meta(storage, types)?);
     }
 
     Ok(module)
@@ -786,9 +814,10 @@ impl FuncArg {
     md: &frame_metadata::v12::FunctionArgumentMetadata,
     lookup: &mut Types,
   ) -> Result<Self> {
+    let ty = decode_meta(&md.ty)?;
     let arg = Self {
       name: decode_meta(&md.name)?.clone(),
-      ty: NamedType::new(decode_meta(&md.ty)?, lookup)?,
+      ty: NamedType::new(&ty, lookup)?,
     };
 
     Ok(arg)
@@ -799,9 +828,10 @@ impl FuncArg {
     md: &frame_metadata::v13::FunctionArgumentMetadata,
     lookup: &mut Types,
   ) -> Result<Self> {
+    let ty = decode_meta(&md.ty)?;
     let arg = Self {
       name: decode_meta(&md.name)?.clone(),
-      ty: NamedType::new(decode_meta(&md.ty)?, lookup)?,
+      ty: NamedType::new(&ty, lookup)?,
     };
 
     Ok(arg)
