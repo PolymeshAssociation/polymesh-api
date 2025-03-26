@@ -15,43 +15,42 @@ async fn main() -> Result<()> {
 
   let url = env::args().nth(1).expect("Missing ws url");
 
-  //let mut alice = PairSigner::new(AccountKeyring::Alice.pair());
   let mut alice = PairSigner::new(subxt_signer::sr25519::dev::alice());
 
   let api = Api::new(&url).await?;
+  println!("Connection with chain established.");
 
   let dest = AccountKeyring::Bob.to_account_id().into();
   let mut res = api
     .call()
     .balances()
     .transfer(dest, 123_012_345)?
-    .execute(&mut alice)
+    .submit_and_watch(&mut alice)
     .await?;
+
+  println!("Transfer submitted, waiting for transaction to be finalized");
+  res.wait_finalized().await?;
+  println!("POLYX transfer finalized.");
+
   let events = res.events().await?;
-  //println!("call1 events = {:#?}", events);
   if let Some(events) = events {
     for rec in &events.0 {
-      println!("  - {:?}: {:?}", rec.name(), rec.short_doc());
       match &rec.event {
         RuntimeEvent::Balances(events::BalancesEvent::Transfer(
-          from_did,
+          _from_did,
           from,
-          to_did,
+          _to_did,
           to,
-          value,
-          memo,
+          amount,
+          _memo,
         )) => {
           println!(
-            "    - balances: transfer({:?}, {:?}, {:?}, {:?}, {:?}, {:?})",
-            from_did, from, to_did, to, value, memo
+            "{} transfered {:?} to {}",
+            from, amount, to
           );
         }
-        RuntimeEvent::Balances(ev) => {
-          println!("    - balances: other event: {ev:?}");
-        }
-        ev => {
-          println!("    - other: {ev:?}");
-        }
+        // Ignore other events.
+        _ => (),
       }
     }
   }

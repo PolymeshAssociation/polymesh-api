@@ -20,6 +20,7 @@ members = [
   "crates/polymesh-offline-signer",
 
   "examples/simple_transfer",
+  "examples/subxt-transfer",
   "examples/get_authorizations",
   "examples/add_secondary_keys_with_auth",
   "examples/subscribe_blocks",
