@@ -103,6 +103,10 @@ pub trait KeypairSigner: Send + Sync + Sized + Clone {
   fn account(&self) -> AccountId;
   fn sign(&self, message: &[u8]) -> MultiSignature;
   fn from_string(s: &str, password_override: Option<&str>) -> Result<Self>;
+
+  fn verify<M: AsRef<[u8]>>(&self, _sig: &MultiSignature, _message: M) -> Result<bool> {
+    unimplemented!()
+  }
 }
 
 #[cfg(feature = "std")]
@@ -121,6 +125,22 @@ impl KeypairSigner for sp_core::ed25519::Pair {
       password_override,
     )?)
   }
+
+  fn verify<M: AsRef<[u8]>>(&self, sig: &MultiSignature, message: M) -> Result<bool> {
+    let sig = match sig {
+      MultiSignature::Ed25519(sig) => sig,
+      _ => {
+        return Err(Error::CoreCryptoError(format!(
+          "Invalid signature type: {sig:?}"
+        )))
+      }
+    };
+    Ok(<sp_core::ed25519::Pair as sp_core::Pair>::verify(
+      sig,
+      message.as_ref(),
+      &self.public(),
+    ))
+  }
 }
 
 #[cfg(feature = "std")]
@@ -138,6 +158,22 @@ impl KeypairSigner for sp_core::sr25519::Pair {
       s,
       password_override,
     )?)
+  }
+
+  fn verify<M: AsRef<[u8]>>(&self, sig: &MultiSignature, message: M) -> Result<bool> {
+    let sig = match sig {
+      MultiSignature::Sr25519(sig) => sig,
+      _ => {
+        return Err(Error::CoreCryptoError(format!(
+          "Invalid signature type: {sig:?}"
+        )))
+      }
+    };
+    Ok(<sp_core::sr25519::Pair as sp_core::Pair>::verify(
+      sig,
+      message.as_ref(),
+      &self.public(),
+    ))
   }
 }
 

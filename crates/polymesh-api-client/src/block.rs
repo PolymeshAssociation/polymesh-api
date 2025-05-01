@@ -254,6 +254,9 @@ impl Extra {
   }
 }
 
+/// Encoded is a wrapper for data that has already been encoded.
+///
+/// This is used to avoid double encoding.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Encoded(
@@ -294,6 +297,34 @@ impl Decode for Encoded {
       }
       Ok(Self(data))
     }
+  }
+}
+
+/// BytesPayload is a wrapper for signing raw bytes.
+///
+/// The raw bytes will be wrapped in `<Bytes>raw data here</Bytes>` before signing.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct BytesPayload(
+  #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
+);
+
+pub const BYTES_PREFIX: &[u8] = b"<Bytes>";
+pub const BYTES_SUFFIX: &[u8] = b"</Bytes>";
+
+impl<T: Encode> From<&T> for BytesPayload {
+  fn from(other: &T) -> Self {
+    Self(other.encode())
+  }
+}
+
+impl Encode for BytesPayload {
+  fn size_hint(&self) -> usize {
+    BYTES_PREFIX.len() + self.0.len() + BYTES_SUFFIX.len()
+  }
+  fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+    dest.write(BYTES_PREFIX);
+    dest.write(&self.0);
+    dest.write(BYTES_SUFFIX);
   }
 }
 
@@ -602,5 +633,76 @@ impl<Event: RuntimeEnumTraits> EventRecords<Event> {
 
   pub fn to_string(&self) -> String {
     format!("{:#?}", self.0)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use anyhow::Result;
+
+  use super::*;
+
+  /// Test the `BytesPayload` signing and verification.
+  #[tokio::test]
+  async fn test_bytes_payload() -> Result<()> {
+    let data = b"Hello";
+    let payload = BytesPayload(data.to_vec());
+    let encoded = payload.encode();
+    assert_eq!(
+      encoded.len(),
+      BYTES_PREFIX.len() + data.len() + BYTES_SUFFIX.len()
+    );
+    assert_eq!(&encoded[..BYTES_PREFIX.len()], BYTES_PREFIX);
+    assert_eq!(
+      &encoded[BYTES_PREFIX.len()..BYTES_PREFIX.len() + data.len()],
+      data
+    );
+    assert_eq!(&encoded[BYTES_PREFIX.len() + data.len()..], BYTES_SUFFIX);
+
+    // Alice sr25519 keypair.
+    let alice = sp_core::sr25519::Pair::from_string("//Alice", None)?;
+
+    // Sign the payload using Alice.
+    let sig = alice.sign(&encoded[..]);
+
+    // Verify the signature.
+    let verified = alice.verify(&sig, &encoded[..])?;
+    assert!(verified);
+
+    Ok(())
+  }
+
+  /// Test signature from `subkey` tool.
+  #[tokio::test]
+  async fn test_subkey_signature() -> Result<()> {
+    let unwrapped_data = b"Test from subkey";
+    let payload = BytesPayload(unwrapped_data.to_vec());
+    let wrapped_data = payload.encode();
+
+    // Signatures from `subkey` tool.
+    let unwrapped_sig = MultiSignature::Sr25519(
+      sp_core::sr25519::Signature::from_slice(
+      &hex::decode("f22a9a82306e09fefab3782f55d1981795803211e3a2ef8f90555bb96dab0d281fd98705f4c675545d1f537b90cefa6596f60617eac5dec5bd4b9306908dc687")?
+      ).expect("Invalid signature"),
+    );
+    let wrapped_sig = MultiSignature::Sr25519(
+      sp_core::sr25519::Signature::from_slice(
+        &hex::decode("8c76d5f31c5ff229a90067063a19feff0e94f28793a490d63e0abd9f5aa5a33fa58fae990b98b6d80ae1ec0085fe19a36cb5b757f46b2d7574c7fc9e35974682")?,
+      )
+      .expect("Invalid signature"),
+    );
+
+    // Alice sr25519 keypair.
+    let alice = sp_core::sr25519::Pair::from_string("//Alice", None)?;
+
+    // Verify the unwrapped data signature.
+    let verified = alice.verify(&unwrapped_sig, &unwrapped_data[..])?;
+    assert!(verified);
+
+    // Verify the wrapped data signature.
+    let verified = alice.verify(&wrapped_sig, &wrapped_data[..])?;
+    assert!(verified);
+
+    Ok(())
   }
 }
