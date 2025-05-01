@@ -213,7 +213,11 @@ mod v14 {
             "sp_runtime::multiaddress::MultiAddress",
             quote!(#api_interface::MultiAddress),
           ),
-          #[cfg(not(feature = "ink"))]
+          (
+            "sp_runtime::multiaddress::MultiSignature",
+            quote!(#api_interface::MultiSignature),
+          ),
+           #[cfg(not(feature = "ink"))]
           ("sp_runtime::generic::era::Era", quote!(#api_interface::Era)),
           (
             "sp_arithmetic::per_things::Perbill",
