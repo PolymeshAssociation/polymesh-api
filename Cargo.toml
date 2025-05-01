@@ -32,7 +32,7 @@ members = [
 ## Keep common dependencies here.
 [workspace.dependencies]
 # Our crates
-polymesh-api-client = { version = "3.8.3", path = "crates/polymesh-api-client", default-features = false }
+polymesh-api-client = { version = "3.8.4", path = "crates/polymesh-api-client", default-features = false }
 polymesh-api-ink = { version = "1.5.0", path = "crates/polymesh-api-ink", default-features = false }
 polymesh-api-codegen = { version = "3.6.4", path = "crates/polymesh-api-codegen", default-features = false }
 polymesh-api-codegen-macro = { version = "3.6.4", path = "crates/polymesh-api-codegen-macro", default-features = false }
