@@ -44,10 +44,7 @@ async fn main() -> Result<()> {
           amount,
           _memo,
         )) => {
-          println!(
-            "{} transfered {:?} to {}",
-            from, amount, to
-          );
+          println!("{} transfered {:?} to {}", from, amount, to);
         }
         // Ignore other events.
         _ => (),
