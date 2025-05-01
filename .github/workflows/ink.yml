@@ -17,7 +17,7 @@ jobs:
           - nightly
         platform:
           - name: Wasm32 Ink!
-            os: ubuntu-20.04
+            os: ubuntu-24.04
             target: wasm32-unknown-unknown
 
     runs-on: ${{ matrix.platform.os }}
