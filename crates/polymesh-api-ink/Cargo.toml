@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-ink"
-version = "1.5.0"
+version = "1.5.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -14,6 +14,7 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
 # substrate
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
+sp-core = { workspace = true, default-features = false }
 sp-arithmetic = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false, optional = true }

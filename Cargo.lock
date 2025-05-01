@@ -3998,7 +3998,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "1.5.0"
+version = "1.5.1"
 dependencies = [
  "hex",
  "ink",
@@ -4006,6 +4006,7 @@ dependencies = [
  "primitive-types 0.12.2",
  "scale-info",
  "sp-arithmetic",
+ "sp-core",
  "sp-weights",
 ]
 

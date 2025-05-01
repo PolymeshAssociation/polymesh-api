@@ -22,6 +22,8 @@ pub use sp_core::hashing;
 
 pub use sp_weights;
 
+pub use sp_runtime::MultiSignature;
+
 // Re-impl `OldWeight`
 #[derive(
   Clone, Copy, Debug, Encode, Decode, CompactAs, Default, PartialEq, Eq, PartialOrd, Ord,

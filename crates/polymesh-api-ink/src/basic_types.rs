@@ -14,12 +14,25 @@ use ink::storage::traits::StorageLayout;
 pub use ink::primitives::AccountId;
 pub use sp_arithmetic::per_things;
 
+pub use sp_core::{ecdsa, ed25519, sr25519};
+
 // Re-impl `OldWeight`
 #[derive(
   Clone, Copy, Debug, Encode, Decode, CompactAs, Default, PartialEq, Eq, PartialOrd, Ord,
 )]
 #[cfg_attr(feature = "std", derive(TypeInfo))]
 pub struct OldWeight(pub u64);
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(TypeInfo))]
+pub enum MultiSignature {
+  /// An Ed25519 signature.
+  Ed25519(ed25519::Signature),
+  /// An Sr25519 signature.
+  Sr25519(sr25519::Signature),
+  /// An ECDSA/SECP256k1 signature.
+  Ecdsa(ecdsa::Signature),
+}
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Hash))]

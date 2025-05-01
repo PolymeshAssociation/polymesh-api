@@ -2,9 +2,9 @@ use ink::env::Environment;
 
 use codec::{Decode, Encode};
 
-use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::{AccountId, AssetId, Encoded, Error, IdentityId};
 
