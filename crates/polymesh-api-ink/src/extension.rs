@@ -4,7 +4,7 @@ use codec::{Decode, Encode};
 
 use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
-use alloc::{format, string::String};
+use alloc::string::String;
 
 use crate::{AccountId, AssetId, Encoded, Error, IdentityId};
 
