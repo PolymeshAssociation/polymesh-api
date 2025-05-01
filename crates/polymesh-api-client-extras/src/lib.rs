@@ -1,6 +1,6 @@
 use codec::{Decode, Encode};
 
-use polymesh_api::client::basic_types::{AccountId, IdentityId};
+use polymesh_api::client::basic_types::{AccountId, AssetId, IdentityId};
 use polymesh_api::client::error::Result;
 use polymesh_api::types::{
   polymesh_primitives::asset::CheckpointId,
@@ -30,6 +30,7 @@ pub struct TargetIdAuthorization {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CreatedIds {
+  AssetCreated(AssetId),
   IdentityCreated(IdentityId),
   ChildIdentityCreated(IdentityId),
   MultiSigCreated(AccountId),
@@ -49,6 +50,9 @@ pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<Created
         let mut ids = Vec::new();
         for rec in &events.0 {
           match &rec.event {
+            RuntimeEvent::Asset(AssetEvent::AssetCreated(_, id, ..)) => {
+              ids.push(CreatedIds::AssetCreated(*id));
+            }
             RuntimeEvent::Settlement(SettlementEvent::VenueCreated(_, id, ..)) => {
               ids.push(CreatedIds::VenueCreated(*id));
             }
@@ -124,6 +128,21 @@ pub async fn get_instruction_id(res: &mut TransactionResults) -> Result<Option<I
       match &rec.event {
         RuntimeEvent::Settlement(SettlementEvent::InstructionCreated(_, _, instruction_id, ..)) => {
           return Some(*instruction_id);
+        }
+        _ => (),
+      }
+    }
+    None
+  }))
+}
+
+/// Search transaction events for AssetId.
+pub async fn get_asset_id(res: &mut TransactionResults) -> Result<Option<AssetId>> {
+  Ok(res.events().await?.and_then(|events| {
+    for rec in &events.0 {
+      match &rec.event {
+        RuntimeEvent::Asset(AssetEvent::AssetCreated(_, asset_id, ..)) => {
+          return Some(*asset_id);
         }
         _ => (),
       }
