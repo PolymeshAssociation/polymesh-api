@@ -300,30 +300,27 @@ impl Decode for Encoded {
   }
 }
 
-/// BytesPayload is a wrapper for signing raw bytes.
+/// BytesPayload is a wrapper for signing the raw SCALE bytes of `T`.
 ///
-/// The raw bytes will be wrapped in `<Bytes>raw data here</Bytes>` before signing.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct BytesPayload(
-  #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
-);
+/// The wrapped `T` type will be SCALE encoded and wrapped with a prefix & suffix `<Bytes>...T SCALE Encoded...</Bytes>` before signing.
+pub struct BytesPayload<T>(pub T);
 
 pub const BYTES_PREFIX: &[u8] = b"<Bytes>";
 pub const BYTES_SUFFIX: &[u8] = b"</Bytes>";
 
-impl<T: Encode> From<&T> for BytesPayload {
+impl<T: Encode + Clone> From<&T> for BytesPayload<T> {
   fn from(other: &T) -> Self {
-    Self(other.encode())
+    Self(other.clone())
   }
 }
 
-impl Encode for BytesPayload {
+impl<T: Encode + Clone> Encode for BytesPayload<T> {
   fn size_hint(&self) -> usize {
-    BYTES_PREFIX.len() + self.0.len() + BYTES_SUFFIX.len()
+    BYTES_PREFIX.len() + self.0.size_hint() + BYTES_SUFFIX.len()
   }
-  fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+  fn encode_to<D: Output + ?Sized>(&self, dest: &mut D) {
     dest.write(BYTES_PREFIX);
-    dest.write(&self.0);
+    self.0.encode_to(dest);
     dest.write(BYTES_SUFFIX);
   }
 }
@@ -646,7 +643,7 @@ mod tests {
   #[tokio::test]
   async fn test_bytes_payload() -> Result<()> {
     let data = b"Hello";
-    let payload = BytesPayload(data.to_vec());
+    let payload = BytesPayload(Encoded::from(data));
     let encoded = payload.encode();
     assert_eq!(
       encoded.len(),
@@ -676,7 +673,7 @@ mod tests {
   #[tokio::test]
   async fn test_subkey_signature() -> Result<()> {
     let unwrapped_data = b"Test from subkey";
-    let payload = BytesPayload(unwrapped_data.to_vec());
+    let payload = BytesPayload(Encoded::from(unwrapped_data));
     let wrapped_data = payload.encode();
 
     // Signatures from `subkey` tool.
