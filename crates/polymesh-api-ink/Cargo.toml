@@ -29,6 +29,7 @@ default = ["std"]
 std = [
   "sp-arithmetic/std",
   "sp-weights/std",
+  "sp-core/std",
   "codec/std",
   "scale-info/std",
   "primitive-types/std",
