@@ -44,18 +44,18 @@ polymesh-api-tester = { version = "0.9.0", path = "crates/polymesh-api-tester", 
 frame-metadata = { version = "=15.1.0", default-features = false }
 primitive-types = { version = "0.12.0", default-features = false }
 scale-info = { version = "2.5", default-features = false }
-sp-arithmetic = { version = "21.0", default-features = false }
-sp-application-crypto = { version = "28.0", default-features = false }
-sp-core = { version = "26.0", default-features = false }
-sp-core-hashing = { version = "13.0", default-features = false }
-sp-io = { version = "28.0", default-features = false }
-sp-keyring = { version = "29.0", default-features = false }
-sp-runtime = { version = "29.0", default-features = false }
-sp-std = { version = "12.0", default-features = false }
-sp-weights = { version = "25.0", default-features = false }
+sp-arithmetic = { version = "26.1", default-features = false }
+sp-application-crypto = { version = "40.1", default-features = false }
+sp-core = { version = "36.1", default-features = false }
+sp-crypto-hashing = { version = "0.1", default-features = false }
+sp-io = { version = "40.0", default-features = false }
+sp-keyring = { version = "41.0", default-features = false }
+sp-runtime = { version = "41.1", default-features = false }
+sp-std = { version = "14.0", default-features = false }
+sp-weights = { version = "31.1", default-features = false }
 
 # Subxt signer
-subxt-signer = { version = "0.33", default-features = false }
+subxt-signer = { version = "0.41", default-features = false }
 
 # Ink!
 ink = { version = "4.3", default-features = false }

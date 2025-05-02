@@ -736,8 +736,8 @@ mod v14 {
       let storage_ident = format_ident!("{}", storage_name.to_snake_case());
       let api_interface = &self.api_interface;
       let mut key_prefix = Vec::with_capacity(512);
-      key_prefix.extend(sp_core_hashing::twox_128(mod_prefix.as_bytes()));
-      key_prefix.extend(sp_core_hashing::twox_128(storage_name.as_bytes()));
+      key_prefix.extend(sp_crypto_hashing::twox_128(mod_prefix.as_bytes()));
+      key_prefix.extend(sp_crypto_hashing::twox_128(storage_name.as_bytes()));
 
       let (hashers, value_ty) = match &md.ty {
         StorageEntryType::Plain(value) => (vec![], value.id()),
@@ -878,8 +878,8 @@ mod v14 {
       let storage_ident = format_ident!("{}", storage_name.to_snake_case());
       let api_interface = &self.api_interface;
       let mut key_prefix = Vec::with_capacity(32);
-      key_prefix.extend(sp_core_hashing::twox_128(mod_prefix.as_bytes()));
-      key_prefix.extend(sp_core_hashing::twox_128(storage_name.as_bytes()));
+      key_prefix.extend(sp_crypto_hashing::twox_128(mod_prefix.as_bytes()));
+      key_prefix.extend(sp_crypto_hashing::twox_128(storage_name.as_bytes()));
 
       let (mut hashers, value_ty) = match &md.ty {
         StorageEntryType::Plain(value) => (vec![], value.id()),

@@ -23,7 +23,7 @@ quote = "1"
 serde = { workspace = true }
 serde-big-array = { workspace = true }
 
-sp-core-hashing = { workspace = true, default-features = false }
+sp-crypto-hashing = { workspace = true, default-features = false }
 frame-metadata = { workspace = true, default-features = false }
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 scale-info = { workspace = true, default-features = false }
@@ -60,6 +60,6 @@ v14 = [ "frame-metadata/v14"]
 
 std = [
 	"frame-metadata/std",
-	"sp-core-hashing/std",
+	"sp-crypto-hashing/std",
 	"scale-info/std",
 ]

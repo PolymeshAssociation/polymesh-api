@@ -184,7 +184,7 @@ impl KeypairSigner for subxt_signer::sr25519::Keypair {
 
   fn sign(&self, message: &[u8]) -> MultiSignature {
     let sig = subxt_signer::sr25519::Keypair::sign(self, message).0;
-    MultiSignature::Sr25519(sp_core::sr25519::Signature(sig))
+    MultiSignature::Sr25519(sig.into())
   }
 
   fn from_string(s: &str, password_override: Option<&str>) -> Result<Self> {
@@ -206,7 +206,7 @@ impl KeypairSigner for subxt_signer::ecdsa::Keypair {
 
   fn sign(&self, message: &[u8]) -> MultiSignature {
     let sig = subxt_signer::ecdsa::Keypair::sign(self, message).0;
-    MultiSignature::Ecdsa(sp_core::ecdsa::Signature(sig))
+    MultiSignature::Ecdsa(sig.into())
   }
 
   fn from_string(s: &str, password_override: Option<&str>) -> Result<Self> {
