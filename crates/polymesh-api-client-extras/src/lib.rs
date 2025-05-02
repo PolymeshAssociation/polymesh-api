@@ -35,19 +35,19 @@ pub struct TargetIdAuthorization {
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug)]
 pub struct Receipt {
   /// Unique receipt number set by the signer for their receipts.
-  uid: u64,
+  pub uid: u64,
   /// The [`InstructionId`] of the instruction for which the receipt is for.
-  instruction_id: InstructionId,
+  pub instruction_id: InstructionId,
   /// The [`LegId`] of the leg for which the receipt is for.
-  leg_id: LegId,
+  pub leg_id: LegId,
   /// The [`IdentityId`] of the sender.
-  sender_identity: IdentityId,
+  pub sender_identity: IdentityId,
   /// The [`IdentityId`] of the receiver.
-  receiver_identity: IdentityId,
+  pub receiver_identity: IdentityId,
   /// [`Ticker`] of the asset being transferred.
-  ticker: Ticker,
+  pub ticker: Ticker,
   /// The amount transferred.
-  amount: u128,
+  pub amount: u128,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
