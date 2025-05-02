@@ -3,9 +3,12 @@ use codec::{Decode, Encode};
 use polymesh_api::client::basic_types::{AccountId, AssetId, IdentityId};
 use polymesh_api::client::error::Result;
 use polymesh_api::types::{
-  polymesh_primitives::asset::CheckpointId,
-  polymesh_primitives::checkpoint::ScheduleId,
-  polymesh_primitives::settlement::{InstructionId, VenueId},
+  polymesh_primitives::{
+    asset::CheckpointId,
+    checkpoint::ScheduleId,
+    settlement::{InstructionId, LegId, VenueId},
+    ticker::Ticker,
+  },
   runtime::{events::*, RuntimeEvent},
 };
 use polymesh_api::TransactionResults;
@@ -26,6 +29,25 @@ pub struct TargetIdAuthorization {
   pub nonce: AuthorizationNonce,
   /// Expire timestamp to limit how long the authorization is valid for.
   pub expires_at: Moment,
+}
+
+/// An offchain transaction receipt.
+#[derive(Encode, Decode, Clone, PartialEq, Eq, Debug)]
+pub struct Receipt {
+  /// Unique receipt number set by the signer for their receipts.
+  uid: u64,
+  /// The [`InstructionId`] of the instruction for which the receipt is for.
+  instruction_id: InstructionId,
+  /// The [`LegId`] of the leg for which the receipt is for.
+  leg_id: LegId,
+  /// The [`IdentityId`] of the sender.
+  sender_identity: IdentityId,
+  /// The [`IdentityId`] of the receiver.
+  receiver_identity: IdentityId,
+  /// [`Ticker`] of the asset being transferred.
+  ticker: Ticker,
+  /// The amount transferred.
+  amount: u128,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
