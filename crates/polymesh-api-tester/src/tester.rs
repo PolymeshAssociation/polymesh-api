@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-#[cfg(feature = "polymesh_v7")]
 use polymesh_api::polymesh::types::polymesh_primitives::secondary_key::ExtrinsicPermissions;
 use polymesh_api::{
   client::{AccountId, AssetId, IdentityId},
@@ -174,9 +173,6 @@ impl PolymeshTester {
           key: key.account(),
           permissions: Permissions {
             asset: SubsetRestriction::Whole,
-            #[cfg(feature = "polymesh_v6")]
-            extrinsic: SubsetRestriction::Whole,
-            #[cfg(feature = "polymesh_v7")]
             extrinsic: ExtrinsicPermissions::Whole,
             portfolio: SubsetRestriction::Whole,
           },
@@ -315,9 +311,6 @@ impl PolymeshTester {
   pub async fn get_did(&self, account: AccountId) -> Result<Option<IdentityId>> {
     let did = match self.key_records(account).await? {
       Some(KeyRecord::PrimaryKey(did)) => Some(did),
-      #[cfg(feature = "polymesh_v6")]
-      Some(KeyRecord::SecondaryKey(did, _)) => Some(did),
-      #[cfg(feature = "polymesh_v7")]
       Some(KeyRecord::SecondaryKey(did)) => Some(did),
       _ => None,
     };
@@ -364,7 +357,6 @@ impl PolymeshTester {
     Ticker(name.as_bytes().try_into().unwrap())
   }
 
-  #[cfg(feature = "polymesh_v7")]
   pub fn gen_asset_id(&self) -> AssetId {
     use rand::{thread_rng, Rng};
     let mut data = [0u8; 8];

@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "3.8.4"
+version = "3.9.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -57,7 +57,7 @@ sp-io = { workspace = true, default-features = false, features = ["disable_oom",
 [dev-dependencies]
 anyhow = "1"
 dotenv = "0.15"
-env_logger = "0.9"
+env_logger = "0.11"
 
 lazy_static = "1.4.0"
 

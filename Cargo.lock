@@ -18,7 +18,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "log",
  "parity-scale-codec",
  "polymesh-api",
@@ -666,17 +666,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
-name = "atty"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
-dependencies = [
- "hermit-abi 0.1.19",
- "libc",
- "winapi",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1191,7 +1180,7 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "hex",
  "lazy_static",
  "log",
@@ -1536,7 +1525,7 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "hex",
  "lazy_static",
  "log",
@@ -1698,19 +1687,6 @@ checksum = "186e05a59d4c50738528153b83b0b0194d3a29507dfec16eccd4b342903397d0"
 dependencies = [
  "log",
  "regex",
-]
-
-[[package]]
-name = "env_logger"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
-dependencies = [
- "atty",
- "humantime",
- "log",
- "regex",
- "termcolor",
 ]
 
 [[package]]
@@ -2099,7 +2075,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "futures-util",
  "hex",
  "log",
@@ -2301,15 +2277,6 @@ name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
-
-[[package]]
-name = "hermit-abi"
-version = "0.1.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "hermit-abi"
@@ -3881,7 +3848,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api"
-version = "3.10.2"
+version = "3.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3903,13 +3870,13 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client"
-version = "3.8.4"
+version = "3.9.0"
 dependencies = [
  "anyhow",
  "async-stream",
  "async-trait",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "frame-metadata 15.1.0",
  "futures-core",
  "hex",
@@ -3940,7 +3907,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client-extras"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "parity-scale-codec",
  "polymesh-api",
@@ -3951,12 +3918,12 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "3.6.5"
+version = "3.7.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "frame-metadata 15.1.0",
  "heck 0.4.1",
  "hex",
@@ -3977,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen-macro"
-version = "3.6.5"
+version = "3.7.0"
 dependencies = [
  "darling 0.14.4",
  "parity-scale-codec",
@@ -3990,7 +3957,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-ink"
-version = "1.5.1"
+version = "1.6.0"
 dependencies = [
  "hex",
  "ink",
@@ -4004,11 +3971,11 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-tester"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "hex",
  "log",
  "polymesh-api",
@@ -4025,12 +3992,12 @@ dependencies = [
 
 [[package]]
 name = "polymesh-offline-signer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "hex",
  "log",
  "parity-scale-codec",
@@ -5238,7 +5205,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "log",
  "polymesh-api",
  "sp-keyring",
@@ -5954,7 +5921,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "hex",
  "log",
  "polymesh-api",
@@ -6260,7 +6227,7 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "dotenv",
- "env_logger 0.9.3",
+ "env_logger 0.11.8",
  "hex",
  "log",
  "polymesh-api",

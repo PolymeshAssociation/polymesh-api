@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen"
-version = "3.6.5"
+version = "3.7.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -31,7 +31,7 @@ scale-info = { workspace = true, default-features = false }
 [dev-dependencies]
 anyhow = "1"
 dotenv = "0.15"
-env_logger = "0.9"
+env_logger = "0.11"
 
 async-trait = "0.1"
 
