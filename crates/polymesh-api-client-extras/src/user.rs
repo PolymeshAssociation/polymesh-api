@@ -185,10 +185,19 @@ impl PolymeshHelper {
     Ok(did)
   }
 
+  #[cfg(not(feature = "polymesh_v8"))]
   pub async fn get_account_info(
     &self,
     account: AccountId,
   ) -> Result<AccountInfo<u32, AccountData>> {
+    Ok(self.api.query().system().account(account).await?)
+  }
+
+  #[cfg(feature = "polymesh_v8")]
+  pub async fn get_account_info(
+    &self,
+    account: AccountId,
+  ) -> Result<AccountInfo<u32, AccountData<u128>>> {
     Ok(self.api.query().system().account(account).await?)
   }
 
