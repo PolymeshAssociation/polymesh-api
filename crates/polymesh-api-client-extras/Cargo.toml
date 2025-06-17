@@ -25,6 +25,8 @@ default = [ "std", "serde", "polymesh_v7" ]
 
 polymesh_v7 = ["polymesh-api/polymesh_v7"]
 
+polymesh_v8 = ["polymesh-api/polymesh_v8"]
+
 serde = [
   "polymesh-api/serde",
 ]
