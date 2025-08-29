@@ -30,6 +30,9 @@ pub use storage::*;
 pub mod client;
 pub use client::*;
 
+#[cfg(feature = "serde")]
+pub mod serde_impl;
+
 #[cfg(feature = "type_info")]
 pub mod type_def;
 
