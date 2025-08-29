@@ -677,16 +677,13 @@ mod tests {
     let wrapped_data = payload.encode();
 
     // Signatures from `subkey` tool.
+    let hex = hex::decode("f22a9a82306e09fefab3782f55d1981795803211e3a2ef8f90555bb96dab0d281fd98705f4c675545d1f537b90cefa6596f60617eac5dec5bd4b9306908dc687")?;
     let unwrapped_sig = MultiSignature::Sr25519(
-      sp_core::sr25519::Signature::from_slice(
-      &hex::decode("f22a9a82306e09fefab3782f55d1981795803211e3a2ef8f90555bb96dab0d281fd98705f4c675545d1f537b90cefa6596f60617eac5dec5bd4b9306908dc687")?
-      ).expect("Invalid signature"),
+      sp_core::sr25519::Signature::try_from(hex.as_slice()).expect("Invalid signature"),
     );
+    let hex = hex::decode("8c76d5f31c5ff229a90067063a19feff0e94f28793a490d63e0abd9f5aa5a33fa58fae990b98b6d80ae1ec0085fe19a36cb5b757f46b2d7574c7fc9e35974682")?;
     let wrapped_sig = MultiSignature::Sr25519(
-      sp_core::sr25519::Signature::from_slice(
-        &hex::decode("8c76d5f31c5ff229a90067063a19feff0e94f28793a490d63e0abd9f5aa5a33fa58fae990b98b6d80ae1ec0085fe19a36cb5b757f46b2d7574c7fc9e35974682")?,
-      )
-      .expect("Invalid signature"),
+      sp_core::sr25519::Signature::try_from(hex.as_slice()).expect("Invalid signature"),
     );
 
     // Alice sr25519 keypair.

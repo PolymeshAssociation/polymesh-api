@@ -2,7 +2,7 @@ use std::env;
 
 use anyhow::Result;
 
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring;
 
 use polymesh_api::client::PairSigner;
 use polymesh_api::polymesh::types::runtime::{events, RuntimeEvent};
@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
   let api = Api::new(&url).await?;
   println!("Connection with chain established.");
 
-  let dest = AccountKeyring::Bob.to_account_id().into();
+  let dest = Sr25519Keyring::Bob.to_account_id().into();
   let mut res = api
     .call()
     .balances()

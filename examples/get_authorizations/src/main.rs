@@ -5,7 +5,7 @@ use futures_util::StreamExt;
 
 use anyhow::Result;
 
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring;
 
 use polymesh_api::client::{AccountId, IdentityId};
 use polymesh_api::polymesh::types::polymesh_primitives::secondary_key::Signatory;
@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
       Signatory::Identity(IdentityId(id))
     }
     Some(s) => Signatory::Account(AccountId::from_str(&s)?),
-    None => Signatory::Account(AccountKeyring::Bob.to_account_id().into()),
+    None => Signatory::Account(Sr25519Keyring::Bob.to_account_id().into()),
   };
 
   let api = Api::new(&url).await?;

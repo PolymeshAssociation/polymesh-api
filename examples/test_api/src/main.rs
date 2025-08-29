@@ -2,7 +2,7 @@ use std::env;
 
 use anyhow::Result;
 
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring;
 
 use polymesh_api::client::MultiAddress;
 use polymesh_api::client::PairSigner;
@@ -15,12 +15,12 @@ async fn main() -> Result<()> {
 
   let url = env::args().nth(1).expect("Missing ws url");
 
-  let mut alice = PairSigner::new(AccountKeyring::Alice.pair());
+  let mut alice = PairSigner::new(Sr25519Keyring::Alice.pair());
 
   let api = Api::new(&url).await?;
 
-  let dest: MultiAddress<_, _> = AccountKeyring::Eve.to_account_id().into();
-  //let dest: MultiAddress<_, _> = AccountKeyring::Ferdie.to_account_id().into();
+  let dest: MultiAddress<_, _> = Sr25519Keyring::Eve.to_account_id().into();
+  //let dest: MultiAddress<_, _> = Sr25519Keyring::Ferdie.to_account_id().into();
   let call = api.call().balances().transfer(dest.clone(), 123_012_345)?;
   println!("call = {call:#?}");
   println!(

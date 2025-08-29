@@ -6,7 +6,7 @@ use std::env;
 
 use anyhow::Result;
 
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring;
 
 pub mod polymesh;
 use polymesh::Api;
@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
 
   let api = Api::new(&url).await?;
 
-  let dest = AccountKeyring::Bob.to_account_id();
+  let dest = Sr25519Keyring::Bob.to_account_id();
   let call = api.call().balances().transfer(dest.into(), 123_012_345);
   println!("balances.transfer = {call:#?}");
   Ok(())
