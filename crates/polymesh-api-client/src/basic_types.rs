@@ -624,13 +624,11 @@ pub type GenericAddress = MultiAddress<AccountId, u32>;
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct IdentityId(
-  #[cfg_attr(
-    feature = "utoipa",
-    schema(example = "0x0600000000000000000000000000000000000000000000000000000000000000")
-  )]
-  pub [u8; 32],
-);
+#[cfg_attr(
+  feature = "utoipa",
+  schema(example = "0x0600000000000000000000000000000000000000000000000000000000000000")
+)]
+pub struct IdentityId(pub [u8; 32]);
 
 impl fmt::Display for IdentityId {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -710,13 +708,11 @@ impl<'de> Deserialize<'de> for IdentityId {
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(all(feature = "std", feature = "type_info"), derive(TypeInfo))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct AssetId(
-  #[cfg_attr(
-    feature = "utoipa",
-    schema(example = "67e55044-10b1-426f-9247-bb680e5fe0c8")
-  )]
-  pub [u8; 16],
-);
+#[cfg_attr(
+  feature = "utoipa",
+  schema(example = "67e55044-10b1-426f-9247-bb680e5fe0c8")
+)]
+pub struct AssetId(pub [u8; 16]);
 
 impl AssetId {
   pub fn as_uuid(&self) -> uuid::Uuid {
