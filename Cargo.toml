@@ -100,6 +100,7 @@ tokio = { version = "1.19", features = ["rt"] }
 default = [ "std", "polymesh_v7", "rpc", "serde", "v14" ]
 
 polymesh_v7 = []
+polymesh_v8 = []
 
 # Download the chain metadata from a RPC node.
 download_metadata = [
