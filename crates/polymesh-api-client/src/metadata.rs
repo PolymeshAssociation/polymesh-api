@@ -9,6 +9,7 @@ use frame_metadata::decode_different::{DecodeDifferent, DecodeDifferentArray};
 #[cfg(feature = "v14")]
 use scale_info::form::PortableForm;
 
+#[cfg(any(feature = "v13", feature = "v12",))]
 use codec::{Decode, Encode};
 
 #[cfg(not(feature = "std"))]

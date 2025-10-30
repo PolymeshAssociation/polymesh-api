@@ -1,5 +1,6 @@
 use serde::{de, ser, Deserialize, Serialize};
 
+use alloc::format;
 use core::{fmt, str::FromStr};
 use sp_core::crypto::Ss58Codec;
 

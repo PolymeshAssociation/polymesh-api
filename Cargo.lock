@@ -3870,7 +3870,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-client"
-version = "3.10.1"
+version = "3.10.2"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -3918,7 +3918,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "3.7.0"
+version = "3.7.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3944,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen-macro"
-version = "3.7.0"
+version = "3.7.1"
 dependencies = [
  "darling 0.14.4",
  "parity-scale-codec",

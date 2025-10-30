@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen-macro"
-version = "3.7.0"
+version = "3.7.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -20,7 +20,7 @@ proc-macro-error = "1"
 syn = "1.0.96"
 
 polymesh-api-codegen = { workspace = true, default-features = false }
-polymesh-api-client = { workspace = true , default-features = false, optional = true }
+polymesh-api-client = { workspace = true, optional = true }
 
 codec = { version = "3", package = "parity-scale-codec", default-features = false }
 
@@ -30,6 +30,7 @@ default = [ "std", "v14" ]
 # Support downloading chain metadata from a RPC node.
 download_metadata = [
   "polymesh-api-client",
+  "polymesh-api-client/std",
   "polymesh-api-client/type_info",
 ]
 
