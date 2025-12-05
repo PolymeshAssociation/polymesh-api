@@ -175,6 +175,7 @@ mod v14 {
     call: TokenStream,
     event: TokenStream,
     v2_weights: bool,
+    dispatch_event_info: bool,
     api_interface: TokenStream,
   }
 
@@ -239,6 +240,7 @@ mod v14 {
           ("BTreeMap", quote!(::alloc::collections::BTreeMap)),
           ("String", quote!(::alloc::string::String)),
           ("Vec", quote!(::alloc::vec::Vec)),
+          ("Cow", quote!(::alloc::borrow::Cow)),
           (
             "bounded_collections::bounded_btree_map::BoundedBTreeMap",
             quote!(::alloc::collections::BTreeMap),
@@ -382,6 +384,7 @@ mod v14 {
         call,
         event,
         v2_weights: false,
+        dispatch_event_info: false,
         api_interface,
       };
 
@@ -501,6 +504,10 @@ mod v14 {
           self.v2_weights = true;
           return;
         }
+        if full_name == "frame_system::DispatchEventInfo" {
+          self.dispatch_event_info = true;
+          return;
+        }
       }
     }
 
@@ -616,6 +623,7 @@ mod v14 {
       }
       let ty = self.md.types.resolve(id)?;
       let path = ty.path();
+      let mut lifetime = quote!();
       let (type_ident, is_btree) = match self.is_runtime_type(path) {
         Some(name) => {
           // Remap runtime types to namespace `runtime`.
@@ -629,6 +637,9 @@ mod v14 {
             "BTreeSet" | "BTreeMap" => true,
             _ => false,
           };
+          if full_name == "Cow" {
+            lifetime = quote!('static, );
+          }
           let type_ident = self
             .rename_types
             .get(&full_name)
@@ -720,7 +731,7 @@ mod v14 {
 
       if type_params.len() > 0 {
         Some(quote! {
-          #type_ident<#(#type_params),*>
+          #type_ident<#lifetime #(#type_params),*>
         })
       } else {
         Some(type_ident)
@@ -1683,15 +1694,20 @@ mod v14 {
       let docs = ty.docs();
       let (mut code, params) = match ty.type_def() {
         TypeDef::Composite(struct_ty) => {
-          let (is_tuple, mut fields) = self.gen_struct_fields(struct_ty.fields(), &mut scope)?;
+          let fields = struct_ty.fields();
+          let fields_len = fields.len();
+          let (is_tuple, mut fields) = self.gen_struct_fields(fields, &mut scope)?;
           if let Some(unused_params) = scope.get_unused_params() {
+            if fields_len > 0 {
+              fields.append_all(quote! {, });
+            }
             if is_tuple {
               fields.append_all(quote! {
-                , #unused_params
+                #unused_params
               });
             } else {
               fields.append_all(quote! {
-                , _phantom_data: #unused_params
+                _phantom_data: #unused_params
               });
             }
           }
@@ -1920,6 +1936,8 @@ mod v14 {
 
       let dispatch_info = if self.v2_weights {
         quote! { frame_support::dispatch::DispatchInfo }
+      } else if self.dispatch_event_info {
+        quote! { frame_system::DispatchEventInfo }
       } else {
         quote! { frame_support::weights::DispatchInfo }
       };

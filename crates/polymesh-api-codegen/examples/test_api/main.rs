@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
   let api = Api::new(&url).await?;
 
   let dest = Sr25519Keyring::Bob.to_account_id();
-  let call = api.call().balances().transfer(dest.into(), 123_012_345);
+  let call = api.call().balances().transfer_keep_alive(dest.into(), 123_012_345);
   println!("balances.transfer = {call:#?}");
   Ok(())
 }
