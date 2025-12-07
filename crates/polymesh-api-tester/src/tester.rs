@@ -193,12 +193,22 @@ impl PolymeshTester {
     for account in accounts {
       if has_sudo {
         // We have sudo, just set their balance.
+        #[cfg(not(feature = "polymesh_v8"))]
         sudos.push(
           self
             .api
             .call()
             .balances()
             .set_balance(account.into(), self.init_polyx, 0)?
+            .into(),
+        );
+        #[cfg(feature = "polymesh_v8")]
+        sudos.push(
+          self
+            .api
+            .call()
+            .balances()
+            .force_set_balance(account.into(), self.init_polyx)?
             .into(),
         );
       } else {
@@ -208,7 +218,7 @@ impl PolymeshTester {
             .api
             .call()
             .balances()
-            .transfer(account.into(), self.init_polyx)?
+            .transfer_with_memo(account.into(), self.init_polyx, None)?
             .into(),
         );
       }
@@ -338,7 +348,7 @@ impl PolymeshTester {
               .api
               .call()
               .balances()
-              .transfer(account.into(), self.init_polyx)?
+              .transfer_with_memo(account.into(), self.init_polyx, None)?
               .into(),
           ])?
           .execute(&mut self.cdd)

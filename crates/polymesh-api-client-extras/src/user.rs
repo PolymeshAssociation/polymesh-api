@@ -3,11 +3,15 @@ use core::ops::{Deref, DerefMut};
 use polymesh_api::{
   client::{dev, AccountId, DefaultSigner, IdentityId, Result, Signer},
   polymesh::types::{
-    frame_system::AccountInfo, pallet_balances::AccountData,
+    frame_system::AccountInfo,
     polymesh_primitives::secondary_key::KeyRecord,
   },
   Api,
 };
+#[cfg(not(feature = "polymesh_v8"))]
+use polymesh_api::polymesh::types::pallet_balances::AccountData;
+#[cfg(feature = "polymesh_v8")]
+use polymesh_api::polymesh::types::pallet_balances::types::AccountData;
 
 use crate::*;
 
@@ -128,12 +132,22 @@ impl PolymeshHelper {
         let balance = balances[idx];
         if balance < self.init_polyx {
           // Transfer some funds to the user.
+          #[cfg(not(feature = "polymesh_v8"))]
           fund_calls.push(
             self
               .api
               .call()
               .balances()
               .set_balance(account.into(), self.init_polyx, 0)?
+              .into(),
+          );
+          #[cfg(feature = "polymesh_v8")]
+          fund_calls.push(
+            self
+              .api
+              .call()
+              .balances()
+              .force_set_balance(account.into(), self.init_polyx)?
               .into(),
           );
         }
@@ -243,7 +257,7 @@ impl PolymeshHelper {
               .api
               .call()
               .balances()
-              .transfer(account.into(), self.init_polyx)?
+              .transfer_with_memo(account.into(), self.init_polyx, None)?
               .into(),
           ])?
           .execute(&mut self.cdd)

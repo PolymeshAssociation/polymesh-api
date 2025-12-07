@@ -19,7 +19,7 @@ async fn create_secondary_keys() -> Result<()> {
         .api
         .call()
         .balances()
-        .transfer(sk.account().into(), ONE_POLYX)?
+        .transfer_with_memo(sk.account().into(), ONE_POLYX, None)?
         .submit_and_watch(&mut user.primary_key)
         .await?;
       results.push(res);
@@ -28,7 +28,7 @@ async fn create_secondary_keys() -> Result<()> {
         .api
         .call()
         .balances()
-        .transfer(pk.into(), ONE_POLYX)?
+        .transfer_with_memo(pk.into(), ONE_POLYX, None)?
         .submit_and_watch(sk)
         .await?;
       results.push(res);
