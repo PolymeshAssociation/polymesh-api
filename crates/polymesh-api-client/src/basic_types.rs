@@ -379,7 +379,7 @@ pub type GenericAddress = MultiAddress<AccountId, u32>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "utoipa",
-  schema(value_type = String, format = Binary, example = "0x0600000000000000000000000000000000000000000000000000000000000000")
+  schema(value_type = String, format = Binary, examples("0x0600000000000000000000000000000000000000000000000000000000000000"))
 )]
 pub struct IdentityId(pub [u8; 32]);
 
@@ -402,7 +402,7 @@ impl fmt::Debug for IdentityId {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "utoipa",
-  schema(value_type = String, format = Binary, example = "67e55044-10b1-426f-9247-bb680e5fe0c8")
+  schema(value_type = String, format = Binary, examples("67e55044-10b1-426f-9247-bb680e5fe0c8"))
 )]
 pub struct AssetId(pub [u8; 16]);
 
