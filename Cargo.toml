@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "3.13.0"
+version = "3.13.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -32,11 +32,11 @@ members = [
 ## Keep common dependencies here.
 [workspace.dependencies]
 # Our crates
-polymesh-api-client = { version = "3.11.0", path = "crates/polymesh-api-client", default-features = false }
+polymesh-api-client = { version = "3.11.1", path = "crates/polymesh-api-client", default-features = false }
 polymesh-api-ink = { version = "1.6.0", path = "crates/polymesh-api-ink", default-features = false }
 polymesh-api-codegen = { version = "3.7.3", path = "crates/polymesh-api-codegen", default-features = false }
 polymesh-api-codegen-macro = { version = "3.7.3", path = "crates/polymesh-api-codegen-macro", default-features = false }
-polymesh-api = { version = "3.13.0", path = "./", default-features = false }
+polymesh-api = { version = "3.13.1", path = "./", default-features = false }
 polymesh-api-client-extras = { version = "3.6.2", path = "crates/polymesh-api-client-extras", default-features = false }
 polymesh-api-tester = { version = "0.10.1", path = "crates/polymesh-api-tester", default-features = false }
 
@@ -100,7 +100,7 @@ tokio = { version = "1.19", features = ["rt"] }
 default = [ "std", "polymesh_v7", "rpc", "serde", "v14" ]
 
 polymesh_v7 = []
-polymesh_v8 = []
+polymesh_v8 = [ "polymesh-api-client?/polymesh_v8" ]
 
 # Download the chain metadata from a RPC node.
 download_metadata = [

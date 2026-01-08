@@ -327,7 +327,7 @@ impl<Api: ChainApi> Call<Api> {
 
     let encoded_call = self.encoded();
     let (additional, era) = client.get_additional_signed(lifetime).await?;
-    let extra = Extra::new(era, nonce);
+    let extra = Extra::new(era, nonce, additional.encode_metadata_hash());
     Ok(PreparedTransaction::new(
       account,
       additional,
@@ -374,7 +374,7 @@ impl<Api: ChainApi> Call<Api> {
 
     let encoded_call = self.encoded();
     let (additional, era) = client.get_additional_signed(None).await?;
-    let extra = Extra::new(era, nonce);
+    let extra = Extra::new(era, nonce, additional.encode_metadata_hash());
     let payload = SignedPayload::new(&encoded_call, &extra, additional);
 
     let payload = payload.encode();

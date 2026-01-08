@@ -178,6 +178,16 @@ pub struct AdditionalSigned {
   pub metadata_hash: Option<H256>,
 }
 
+impl AdditionalSigned {
+  pub fn encode_metadata_hash(&self) -> Option<Option<H256>> {
+    if self.tx_version >= 8 {
+      Some(self.metadata_hash.clone())
+    } else {
+      None
+    }
+  }
+}
+
 impl Encode for AdditionalSigned {
   fn encode_to<T: Output + ?Sized>(&self, output: &mut T) {
     self.spec_version.encode_to(output);
@@ -262,20 +272,22 @@ impl From<Era> for sp_runtime::generic::Era {
   }
 }
 
-#[derive(Clone, Debug, Encode, Decode)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Extra {
   era: sp_runtime::generic::Era,
   nonce: Compact<u32>,
   tip: Compact<u128>,
+  metadata_hash: Option<Option<H256>>,
 }
 
 impl Extra {
-  pub fn new(era: Era, nonce: u32) -> Self {
+  pub fn new(era: Era, nonce: u32, metadata_hash: Option<Option<H256>>) -> Self {
     Self {
       era: era.into(),
       nonce: nonce.into(),
       tip: 0u128.into(),
+      metadata_hash,
     }
   }
 
@@ -285,6 +297,35 @@ impl Extra {
 
   pub fn tip(&self) -> u128 {
     self.tip.0
+  }
+}
+
+impl Encode for Extra {
+  fn encode_to<T: Output + ?Sized>(&self, output: &mut T) {
+    self.era.encode_to(output);
+    self.nonce.encode_to(output);
+    self.tip.encode_to(output);
+    if let Some(metadata_hash) = &self.metadata_hash {
+      metadata_hash.encode_to(output);
+    }
+  }
+}
+
+impl Decode for Extra {
+  fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+    let era = Decode::decode(input)?;
+    let nonce = Decode::decode(input)?;
+    let tip = Decode::decode(input)?;
+    #[cfg(feature = "polymesh_v8")]
+    let metadata_hash = Some(Decode::decode(input)?);
+    #[cfg(not(feature = "polymesh_v8"))]
+    let metadata_hash = None;
+    Ok(Self {
+      era,
+      nonce,
+      tip,
+      metadata_hash,
+    })
   }
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-client"
-version = "3.11.0"
+version = "3.11.1"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -65,6 +65,8 @@ frame-metadata = { workspace = true, default-features = false, features = ["v14"
 
 [features]
 default = [ "std", "serde", "type_info", "v12", "v13", "v14" ]
+
+polymesh_v8 = []
 
 wasm = [
   "v14",
