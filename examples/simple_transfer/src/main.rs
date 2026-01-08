@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
   let mut res = api
     .call()
     .balances()
-    .transfer(dest, 123_012_345)?
+    .transfer_with_memo(dest, 123_012_345, None)?
     .submit_and_watch(&mut alice)
     .await?;
 

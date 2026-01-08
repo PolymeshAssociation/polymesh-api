@@ -21,7 +21,10 @@ async fn main() -> Result<()> {
 
   let dest: MultiAddress<_, _> = Sr25519Keyring::Eve.to_account_id().into();
   //let dest: MultiAddress<_, _> = Sr25519Keyring::Ferdie.to_account_id().into();
-  let call = api.call().balances().transfer(dest.clone(), 123_012_345)?;
+  let call = api
+    .call()
+    .balances()
+    .transfer_with_memo(dest.clone(), 123_012_345, None)?;
   println!("call = {call:#?}");
   println!(
     "call_json = {:#?}",
@@ -31,9 +34,21 @@ async fn main() -> Result<()> {
 
   // Test batches.
   let call = api.call().utility().batch(vec![
-    api.call().balances().transfer(dest.clone(), 1)?.into(),
-    api.call().balances().transfer(dest.clone(), 2)?.into(),
-    api.call().balances().transfer(dest.clone(), 3)?.into(),
+    api
+      .call()
+      .balances()
+      .transfer_with_memo(dest.clone(), 1, None)?
+      .into(),
+    api
+      .call()
+      .balances()
+      .transfer_with_memo(dest.clone(), 2, None)?
+      .into(),
+    api
+      .call()
+      .balances()
+      .transfer_with_memo(dest.clone(), 3, None)?
+      .into(),
   ])?;
   println!("call = {call:#?}");
   println!(

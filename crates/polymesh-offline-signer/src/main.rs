@@ -163,7 +163,10 @@ async fn prepare(args: PrepareArgs) -> Result<()> {
       let amount = (amount * scale)
         .to_u128()
         .ok_or_else(|| anyhow!("Failed to convert amount to u128."))?;
-      api.call().balances().transfer(dest.into(), amount)?
+      api
+        .call()
+        .balances()
+        .transfer_with_memo(dest.into(), amount, None)?
     }
     PrepareCommands::IdentityRegisterDid {
       primary_key,
