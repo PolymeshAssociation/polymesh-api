@@ -1993,32 +1993,32 @@ mod v14 {
             })
           }
 
-          pub fn call(&self) -> CallApi {
+          pub fn call(&self) -> CallApi<'_> {
             CallApi { api: self }
           }
 
           #[cfg(not(feature = "ink"))]
-          pub fn query(&self) -> QueryApi {
+          pub fn query(&self) -> QueryApi<'_> {
             QueryApi { api: self, at: None }
           }
 
           #[cfg(feature = "ink")]
-          pub fn query(&self) -> QueryApi {
+          pub fn query(&self) -> QueryApi<'_> {
             QueryApi { api: self }
           }
 
           #[cfg(not(feature = "ink"))]
-          pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi {
+          pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi<'_> {
             QueryApi { api: self, at: Some(block) }
           }
 
           #[cfg(not(feature = "ink"))]
-          pub fn paged_query(&self) -> PagedQueryApi {
+          pub fn paged_query(&self) -> PagedQueryApi<'_> {
             PagedQueryApi { api: self, at: None }
           }
 
           #[cfg(not(feature = "ink"))]
-          pub fn paged_query_at(&self, block: ::polymesh_api_client::BlockHash) -> PagedQueryApi {
+          pub fn paged_query_at(&self, block: ::polymesh_api_client::BlockHash) -> PagedQueryApi<'_> {
             PagedQueryApi { api: self, at: Some(block) }
           }
 

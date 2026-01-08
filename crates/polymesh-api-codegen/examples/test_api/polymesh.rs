@@ -36,6 +36,55 @@ pub mod types {
             pub target_number: N,
         }
     }
+    pub mod frame_election_provider_support {
+        use super::*;
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct BoundedSupport<AccountId> {
+            pub total: u128,
+            pub voters: ::alloc::vec::Vec<(AccountId, u128)>,
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct BoundedSupports<AccountId>(
+            pub  ::alloc::vec::Vec<(
+                AccountId,
+                frame_election_provider_support::BoundedSupport<AccountId>,
+            )>,
+        );
+    }
+    pub mod frame_metadata_hash_extension {
+        use super::*;
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct CheckMetadataHash {
+            pub mode: frame_metadata_hash_extension::Mode,
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub enum Mode {
+            #[codec(index = 0u8)]
+            Disabled,
+            #[codec(index = 1u8)]
+            Enabled,
+        }
+    }
     pub mod frame_support {
         use super::*;
         pub mod dispatch {
@@ -90,6 +139,8 @@ pub mod types {
                 Signed(AccountId),
                 #[codec(index = 2u8)]
                 None,
+                #[codec(index = 3u8)]
+                Authorized,
             }
         }
         pub mod traits {
@@ -167,6 +218,16 @@ pub mod types {
         use super::*;
         pub mod extensions {
             use super::*;
+            pub mod authorize_call {
+                use super::*;
+                #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(
+                    all(feature = "std", feature = "type_info"),
+                    derive(::scale_info::TypeInfo)
+                )]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct AuthorizeCall();
+            }
             pub mod check_genesis {
                 use super::*;
                 #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
@@ -186,6 +247,16 @@ pub mod types {
                 )]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct CheckMortality(pub ::polymesh_api_client::Era);
+            }
+            pub mod check_non_zero_sender {
+                use super::*;
+                #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(
+                    all(feature = "std", feature = "type_info"),
+                    derive(::scale_info::TypeInfo)
+                )]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct CheckNonZeroSender();
             }
             pub mod check_nonce {
                 use super::*;
@@ -226,6 +297,16 @@ pub mod types {
                 )]
                 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
                 pub struct CheckWeight();
+            }
+            pub mod weight_reclaim {
+                use super::*;
+                #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(
+                    all(feature = "std", feature = "type_info"),
+                    derive(::scale_info::TypeInfo)
+                )]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub struct WeightReclaim();
             }
         }
         pub mod limits {
@@ -2928,64 +3009,110 @@ pub mod types {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
-                #[doc = "Some amount was burned from an account."]
+                #[doc = "Some credit was balanced and added to the TotalIssuance."]
                 #[codec(index = 11u8)]
+                MintedCredit { amount: u128 },
+                #[doc = "Some amount was burned from an account."]
+                #[codec(index = 12u8)]
                 Burned {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
+                #[doc = "Some debt has been dropped from the Total Issuance."]
+                #[codec(index = 13u8)]
+                BurnedDebt { amount: u128 },
                 #[doc = "Some amount was suspended from an account (it can be restored later)."]
-                #[codec(index = 12u8)]
+                #[codec(index = 14u8)]
                 Suspended {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
                 #[doc = "Some amount was restored into an account."]
-                #[codec(index = 13u8)]
+                #[codec(index = 15u8)]
                 Restored {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
                 #[doc = "An account was upgraded."]
-                #[codec(index = 14u8)]
+                #[codec(index = 16u8)]
                 Upgraded {
                     who: ::polymesh_api_client::AccountId,
                 },
                 #[doc = "Total issuance was increased by `amount`, creating a credit to be balanced."]
-                #[codec(index = 15u8)]
+                #[codec(index = 17u8)]
                 Issued { amount: u128 },
                 #[doc = "Total issuance was decreased by `amount`, creating a debt to be balanced."]
-                #[codec(index = 16u8)]
+                #[codec(index = 18u8)]
                 Rescinded { amount: u128 },
                 #[doc = "Some balance was locked."]
-                #[codec(index = 17u8)]
+                #[codec(index = 19u8)]
                 Locked {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
                 #[doc = "Some balance was unlocked."]
-                #[codec(index = 18u8)]
+                #[codec(index = 20u8)]
                 Unlocked {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
                 #[doc = "Some balance was frozen."]
-                #[codec(index = 19u8)]
+                #[codec(index = 21u8)]
                 Frozen {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
                 #[doc = "Some balance was thawed."]
-                #[codec(index = 20u8)]
+                #[codec(index = 22u8)]
                 Thawed {
                     who: ::polymesh_api_client::AccountId,
                     amount: u128,
                 },
                 #[doc = "The `TotalIssuance` was forcefully changed."]
-                #[codec(index = 21u8)]
+                #[codec(index = 23u8)]
                 TotalIssuanceForced { old: u128, new: u128 },
+                #[doc = "Some balance was placed on hold."]
+                #[codec(index = 24u8)]
+                Held {
+                    reason: runtime::RuntimeHoldReason,
+                    who: ::polymesh_api_client::AccountId,
+                    amount: u128,
+                },
+                #[doc = "Held balance was burned from an account."]
+                #[codec(index = 25u8)]
+                BurnedHeld {
+                    reason: runtime::RuntimeHoldReason,
+                    who: ::polymesh_api_client::AccountId,
+                    amount: u128,
+                },
+                #[doc = "A transfer of `amount` on hold from `source` to `dest` was initiated."]
+                #[codec(index = 26u8)]
+                TransferOnHold {
+                    reason: runtime::RuntimeHoldReason,
+                    source: ::polymesh_api_client::AccountId,
+                    dest: ::polymesh_api_client::AccountId,
+                    amount: u128,
+                },
+                #[doc = "The `transferred` balance is placed on hold at the `dest` account."]
+                #[codec(index = 27u8)]
+                TransferAndHold {
+                    reason: runtime::RuntimeHoldReason,
+                    source: ::polymesh_api_client::AccountId,
+                    dest: ::polymesh_api_client::AccountId,
+                    transferred: u128,
+                },
+                #[doc = "Some balance was released from hold."]
+                #[codec(index = 28u8)]
+                Released {
+                    reason: runtime::RuntimeHoldReason,
+                    who: ::polymesh_api_client::AccountId,
+                    amount: u128,
+                },
+                #[doc = "An unexpected/defensive event was triggered."]
+                #[codec(index = 29u8)]
+                Unexpected(pallet_balances::pallet::UnexpectedKind),
                 #[doc = "Transfer with memo succeeded."]
-                #[codec(index = 22u8)]
+                #[codec(index = 30u8)]
                 TransferWithMemo {
                     from: ::polymesh_api_client::AccountId,
                     to: ::polymesh_api_client::AccountId,
@@ -3008,7 +3135,9 @@ pub mod types {
                         Self::Withdraw { .. } => "Balances.Withdraw",
                         Self::Slashed { .. } => "Balances.Slashed",
                         Self::Minted { .. } => "Balances.Minted",
+                        Self::MintedCredit { .. } => "Balances.MintedCredit",
                         Self::Burned { .. } => "Balances.Burned",
+                        Self::BurnedDebt { .. } => "Balances.BurnedDebt",
                         Self::Suspended { .. } => "Balances.Suspended",
                         Self::Restored { .. } => "Balances.Restored",
                         Self::Upgraded { .. } => "Balances.Upgraded",
@@ -3019,6 +3148,12 @@ pub mod types {
                         Self::Frozen { .. } => "Balances.Frozen",
                         Self::Thawed { .. } => "Balances.Thawed",
                         Self::TotalIssuanceForced { .. } => "Balances.TotalIssuanceForced",
+                        Self::Held { .. } => "Balances.Held",
+                        Self::BurnedHeld { .. } => "Balances.BurnedHeld",
+                        Self::TransferOnHold { .. } => "Balances.TransferOnHold",
+                        Self::TransferAndHold { .. } => "Balances.TransferAndHold",
+                        Self::Released { .. } => "Balances.Released",
+                        Self::Unexpected(_) => "Balances.Unexpected",
                         Self::TransferWithMemo { .. } => "Balances.TransferWithMemo",
                         _ => "Unknown",
                     }
@@ -3030,7 +3165,7 @@ pub mod types {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    # [allow (unreachable_patterns)] match self { Self :: Endowed { .. } => { & ["An account was created with some free balance." ,] } , Self :: DustLost { .. } => { & ["An account was removed whose balance was non-zero but below ExistentialDeposit," , "resulting in an outright loss." ,] } , Self :: Transfer { .. } => { & ["Transfer succeeded." ,] } , Self :: BalanceSet { .. } => { & ["A balance was set by root." ,] } , Self :: Reserved { .. } => { & ["Some balance was reserved (moved from free to reserved)." ,] } , Self :: Unreserved { .. } => { & ["Some balance was unreserved (moved from reserved to free)." ,] } , Self :: ReserveRepatriated { .. } => { & ["Some balance was moved from the reserve of the first account to the second account." , "Final argument indicates the destination balance type." ,] } , Self :: Deposit { .. } => { & ["Some amount was deposited (e.g. for transaction fees)." ,] } , Self :: Withdraw { .. } => { & ["Some amount was withdrawn from the account (e.g. for transaction fees)." ,] } , Self :: Slashed { .. } => { & ["Some amount was removed from the account (e.g. for misbehavior)." ,] } , Self :: Minted { .. } => { & ["Some amount was minted into an account." ,] } , Self :: Burned { .. } => { & ["Some amount was burned from an account." ,] } , Self :: Suspended { .. } => { & ["Some amount was suspended from an account (it can be restored later)." ,] } , Self :: Restored { .. } => { & ["Some amount was restored into an account." ,] } , Self :: Upgraded { .. } => { & ["An account was upgraded." ,] } , Self :: Issued { .. } => { & ["Total issuance was increased by `amount`, creating a credit to be balanced." ,] } , Self :: Rescinded { .. } => { & ["Total issuance was decreased by `amount`, creating a debt to be balanced." ,] } , Self :: Locked { .. } => { & ["Some balance was locked." ,] } , Self :: Unlocked { .. } => { & ["Some balance was unlocked." ,] } , Self :: Frozen { .. } => { & ["Some balance was frozen." ,] } , Self :: Thawed { .. } => { & ["Some balance was thawed." ,] } , Self :: TotalIssuanceForced { .. } => { & ["The `TotalIssuance` was forcefully changed." ,] } , Self :: TransferWithMemo { .. } => { & ["Transfer with memo succeeded." ,] } , _ => & [""] , }
+                    # [allow (unreachable_patterns)] match self { Self :: Endowed { .. } => { & ["An account was created with some free balance." ,] } , Self :: DustLost { .. } => { & ["An account was removed whose balance was non-zero but below ExistentialDeposit," , "resulting in an outright loss." ,] } , Self :: Transfer { .. } => { & ["Transfer succeeded." ,] } , Self :: BalanceSet { .. } => { & ["A balance was set by root." ,] } , Self :: Reserved { .. } => { & ["Some balance was reserved (moved from free to reserved)." ,] } , Self :: Unreserved { .. } => { & ["Some balance was unreserved (moved from reserved to free)." ,] } , Self :: ReserveRepatriated { .. } => { & ["Some balance was moved from the reserve of the first account to the second account." , "Final argument indicates the destination balance type." ,] } , Self :: Deposit { .. } => { & ["Some amount was deposited (e.g. for transaction fees)." ,] } , Self :: Withdraw { .. } => { & ["Some amount was withdrawn from the account (e.g. for transaction fees)." ,] } , Self :: Slashed { .. } => { & ["Some amount was removed from the account (e.g. for misbehavior)." ,] } , Self :: Minted { .. } => { & ["Some amount was minted into an account." ,] } , Self :: MintedCredit { .. } => { & ["Some credit was balanced and added to the TotalIssuance." ,] } , Self :: Burned { .. } => { & ["Some amount was burned from an account." ,] } , Self :: BurnedDebt { .. } => { & ["Some debt has been dropped from the Total Issuance." ,] } , Self :: Suspended { .. } => { & ["Some amount was suspended from an account (it can be restored later)." ,] } , Self :: Restored { .. } => { & ["Some amount was restored into an account." ,] } , Self :: Upgraded { .. } => { & ["An account was upgraded." ,] } , Self :: Issued { .. } => { & ["Total issuance was increased by `amount`, creating a credit to be balanced." ,] } , Self :: Rescinded { .. } => { & ["Total issuance was decreased by `amount`, creating a debt to be balanced." ,] } , Self :: Locked { .. } => { & ["Some balance was locked." ,] } , Self :: Unlocked { .. } => { & ["Some balance was unlocked." ,] } , Self :: Frozen { .. } => { & ["Some balance was frozen." ,] } , Self :: Thawed { .. } => { & ["Some balance was thawed." ,] } , Self :: TotalIssuanceForced { .. } => { & ["The `TotalIssuance` was forcefully changed." ,] } , Self :: Held { .. } => { & ["Some balance was placed on hold." ,] } , Self :: BurnedHeld { .. } => { & ["Held balance was burned from an account." ,] } , Self :: TransferOnHold { .. } => { & ["A transfer of `amount` on hold from `source` to `dest` was initiated." ,] } , Self :: TransferAndHold { .. } => { & ["The `transferred` balance is placed on hold at the `dest` account." ,] } , Self :: Released { .. } => { & ["Some balance was released from hold." ,] } , Self :: Unexpected (_) => { & ["An unexpected/defensive event was triggered." ,] } , Self :: TransferWithMemo { .. } => { & ["Transfer with memo succeeded." ,] } , _ => & [""] , }
                 }
             }
             impl From<BalancesEvent> for &'static str {
@@ -3042,6 +3177,18 @@ pub mod types {
                 fn from(v: &BalancesEvent) -> Self {
                     v.as_static_str()
                 }
+            }
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum UnexpectedKind {
+                #[codec(index = 0u8)]
+                BalanceUpdated,
+                #[codec(index = 1u8)]
+                FailedToMutateAccount,
             }
         }
         pub mod types {
@@ -3206,51 +3353,239 @@ pub mod types {
                     v.as_static_str()
                 }
             }
-            #[doc = "The `Event` enum of this pallet"]
+        }
+    }
+    pub mod pallet_beefy {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
             #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(
                 all(feature = "std", feature = "type_info"),
                 derive(::scale_info::TypeInfo)
             )]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum BaseEvent {
-                #[doc = "An unexpected error happened that should be investigated."]
-                #[doc = "TODO: Unused, remove it."]
+            pub enum BeefyCall {
+                #[doc = "Report voter equivocation/misbehavior. This method will verify the"]
+                #[doc = "equivocation proof and validate the given key ownership proof"]
+                #[doc = "against the extracted offender. If both are valid, the offence"]
+                #[doc = "will be reported."]
                 #[codec(index = 0u8)]
-                UnexpectedError(Option<sp_runtime::DispatchError>),
+                report_double_voting {
+                    equivocation_proof: ::alloc::boxed::Box<
+                        sp_consensus_beefy::DoubleVotingProof<
+                            u32,
+                            sp_consensus_beefy::ecdsa_crypto::Public,
+                            sp_consensus_beefy::ecdsa_crypto::Signature,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[doc = "Report voter equivocation/misbehavior. This method will verify the"]
+                #[doc = "equivocation proof and validate the given key ownership proof"]
+                #[doc = "against the extracted offender. If both are valid, the offence"]
+                #[doc = "will be reported."]
+                #[doc = ""]
+                #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+                #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+                #[doc = "if the block author is defined it will be defined as the equivocation"]
+                #[doc = "reporter."]
+                #[codec(index = 1u8)]
+                report_double_voting_unsigned {
+                    equivocation_proof: ::alloc::boxed::Box<
+                        sp_consensus_beefy::DoubleVotingProof<
+                            u32,
+                            sp_consensus_beefy::ecdsa_crypto::Public,
+                            sp_consensus_beefy::ecdsa_crypto::Signature,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[doc = "Reset BEEFY consensus by setting a new BEEFY genesis at `delay_in_blocks` blocks in the"]
+                #[doc = "future."]
+                #[doc = ""]
+                #[doc = "Note: `delay_in_blocks` has to be at least 1."]
+                #[codec(index = 2u8)]
+                set_new_genesis { delay_in_blocks: u32 },
+                #[doc = "Report fork voting equivocation. This method will verify the equivocation proof"]
+                #[doc = "and validate the given key ownership proof against the extracted offender."]
+                #[doc = "If both are valid, the offence will be reported."]
+                #[codec(index = 3u8)]
+                report_fork_voting {
+                    equivocation_proof: ::alloc::boxed::Box<
+                        sp_consensus_beefy::ForkVotingProof<
+                            sp_runtime::generic::header::Header<u32>,
+                            sp_consensus_beefy::ecdsa_crypto::Public,
+                            sp_mmr_primitives::AncestryProof<primitive_types::H256>,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[doc = "Report fork voting equivocation. This method will verify the equivocation proof"]
+                #[doc = "and validate the given key ownership proof against the extracted offender."]
+                #[doc = "If both are valid, the offence will be reported."]
+                #[doc = ""]
+                #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+                #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+                #[doc = "if the block author is defined it will be defined as the equivocation"]
+                #[doc = "reporter."]
+                #[codec(index = 4u8)]
+                report_fork_voting_unsigned {
+                    equivocation_proof: ::alloc::boxed::Box<
+                        sp_consensus_beefy::ForkVotingProof<
+                            sp_runtime::generic::header::Header<u32>,
+                            sp_consensus_beefy::ecdsa_crypto::Public,
+                            sp_mmr_primitives::AncestryProof<primitive_types::H256>,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[doc = "Report future block voting equivocation. This method will verify the equivocation proof"]
+                #[doc = "and validate the given key ownership proof against the extracted offender."]
+                #[doc = "If both are valid, the offence will be reported."]
+                #[codec(index = 5u8)]
+                report_future_block_voting {
+                    equivocation_proof: ::alloc::boxed::Box<
+                        sp_consensus_beefy::FutureBlockVotingProof<
+                            u32,
+                            sp_consensus_beefy::ecdsa_crypto::Public,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
+                #[doc = "Report future block voting equivocation. This method will verify the equivocation proof"]
+                #[doc = "and validate the given key ownership proof against the extracted offender."]
+                #[doc = "If both are valid, the offence will be reported."]
+                #[doc = ""]
+                #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+                #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+                #[doc = "if the block author is defined it will be defined as the equivocation"]
+                #[doc = "reporter."]
+                #[codec(index = 6u8)]
+                report_future_block_voting_unsigned {
+                    equivocation_proof: ::alloc::boxed::Box<
+                        sp_consensus_beefy::FutureBlockVotingProof<
+                            u32,
+                            sp_consensus_beefy::ecdsa_crypto::Public,
+                        >,
+                    >,
+                    key_owner_proof: sp_session::MembershipProof,
+                },
             }
-            impl BaseEvent {
+            impl BeefyCall {
                 pub fn as_static_str(&self) -> &'static str {
                     #[allow(unreachable_patterns)]
                     match self {
-                        Self::UnexpectedError(_) => "Base.UnexpectedError",
+                        Self::report_double_voting { .. } => "Beefy.report_double_voting",
+                        Self::report_double_voting_unsigned { .. } => {
+                            "Beefy.report_double_voting_unsigned"
+                        }
+                        Self::set_new_genesis { .. } => "Beefy.set_new_genesis",
+                        Self::report_fork_voting { .. } => "Beefy.report_fork_voting",
+                        Self::report_fork_voting_unsigned { .. } => {
+                            "Beefy.report_fork_voting_unsigned"
+                        }
+                        Self::report_future_block_voting { .. } => {
+                            "Beefy.report_future_block_voting"
+                        }
+                        Self::report_future_block_voting_unsigned { .. } => {
+                            "Beefy.report_future_block_voting_unsigned"
+                        }
                         _ => "Unknown",
                     }
                 }
             }
             #[cfg(not(feature = "ink"))]
-            impl ::polymesh_api_client::EnumInfo for BaseEvent {
+            impl ::polymesh_api_client::EnumInfo for BeefyCall {
                 fn as_name(&self) -> &'static str {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    #[allow(unreachable_patterns)]
-                    match self {
-                        Self::UnexpectedError(_) => &[
-                            "An unexpected error happened that should be investigated.",
-                            "TODO: Unused, remove it.",
-                        ],
-                        _ => &[""],
-                    }
+                    # [allow (unreachable_patterns)] match self { Self :: report_double_voting { .. } => { & ["Report voter equivocation/misbehavior. This method will verify the" , "equivocation proof and validate the given key ownership proof" , "against the extracted offender. If both are valid, the offence" , "will be reported." ,] } , Self :: report_double_voting_unsigned { .. } => { & ["Report voter equivocation/misbehavior. This method will verify the" , "equivocation proof and validate the given key ownership proof" , "against the extracted offender. If both are valid, the offence" , "will be reported." , "" , "This extrinsic must be called unsigned and it is expected that only" , "block authors will call it (validated in `ValidateUnsigned`), as such" , "if the block author is defined it will be defined as the equivocation" , "reporter." ,] } , Self :: set_new_genesis { .. } => { & ["Reset BEEFY consensus by setting a new BEEFY genesis at `delay_in_blocks` blocks in the" , "future." , "" , "Note: `delay_in_blocks` has to be at least 1." ,] } , Self :: report_fork_voting { .. } => { & ["Report fork voting equivocation. This method will verify the equivocation proof" , "and validate the given key ownership proof against the extracted offender." , "If both are valid, the offence will be reported." ,] } , Self :: report_fork_voting_unsigned { .. } => { & ["Report fork voting equivocation. This method will verify the equivocation proof" , "and validate the given key ownership proof against the extracted offender." , "If both are valid, the offence will be reported." , "" , "This extrinsic must be called unsigned and it is expected that only" , "block authors will call it (validated in `ValidateUnsigned`), as such" , "if the block author is defined it will be defined as the equivocation" , "reporter." ,] } , Self :: report_future_block_voting { .. } => { & ["Report future block voting equivocation. This method will verify the equivocation proof" , "and validate the given key ownership proof against the extracted offender." , "If both are valid, the offence will be reported." ,] } , Self :: report_future_block_voting_unsigned { .. } => { & ["Report future block voting equivocation. This method will verify the equivocation proof" , "and validate the given key ownership proof against the extracted offender." , "If both are valid, the offence will be reported." , "" , "This extrinsic must be called unsigned and it is expected that only" , "block authors will call it (validated in `ValidateUnsigned`), as such" , "if the block author is defined it will be defined as the equivocation" , "reporter." ,] } , _ => & [""] , }
                 }
             }
-            impl From<BaseEvent> for &'static str {
-                fn from(v: BaseEvent) -> Self {
+            impl From<BeefyCall> for &'static str {
+                fn from(v: BeefyCall) -> Self {
                     v.as_static_str()
                 }
             }
-            impl From<&BaseEvent> for &'static str {
-                fn from(v: &BaseEvent) -> Self {
+            impl From<&BeefyCall> for &'static str {
+                fn from(v: &BeefyCall) -> Self {
+                    v.as_static_str()
+                }
+            }
+            #[doc = "The `Error` enum of this pallet."]
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum BeefyError {
+                #[doc = "A key ownership proof provided as part of an equivocation report is invalid."]
+                #[codec(index = 0u8)]
+                InvalidKeyOwnershipProof,
+                #[doc = "A double voting proof provided as part of an equivocation report is invalid."]
+                #[codec(index = 1u8)]
+                InvalidDoubleVotingProof,
+                #[doc = "A fork voting proof provided as part of an equivocation report is invalid."]
+                #[codec(index = 2u8)]
+                InvalidForkVotingProof,
+                #[doc = "A future block voting proof provided as part of an equivocation report is invalid."]
+                #[codec(index = 3u8)]
+                InvalidFutureBlockVotingProof,
+                #[doc = "The session of the equivocation proof is invalid"]
+                #[codec(index = 4u8)]
+                InvalidEquivocationProofSession,
+                #[doc = "The session of the equivocation proof is not in the mapping (anymore)"]
+                #[codec(index = 5u8)]
+                InvalidEquivocationProofSessionMember,
+                #[doc = "A given equivocation report is valid but already previously reported."]
+                #[codec(index = 6u8)]
+                DuplicateOffenceReport,
+                #[doc = "Submitted configuration is invalid."]
+                #[codec(index = 7u8)]
+                InvalidConfiguration,
+            }
+            impl BeefyError {
+                pub fn as_static_str(&self) -> &'static str {
+                    #[allow(unreachable_patterns)]
+                    match self {
+                        Self::InvalidKeyOwnershipProof => "Beefy.InvalidKeyOwnershipProof",
+                        Self::InvalidDoubleVotingProof => "Beefy.InvalidDoubleVotingProof",
+                        Self::InvalidForkVotingProof => "Beefy.InvalidForkVotingProof",
+                        Self::InvalidFutureBlockVotingProof => {
+                            "Beefy.InvalidFutureBlockVotingProof"
+                        }
+                        Self::InvalidEquivocationProofSession => {
+                            "Beefy.InvalidEquivocationProofSession"
+                        }
+                        Self::InvalidEquivocationProofSessionMember => {
+                            "Beefy.InvalidEquivocationProofSessionMember"
+                        }
+                        Self::DuplicateOffenceReport => "Beefy.DuplicateOffenceReport",
+                        Self::InvalidConfiguration => "Beefy.InvalidConfiguration",
+                        _ => "Unknown",
+                    }
+                }
+            }
+            #[cfg(not(feature = "ink"))]
+            impl ::polymesh_api_client::EnumInfo for BeefyError {
+                fn as_name(&self) -> &'static str {
+                    self.as_static_str()
+                }
+                fn as_docs(&self) -> &'static [&'static str] {
+                    # [allow (unreachable_patterns)] match self { Self :: InvalidKeyOwnershipProof => { & ["A key ownership proof provided as part of an equivocation report is invalid." ,] } , Self :: InvalidDoubleVotingProof => { & ["A double voting proof provided as part of an equivocation report is invalid." ,] } , Self :: InvalidForkVotingProof => { & ["A fork voting proof provided as part of an equivocation report is invalid." ,] } , Self :: InvalidFutureBlockVotingProof => { & ["A future block voting proof provided as part of an equivocation report is invalid." ,] } , Self :: InvalidEquivocationProofSession => { & ["The session of the equivocation proof is invalid" ,] } , Self :: InvalidEquivocationProofSessionMember => { & ["The session of the equivocation proof is not in the mapping (anymore)" ,] } , Self :: DuplicateOffenceReport => { & ["A given equivocation report is valid but already previously reported." ,] } , Self :: InvalidConfiguration => { & ["Submitted configuration is invalid." ,] } , _ => & [""] , }
+                }
+            }
+            impl From<BeefyError> for &'static str {
+                fn from(v: BeefyError) -> Self {
+                    v.as_static_str()
+                }
+            }
+            impl From<&BeefyError> for &'static str {
+                fn from(v: &BeefyError) -> Self {
                     v.as_static_str()
                 }
             }
@@ -6348,10 +6683,7 @@ pub mod types {
                 #[doc = "This can only be called when [`Phase::Emergency`] is enabled, as an alternative to"]
                 #[doc = "calling [`Call::set_emergency_election_result`]."]
                 #[codec(index = 4u8)]
-                governance_fallback {
-                    maybe_max_voters: Option<u32>,
-                    maybe_max_targets: Option<u32>,
-                },
+                governance_fallback,
             }
             impl ElectionProviderMultiPhaseCall {
                 pub fn as_static_str(&self) -> &'static str {
@@ -6367,7 +6699,7 @@ pub mod types {
                             "ElectionProviderMultiPhase.set_emergency_election_result"
                         }
                         Self::submit { .. } => "ElectionProviderMultiPhase.submit",
-                        Self::governance_fallback { .. } => {
+                        Self::governance_fallback => {
                             "ElectionProviderMultiPhase.governance_fallback"
                         }
                         _ => "Unknown",
@@ -6380,7 +6712,7 @@ pub mod types {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    # [allow (unreachable_patterns)] match self { Self :: submit_unsigned { .. } => { & ["Submit a solution for the unsigned phase." , "" , "The dispatch origin fo this call must be __none__." , "" , "This submission is checked on the fly. Moreover, this unsigned solution is only" , "validated when submitted to the pool from the **local** node. Effectively, this means" , "that only active validators can submit this transaction when authoring a block (similar" , "to an inherent)." , "" , "To prevent any incorrect solution (and thus wasted time/weight), this transaction will" , "panic if the solution submitted by the validator is invalid in any way, effectively" , "putting their authoring reward at risk." , "" , "No deposit or reward is associated with this submission." ,] } , Self :: set_minimum_untrusted_score { .. } => { & ["Set a new value for `MinimumUntrustedScore`." , "" , "Dispatch origin must be aligned with `T::ForceOrigin`." , "" , "This check can be turned off by setting the value to `None`." ,] } , Self :: set_emergency_election_result { .. } => { & ["Set a solution in the queue, to be handed out to the client of this pallet in the next" , "call to `ElectionProvider::elect`." , "" , "This can only be set by `T::ForceOrigin`, and only when the phase is `Emergency`." , "" , "The solution is not checked for any feasibility and is assumed to be trustworthy, as any" , "feasibility check itself can in principle cause the election process to fail (due to" , "memory/weight constrains)." ,] } , Self :: submit { .. } => { & ["Submit a solution for the signed phase." , "" , "The dispatch origin fo this call must be __signed__." , "" , "The solution is potentially queued, based on the claimed score and processed at the end" , "of the signed phase." , "" , "A deposit is reserved and recorded for the solution. Based on the outcome, the solution" , "might be rewarded, slashed, or get all or a part of the deposit back." ,] } , Self :: governance_fallback { .. } => { & ["Trigger the governance fallback." , "" , "This can only be called when [`Phase::Emergency`] is enabled, as an alternative to" , "calling [`Call::set_emergency_election_result`]." ,] } , _ => & [""] , }
+                    # [allow (unreachable_patterns)] match self { Self :: submit_unsigned { .. } => { & ["Submit a solution for the unsigned phase." , "" , "The dispatch origin fo this call must be __none__." , "" , "This submission is checked on the fly. Moreover, this unsigned solution is only" , "validated when submitted to the pool from the **local** node. Effectively, this means" , "that only active validators can submit this transaction when authoring a block (similar" , "to an inherent)." , "" , "To prevent any incorrect solution (and thus wasted time/weight), this transaction will" , "panic if the solution submitted by the validator is invalid in any way, effectively" , "putting their authoring reward at risk." , "" , "No deposit or reward is associated with this submission." ,] } , Self :: set_minimum_untrusted_score { .. } => { & ["Set a new value for `MinimumUntrustedScore`." , "" , "Dispatch origin must be aligned with `T::ForceOrigin`." , "" , "This check can be turned off by setting the value to `None`." ,] } , Self :: set_emergency_election_result { .. } => { & ["Set a solution in the queue, to be handed out to the client of this pallet in the next" , "call to `ElectionProvider::elect`." , "" , "This can only be set by `T::ForceOrigin`, and only when the phase is `Emergency`." , "" , "The solution is not checked for any feasibility and is assumed to be trustworthy, as any" , "feasibility check itself can in principle cause the election process to fail (due to" , "memory/weight constrains)." ,] } , Self :: submit { .. } => { & ["Submit a solution for the signed phase." , "" , "The dispatch origin fo this call must be __signed__." , "" , "The solution is potentially queued, based on the claimed score and processed at the end" , "of the signed phase." , "" , "A deposit is reserved and recorded for the solution. Based on the outcome, the solution" , "might be rewarded, slashed, or get all or a part of the deposit back." ,] } , Self :: governance_fallback => { & ["Trigger the governance fallback." , "" , "This can only be called when [`Phase::Emergency`] is enabled, as an alternative to" , "calling [`Call::set_emergency_election_result`]." ,] } , _ => & [""] , }
                 }
             }
             impl From<ElectionProviderMultiPhaseCall> for &'static str {
@@ -6664,10 +6996,8 @@ pub mod types {
         )]
         #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
         pub struct ReadySolution {
-            pub supports: ::alloc::vec::Vec<(
-                ::polymesh_api_client::AccountId,
-                sp_npos_elections::Support<::polymesh_api_client::AccountId>,
-            )>,
+            pub supports:
+                frame_election_provider_support::BoundedSupports<::polymesh_api_client::AccountId>,
             pub score: sp_npos_elections::ElectionScore,
             pub compute: pallet_election_provider_multi_phase::ElectionCompute,
         }
@@ -7549,10 +7879,6 @@ pub mod types {
                 #[doc = "The limit of how many active members there can be concurrently was changed."]
                 #[codec(index = 5u8)]
                 ActiveLimitChanged(::polymesh_api_client::IdentityId, u32, u32),
-                #[doc = "Phantom member, never used.  This can be removed now.  FRAME v2 doesn't require this."]
-                #[doc = "TODO: remove."]
-                #[codec(index = 6u8)]
-                Dummy,
             }
             impl UpgradeCommitteeMembershipEvent {
                 pub fn as_static_str(&self) -> &'static str {
@@ -7568,7 +7894,6 @@ pub mod types {
                         Self::ActiveLimitChanged(_, _, _) => {
                             "UpgradeCommitteeMembership.ActiveLimitChanged"
                         }
-                        Self::Dummy => "UpgradeCommitteeMembership.Dummy",
                         _ => "Unknown",
                     }
                 }
@@ -7579,7 +7904,7 @@ pub mod types {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    # [allow (unreachable_patterns)] match self { Self :: MemberAdded (_ , _) => { & ["The given member was added; see the transaction for who." , "caller DID, New member DID." ,] } , Self :: MemberRemoved (_ , _) => { & ["The given member was removed; see the transaction for who." , "caller DID, member DID that get removed." ,] } , Self :: MemberRevoked (_ , _) => { & ["The given member has been revoked at specific time-stamp." , "caller DID, member DID that get revoked." ,] } , Self :: MembersSwapped (_ , _ , _) => { & ["Two members were swapped; see the transaction for who." , "caller DID, Removed DID, New add DID." ,] } , Self :: MembersReset (_ , _) => { & ["The membership was reset; see the transaction for who the new set is." , "caller DID, List of new members." ,] } , Self :: ActiveLimitChanged (_ , _ , _) => { & ["The limit of how many active members there can be concurrently was changed." ,] } , Self :: Dummy => { & ["Phantom member, never used.  This can be removed now.  FRAME v2 doesn't require this." , "TODO: remove." ,] } , _ => & [""] , }
+                    # [allow (unreachable_patterns)] match self { Self :: MemberAdded (_ , _) => { & ["The given member was added; see the transaction for who." , "caller DID, New member DID." ,] } , Self :: MemberRemoved (_ , _) => { & ["The given member was removed; see the transaction for who." , "caller DID, member DID that get removed." ,] } , Self :: MemberRevoked (_ , _) => { & ["The given member has been revoked at specific time-stamp." , "caller DID, member DID that get revoked." ,] } , Self :: MembersSwapped (_ , _ , _) => { & ["Two members were swapped; see the transaction for who." , "caller DID, Removed DID, New add DID." ,] } , Self :: MembersReset (_ , _) => { & ["The membership was reset; see the transaction for who the new set is." , "caller DID, List of new members." ,] } , Self :: ActiveLimitChanged (_ , _ , _) => { & ["The limit of how many active members there can be concurrently was changed." ,] } , _ => & [""] , }
                 }
             }
             impl From<UpgradeCommitteeMembershipEvent> for &'static str {
@@ -12480,6 +12805,65 @@ pub mod types {
     }
     pub mod pallet_session {
         use super::*;
+        pub mod historical {
+            use super::*;
+            pub mod pallet {
+                use super::*;
+                #[doc = "The `Event` enum of this pallet"]
+                #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+                #[cfg_attr(
+                    all(feature = "std", feature = "type_info"),
+                    derive(::scale_info::TypeInfo)
+                )]
+                #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+                pub enum HistoricalEvent {
+                    #[doc = "The merkle root of the validators of the said session were stored"]
+                    #[codec(index = 0u8)]
+                    RootStored { index: u32 },
+                    #[doc = "The merkle roots of up to this session index were pruned"]
+                    #[codec(index = 1u8)]
+                    RootsPruned { up_to: u32 },
+                }
+                impl HistoricalEvent {
+                    pub fn as_static_str(&self) -> &'static str {
+                        #[allow(unreachable_patterns)]
+                        match self {
+                            Self::RootStored { .. } => "Historical.RootStored",
+                            Self::RootsPruned { .. } => "Historical.RootsPruned",
+                            _ => "Unknown",
+                        }
+                    }
+                }
+                #[cfg(not(feature = "ink"))]
+                impl ::polymesh_api_client::EnumInfo for HistoricalEvent {
+                    fn as_name(&self) -> &'static str {
+                        self.as_static_str()
+                    }
+                    fn as_docs(&self) -> &'static [&'static str] {
+                        #[allow(unreachable_patterns)]
+                        match self {
+                            Self::RootStored { .. } => &[
+                                "The merkle root of the validators of the said session were stored",
+                            ],
+                            Self::RootsPruned { .. } => {
+                                &["The merkle roots of up to this session index were pruned"]
+                            }
+                            _ => &[""],
+                        }
+                    }
+                }
+                impl From<HistoricalEvent> for &'static str {
+                    fn from(v: HistoricalEvent) -> Self {
+                        v.as_static_str()
+                    }
+                }
+                impl From<&HistoricalEvent> for &'static str {
+                    fn from(v: &HistoricalEvent) -> Self {
+                        v.as_static_str()
+                    }
+                }
+            }
+        }
         pub mod pallet {
             use super::*;
             #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
@@ -12616,13 +13000,17 @@ pub mod types {
                 #[doc = "block number as the type might suggest."]
                 #[codec(index = 0u8)]
                 NewSession { session_index: u32 },
-                #[doc = "Validator has been disabled."]
+                #[doc = "The `NewSession` event in the current block also implies a new validator set to be"]
+                #[doc = "queued."]
                 #[codec(index = 1u8)]
+                NewQueued,
+                #[doc = "Validator has been disabled."]
+                #[codec(index = 2u8)]
                 ValidatorDisabled {
                     validator: ::polymesh_api_client::AccountId,
                 },
                 #[doc = "Validator has been re-enabled."]
-                #[codec(index = 2u8)]
+                #[codec(index = 3u8)]
                 ValidatorReenabled {
                     validator: ::polymesh_api_client::AccountId,
                 },
@@ -12632,6 +13020,7 @@ pub mod types {
                     #[allow(unreachable_patterns)]
                     match self {
                         Self::NewSession { .. } => "Session.NewSession",
+                        Self::NewQueued => "Session.NewQueued",
                         Self::ValidatorDisabled { .. } => "Session.ValidatorDisabled",
                         Self::ValidatorReenabled { .. } => "Session.ValidatorReenabled",
                         _ => "Unknown",
@@ -12644,7 +13033,7 @@ pub mod types {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    # [allow (unreachable_patterns)] match self { Self :: NewSession { .. } => { & ["New session has happened. Note that the argument is the session index, not the" , "block number as the type might suggest." ,] } , Self :: ValidatorDisabled { .. } => { & ["Validator has been disabled." ,] } , Self :: ValidatorReenabled { .. } => { & ["Validator has been re-enabled." ,] } , _ => & [""] , }
+                    # [allow (unreachable_patterns)] match self { Self :: NewSession { .. } => { & ["New session has happened. Note that the argument is the session index, not the" , "block number as the type might suggest." ,] } , Self :: NewQueued => { & ["The `NewSession` event in the current block also implies a new validator set to be" , "queued." ,] } , Self :: ValidatorDisabled { .. } => { & ["Validator has been disabled." ,] } , Self :: ValidatorReenabled { .. } => { & ["Validator has been re-enabled." ,] } , _ => & [""] , }
                 }
             }
             impl From<SessionEvent> for &'static str {
@@ -12656,6 +13045,16 @@ pub mod types {
                 fn from(v: &SessionEvent) -> Self {
                     v.as_static_str()
                 }
+            }
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum HoldReason {
+                #[codec(index = 0u8)]
+                Keys,
             }
         }
     }
@@ -13739,6 +14138,8 @@ pub mod types {
                     #[doc = "period ends. If this leaves an amount actively bonded less than"]
                     #[doc = "[`asset::existential_deposit`], then it is increased to the full amount."]
                     #[doc = ""]
+                    #[doc = "The stash may be chilled if the ledger total amount falls to 0 after unbonding."]
+                    #[doc = ""]
                     #[doc = "The dispatch origin for this call must be _Signed_ by the controller, not the stash."]
                     #[doc = ""]
                     #[doc = "Once the unlock period is done, you can call `withdraw_unbonded` to actually move"]
@@ -13957,6 +14358,7 @@ pub mod types {
                     #[doc = "Can be called by the `T::AdminOrigin`."]
                     #[doc = ""]
                     #[doc = "Parameters: era and indices of the slashes for that era to kill."]
+                    #[doc = "They **must** be sorted in ascending order, *and* unique."]
                     #[codec(index = 17u8)]
                     cancel_deferred_slash {
                         era: u32,
@@ -14267,7 +14669,7 @@ pub mod types {
                         self.as_static_str()
                     }
                     fn as_docs(&self) -> &'static [&'static str] {
-                        # [allow (unreachable_patterns)] match self { Self :: bond { .. } => { & ["Take the origin account as a stash and lock up `value` of its balance. `controller` will" , "be the account that controls it." , "" , "`value` must be more than the `minimum_balance` specified by `T::Currency`." , "" , "The dispatch origin for this call must be _Signed_ by the stash account." , "" , "Emits `Bonded`." , "## Complexity" , "- Independent of the arguments. Moderate complexity." , "- O(1)." , "- Three extra DB entries." , "" , "NOTE: Two of the storage writes (`Self::bonded`, `Self::payee`) are _never_ cleaned" , "unless the `origin` falls below _existential deposit_ (or equal to 0) and gets removed" , "as dust." ,] } , Self :: bond_extra { .. } => { & ["Add some extra amount that have appeared in the stash `free_balance` into the balance up" , "for staking." , "" , "The dispatch origin for this call must be _Signed_ by the stash, not the controller." , "" , "Use this if there are additional funds in your stash account that you wish to bond." , "Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose" , "any limitation on the amount that can be added." , "" , "Emits `Bonded`." , "" , "## Complexity" , "- Independent of the arguments. Insignificant complexity." , "- O(1)." ,] } , Self :: unbond { .. } => { & ["Schedule a portion of the stash to be unlocked ready for transfer out after the bond" , "period ends. If this leaves an amount actively bonded less than" , "[`asset::existential_deposit`], then it is increased to the full amount." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "Once the unlock period is done, you can call `withdraw_unbonded` to actually move" , "the funds out of management ready for transfer." , "" , "No more than a limited number of unlocking chunks (see `MaxUnlockingChunks`)" , "can co-exists at the same time. If there are no unlocking chunks slots available" , "[`Call::withdraw_unbonded`] is called to remove some of the chunks (if possible)." , "" , "If a user encounters the `InsufficientBond` error when calling this extrinsic," , "they should call `chill` first in order to free up their bonded funds." , "" , "Emits `Unbonded`." , "" , "See also [`Call::withdraw_unbonded`]." ,] } , Self :: withdraw_unbonded { .. } => { & ["Remove any unlocked chunks from the `unlocking` queue from our management." , "" , "This essentially frees up that balance to be used by the stash account to do whatever" , "it wants." , "" , "The dispatch origin for this call must be _Signed_ by the controller." , "" , "Emits `Withdrawn`." , "" , "See also [`Call::unbond`]." , "" , "## Parameters" , "" , "- `num_slashing_spans` indicates the number of metadata slashing spans to clear when" , "this call results in a complete removal of all the data related to the stash account." , "In this case, the `num_slashing_spans` must be larger or equal to the number of" , "slashing spans associated with the stash account in the [`SlashingSpans`] storage type," , "otherwise the call will fail. The call weight is directly proportional to" , "`num_slashing_spans`." , "" , "## Complexity" , "O(S) where S is the number of slashing spans to remove" , "NOTE: Weight annotation is the kill scenario, we refund otherwise." ,] } , Self :: validate { .. } => { & ["Declare the desire to validate for the origin controller." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." ,] } , Self :: nominate { .. } => { & ["Declare the desire to nominate `targets` for the origin controller." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "## Complexity" , "- The transaction's complexity is proportional to the size of `targets` (N)" , "which is capped at CompactAssignments::LIMIT (T::MaxNominations)." , "- Both the reads and writes follow a similar pattern." ,] } , Self :: chill => { & ["Declare no desire to either validate or nominate." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "## Complexity" , "- Independent of the arguments. Insignificant complexity." , "- Contains one read." , "- Writes are limited to the `origin` account key." ,] } , Self :: set_payee { .. } => { & ["(Re-)set the payment target for a controller." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "## Complexity" , "- O(1)" , "- Independent of the arguments. Insignificant complexity." , "- Contains a limited number of reads." , "- Writes are limited to the `origin` account key." , "---------" ,] } , Self :: set_controller => { & ["(Re-)sets the controller of a stash to the stash itself. This function previously" , "accepted a `controller` argument to set the controller to an account other than the" , "stash itself. This functionality has now been removed, now only setting the controller" , "to the stash, if it is not already." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "The dispatch origin for this call must be _Signed_ by the stash, not the controller." , "" , "## Complexity" , "O(1)" , "- Independent of the arguments. Insignificant complexity." , "- Contains a limited number of reads." , "- Writes are limited to the `origin` account key." ,] } , Self :: set_validator_count { .. } => { & ["Sets the ideal number of validators." , "" , "The dispatch origin must be Root." , "" , "## Complexity" , "O(1)" ,] } , Self :: increase_validator_count { .. } => { & ["Increments the ideal number of validators up to maximum of" , "`ElectionProviderBase::MaxWinners`." , "" , "The dispatch origin must be Root." , "" , "## Complexity" , "Same as [`Self::set_validator_count`]." ,] } , Self :: scale_validator_count { .. } => { & ["Scale up the ideal number of validators by a factor up to maximum of" , "`ElectionProviderBase::MaxWinners`." , "" , "The dispatch origin must be Root." , "" , "## Complexity" , "Same as [`Self::set_validator_count`]." ,] } , Self :: force_no_eras => { & ["Force there to be no new eras indefinitely." , "" , "The dispatch origin must be Root." , "" , "# Warning" , "" , "The election process starts multiple blocks before the end of the era." , "Thus the election process may be ongoing when this is called. In this case the" , "election will continue until the next era is triggered." , "" , "## Complexity" , "- No arguments." , "- Weight: O(1)" ,] } , Self :: force_new_era => { & ["Force there to be a new era at the end of the next session. After this, it will be" , "reset to normal (non-forced) behaviour." , "" , "The dispatch origin must be Root." , "" , "# Warning" , "" , "The election process starts multiple blocks before the end of the era." , "If this is called just before a new era is triggered, the election process may not" , "have enough blocks to get a result." , "" , "## Complexity" , "- No arguments." , "- Weight: O(1)" ,] } , Self :: set_invulnerables { .. } => { & ["Set the validators who cannot be slashed (if any)." , "" , "The dispatch origin must be Root." ,] } , Self :: force_unstake { .. } => { & ["Force a current staker to become completely unstaked, immediately." , "" , "The dispatch origin must be Root." , "" , "## Parameters" , "" , "- `num_slashing_spans`: Refer to comments on [`Call::withdraw_unbonded`] for more" , "details." ,] } , Self :: force_new_era_always => { & ["Force there to be a new era at the end of sessions indefinitely." , "" , "The dispatch origin must be Root." , "" , "# Warning" , "" , "The election process starts multiple blocks before the end of the era." , "If this is called just before a new era is triggered, the election process may not" , "have enough blocks to get a result." ,] } , Self :: cancel_deferred_slash { .. } => { & ["Cancel enactment of a deferred slash." , "" , "Can be called by the `T::AdminOrigin`." , "" , "Parameters: era and indices of the slashes for that era to kill." ,] } , Self :: payout_stakers { .. } => { & ["Pay out next page of the stakers behind a validator for the given era." , "" , "- `validator_stash` is the stash account of the validator." , "- `era` may be any era between `[current_era - history_depth; current_era]`." , "" , "The origin of this call must be _Signed_. Any account can call this function, even if" , "it is not one of the stakers." , "" , "The reward payout could be paged in case there are too many nominators backing the" , "`validator_stash`. This call will payout unpaid pages in an ascending order. To claim a" , "specific page, use `payout_stakers_by_page`.`" , "" , "If all pages are claimed, it returns an error `InvalidPage`." ,] } , Self :: rebond { .. } => { & ["Rebond a portion of the stash scheduled to be unlocked." , "" , "The dispatch origin must be signed by the controller." , "" , "## Complexity" , "- Time complexity: O(L), where L is unlocking chunks" , "- Bounded by `MaxUnlockingChunks`." ,] } , Self :: reap_stash { .. } => { & ["Remove all data structures concerning a staker/stash once it is at a state where it can" , "be considered `dust` in the staking system. The requirements are:" , "" , "1. the `total_balance` of the stash is below existential deposit." , "2. or, the `ledger.total` of the stash is below existential deposit." , "3. or, existential deposit is zero and either `total_balance` or `ledger.total` is zero." , "" , "The former can happen in cases like a slash; the latter when a fully unbonded account" , "is still receiving staking rewards in `RewardDestination::Staked`." , "" , "It can be called by anyone, as long as `stash` meets the above requirements." , "" , "Refunds the transaction fees upon successful execution." , "" , "## Parameters" , "" , "- `num_slashing_spans`: Refer to comments on [`Call::withdraw_unbonded`] for more" , "details." ,] } , Self :: kick { .. } => { & ["Remove the given nominations from the calling validator." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "- `who`: A list of nominator stash accounts who are nominating this validator which" , "  should no longer be nominating this validator." , "" , "Note: Making this call only makes sense if you first set the validator preferences to" , "block any further nominations." ,] } , Self :: set_staking_configs { .. } => { & ["Update the various staking configurations ." , "" , "* `min_nominator_bond`: The minimum active bond needed to be a nominator." , "* `min_validator_bond`: The minimum active bond needed to be a validator." , "* `max_nominator_count`: The max number of users who can be a nominator at once. When" , "  set to `None`, no limit is enforced." , "* `max_validator_count`: The max number of users who can be a validator at once. When" , "  set to `None`, no limit is enforced." , "* `chill_threshold`: The ratio of `max_nominator_count` or `max_validator_count` which" , "  should be filled in order for the `chill_other` transaction to work." , "* `min_commission`: The minimum amount of commission that each validators must maintain." , "  This is checked only upon calling `validate`. Existing validators are not affected." , "" , "RuntimeOrigin must be Root to call this function." , "" , "NOTE: Existing nominators and validators will not be affected by this update." , "to kick people under the new limits, `chill_other` should be called." ,] } , Self :: chill_other { .. } => { & ["Declare a `controller` to stop participating as either a validator or nominator." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_, but can be called by anyone." , "" , "If the caller is the same as the controller being targeted, then no further checks are" , "enforced, and this function behaves just like `chill`." , "" , "If the caller is different than the controller being targeted, the following conditions" , "must be met:" , "" , "* `controller` must belong to a nominator who has become non-decodable," , "" , "Or:" , "" , "* A `ChillThreshold` must be set and checked which defines how close to the max" , "  nominators or validators we must reach before users can start chilling one-another." , "* A `MaxNominatorCount` and `MaxValidatorCount` must be set which is used to determine" , "  how close we are to the threshold." , "* A `MinNominatorBond` and `MinValidatorBond` must be set and checked, which determines" , "  if this is a person that should be chilled because they have not met the threshold" , "  bond required." , "" , "This can be helpful if bond requirements are updated, and we need to remove old users" , "who do not satisfy these requirements." ,] } , Self :: force_apply_min_commission { .. } => { & ["Force a validator to have at least the minimum commission. This will not affect a" , "validator who already has a commission greater than or equal to the minimum. Any account" , "can call this." ,] } , Self :: set_min_commission { .. } => { & ["Sets the minimum amount of commission that each validators must maintain." , "" , "This call has lower privilege requirements than `set_staking_config` and can be called" , "by the `T::AdminOrigin`. Root can always call this." ,] } , Self :: payout_stakers_by_page { .. } => { & ["Pay out a page of the stakers behind a validator for the given era and page." , "" , "- `validator_stash` is the stash account of the validator." , "- `era` may be any era between `[current_era - history_depth; current_era]`." , "- `page` is the page index of nominators to pay out with value between 0 and" , "  `num_nominators / T::MaxExposurePageSize`." , "" , "The origin of this call must be _Signed_. Any account can call this function, even if" , "it is not one of the stakers." , "" , "If a validator has more than [`Config::MaxExposurePageSize`] nominators backing" , "them, then the list of nominators is paged, with each page being capped at" , "[`Config::MaxExposurePageSize`.] If a validator has more than one page of nominators," , "the call needs to be made for each page separately in order for all the nominators" , "backing a validator to receive the reward. The nominators are not sorted across pages" , "and so it should not be assumed the highest staker would be on the topmost page and vice" , "versa. If rewards are not claimed in [`Config::HistoryDepth`] eras, they are lost." ,] } , Self :: update_payee { .. } => { & ["Migrates an account's `RewardDestination::Controller` to" , "`RewardDestination::Account(controller)`." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "This will waive the transaction fee if the `payee` is successfully migrated." ,] } , Self :: deprecate_controller_batch { .. } => { & ["Updates a batch of controller accounts to their corresponding stash account if they are" , "not the same. Ignores any controller accounts that do not exist, and does not operate if" , "the stash and controller are already the same." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "The dispatch origin must be `T::AdminOrigin`." ,] } , Self :: restore_ledger { .. } => { & ["Restores the state of a ledger which is in an inconsistent state." , "" , "The requirements to restore a ledger are the following:" , "* The stash is bonded; or" , "* The stash is not bonded but it has a staking lock left behind; or" , "* If the stash has an associated ledger and its state is inconsistent; or" , "* If the ledger is not corrupted *but* its staking lock is out of sync." , "" , "The `maybe_*` input parameters will overwrite the corresponding data and metadata of the" , "ledger associated with the stash. If the input parameters are not set, the ledger will" , "be reset values from on-chain state." ,] } , Self :: migrate_currency { .. } => { & ["Removes the legacy Staking locks if they exist." , "" , "This removes the legacy lock on the stake with [`Config::OldCurrency`] and creates a" , "hold on it if needed. If all stake cannot be held, the best effort is made to hold as" , "much as possible. The remaining stake is forced withdrawn from the ledger." , "" , "The fee is waived if the migration is successful." ,] } , Self :: manual_slash { .. } => { & ["This function allows governance to manually slash a validator and is a" , "**fallback mechanism**." , "" , "The dispatch origin must be `T::AdminOrigin`." , "" , "## Parameters" , "- `validator_stash` - The stash account of the validator to slash." , "- `era` - The era in which the validator was in the active set." , "- `slash_fraction` - The percentage of the stake to slash, expressed as a Perbill." , "" , "## Behavior" , "" , "The slash will be applied using the standard slashing mechanics, respecting the" , "configured `SlashDeferDuration`." , "" , "This means:" , "- If the validator was already slashed by a higher percentage for the same era, this" , "  slash will have no additional effect." , "- If the validator was previously slashed by a lower percentage, only the difference" , "  will be applied." , "- The slash will be deferred by `SlashDeferDuration` eras before being enacted." ,] } , _ => & [""] , }
+                        # [allow (unreachable_patterns)] match self { Self :: bond { .. } => { & ["Take the origin account as a stash and lock up `value` of its balance. `controller` will" , "be the account that controls it." , "" , "`value` must be more than the `minimum_balance` specified by `T::Currency`." , "" , "The dispatch origin for this call must be _Signed_ by the stash account." , "" , "Emits `Bonded`." , "## Complexity" , "- Independent of the arguments. Moderate complexity." , "- O(1)." , "- Three extra DB entries." , "" , "NOTE: Two of the storage writes (`Self::bonded`, `Self::payee`) are _never_ cleaned" , "unless the `origin` falls below _existential deposit_ (or equal to 0) and gets removed" , "as dust." ,] } , Self :: bond_extra { .. } => { & ["Add some extra amount that have appeared in the stash `free_balance` into the balance up" , "for staking." , "" , "The dispatch origin for this call must be _Signed_ by the stash, not the controller." , "" , "Use this if there are additional funds in your stash account that you wish to bond." , "Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose" , "any limitation on the amount that can be added." , "" , "Emits `Bonded`." , "" , "## Complexity" , "- Independent of the arguments. Insignificant complexity." , "- O(1)." ,] } , Self :: unbond { .. } => { & ["Schedule a portion of the stash to be unlocked ready for transfer out after the bond" , "period ends. If this leaves an amount actively bonded less than" , "[`asset::existential_deposit`], then it is increased to the full amount." , "" , "The stash may be chilled if the ledger total amount falls to 0 after unbonding." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "Once the unlock period is done, you can call `withdraw_unbonded` to actually move" , "the funds out of management ready for transfer." , "" , "No more than a limited number of unlocking chunks (see `MaxUnlockingChunks`)" , "can co-exists at the same time. If there are no unlocking chunks slots available" , "[`Call::withdraw_unbonded`] is called to remove some of the chunks (if possible)." , "" , "If a user encounters the `InsufficientBond` error when calling this extrinsic," , "they should call `chill` first in order to free up their bonded funds." , "" , "Emits `Unbonded`." , "" , "See also [`Call::withdraw_unbonded`]." ,] } , Self :: withdraw_unbonded { .. } => { & ["Remove any unlocked chunks from the `unlocking` queue from our management." , "" , "This essentially frees up that balance to be used by the stash account to do whatever" , "it wants." , "" , "The dispatch origin for this call must be _Signed_ by the controller." , "" , "Emits `Withdrawn`." , "" , "See also [`Call::unbond`]." , "" , "## Parameters" , "" , "- `num_slashing_spans` indicates the number of metadata slashing spans to clear when" , "this call results in a complete removal of all the data related to the stash account." , "In this case, the `num_slashing_spans` must be larger or equal to the number of" , "slashing spans associated with the stash account in the [`SlashingSpans`] storage type," , "otherwise the call will fail. The call weight is directly proportional to" , "`num_slashing_spans`." , "" , "## Complexity" , "O(S) where S is the number of slashing spans to remove" , "NOTE: Weight annotation is the kill scenario, we refund otherwise." ,] } , Self :: validate { .. } => { & ["Declare the desire to validate for the origin controller." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." ,] } , Self :: nominate { .. } => { & ["Declare the desire to nominate `targets` for the origin controller." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "## Complexity" , "- The transaction's complexity is proportional to the size of `targets` (N)" , "which is capped at CompactAssignments::LIMIT (T::MaxNominations)." , "- Both the reads and writes follow a similar pattern." ,] } , Self :: chill => { & ["Declare no desire to either validate or nominate." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "## Complexity" , "- Independent of the arguments. Insignificant complexity." , "- Contains one read." , "- Writes are limited to the `origin` account key." ,] } , Self :: set_payee { .. } => { & ["(Re-)set the payment target for a controller." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "## Complexity" , "- O(1)" , "- Independent of the arguments. Insignificant complexity." , "- Contains a limited number of reads." , "- Writes are limited to the `origin` account key." , "---------" ,] } , Self :: set_controller => { & ["(Re-)sets the controller of a stash to the stash itself. This function previously" , "accepted a `controller` argument to set the controller to an account other than the" , "stash itself. This functionality has now been removed, now only setting the controller" , "to the stash, if it is not already." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "The dispatch origin for this call must be _Signed_ by the stash, not the controller." , "" , "## Complexity" , "O(1)" , "- Independent of the arguments. Insignificant complexity." , "- Contains a limited number of reads." , "- Writes are limited to the `origin` account key." ,] } , Self :: set_validator_count { .. } => { & ["Sets the ideal number of validators." , "" , "The dispatch origin must be Root." , "" , "## Complexity" , "O(1)" ,] } , Self :: increase_validator_count { .. } => { & ["Increments the ideal number of validators up to maximum of" , "`ElectionProviderBase::MaxWinners`." , "" , "The dispatch origin must be Root." , "" , "## Complexity" , "Same as [`Self::set_validator_count`]." ,] } , Self :: scale_validator_count { .. } => { & ["Scale up the ideal number of validators by a factor up to maximum of" , "`ElectionProviderBase::MaxWinners`." , "" , "The dispatch origin must be Root." , "" , "## Complexity" , "Same as [`Self::set_validator_count`]." ,] } , Self :: force_no_eras => { & ["Force there to be no new eras indefinitely." , "" , "The dispatch origin must be Root." , "" , "# Warning" , "" , "The election process starts multiple blocks before the end of the era." , "Thus the election process may be ongoing when this is called. In this case the" , "election will continue until the next era is triggered." , "" , "## Complexity" , "- No arguments." , "- Weight: O(1)" ,] } , Self :: force_new_era => { & ["Force there to be a new era at the end of the next session. After this, it will be" , "reset to normal (non-forced) behaviour." , "" , "The dispatch origin must be Root." , "" , "# Warning" , "" , "The election process starts multiple blocks before the end of the era." , "If this is called just before a new era is triggered, the election process may not" , "have enough blocks to get a result." , "" , "## Complexity" , "- No arguments." , "- Weight: O(1)" ,] } , Self :: set_invulnerables { .. } => { & ["Set the validators who cannot be slashed (if any)." , "" , "The dispatch origin must be Root." ,] } , Self :: force_unstake { .. } => { & ["Force a current staker to become completely unstaked, immediately." , "" , "The dispatch origin must be Root." , "" , "## Parameters" , "" , "- `num_slashing_spans`: Refer to comments on [`Call::withdraw_unbonded`] for more" , "details." ,] } , Self :: force_new_era_always => { & ["Force there to be a new era at the end of sessions indefinitely." , "" , "The dispatch origin must be Root." , "" , "# Warning" , "" , "The election process starts multiple blocks before the end of the era." , "If this is called just before a new era is triggered, the election process may not" , "have enough blocks to get a result." ,] } , Self :: cancel_deferred_slash { .. } => { & ["Cancel enactment of a deferred slash." , "" , "Can be called by the `T::AdminOrigin`." , "" , "Parameters: era and indices of the slashes for that era to kill." , "They **must** be sorted in ascending order, *and* unique." ,] } , Self :: payout_stakers { .. } => { & ["Pay out next page of the stakers behind a validator for the given era." , "" , "- `validator_stash` is the stash account of the validator." , "- `era` may be any era between `[current_era - history_depth; current_era]`." , "" , "The origin of this call must be _Signed_. Any account can call this function, even if" , "it is not one of the stakers." , "" , "The reward payout could be paged in case there are too many nominators backing the" , "`validator_stash`. This call will payout unpaid pages in an ascending order. To claim a" , "specific page, use `payout_stakers_by_page`.`" , "" , "If all pages are claimed, it returns an error `InvalidPage`." ,] } , Self :: rebond { .. } => { & ["Rebond a portion of the stash scheduled to be unlocked." , "" , "The dispatch origin must be signed by the controller." , "" , "## Complexity" , "- Time complexity: O(L), where L is unlocking chunks" , "- Bounded by `MaxUnlockingChunks`." ,] } , Self :: reap_stash { .. } => { & ["Remove all data structures concerning a staker/stash once it is at a state where it can" , "be considered `dust` in the staking system. The requirements are:" , "" , "1. the `total_balance` of the stash is below existential deposit." , "2. or, the `ledger.total` of the stash is below existential deposit." , "3. or, existential deposit is zero and either `total_balance` or `ledger.total` is zero." , "" , "The former can happen in cases like a slash; the latter when a fully unbonded account" , "is still receiving staking rewards in `RewardDestination::Staked`." , "" , "It can be called by anyone, as long as `stash` meets the above requirements." , "" , "Refunds the transaction fees upon successful execution." , "" , "## Parameters" , "" , "- `num_slashing_spans`: Refer to comments on [`Call::withdraw_unbonded`] for more" , "details." ,] } , Self :: kick { .. } => { & ["Remove the given nominations from the calling validator." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_ by the controller, not the stash." , "" , "- `who`: A list of nominator stash accounts who are nominating this validator which" , "  should no longer be nominating this validator." , "" , "Note: Making this call only makes sense if you first set the validator preferences to" , "block any further nominations." ,] } , Self :: set_staking_configs { .. } => { & ["Update the various staking configurations ." , "" , "* `min_nominator_bond`: The minimum active bond needed to be a nominator." , "* `min_validator_bond`: The minimum active bond needed to be a validator." , "* `max_nominator_count`: The max number of users who can be a nominator at once. When" , "  set to `None`, no limit is enforced." , "* `max_validator_count`: The max number of users who can be a validator at once. When" , "  set to `None`, no limit is enforced." , "* `chill_threshold`: The ratio of `max_nominator_count` or `max_validator_count` which" , "  should be filled in order for the `chill_other` transaction to work." , "* `min_commission`: The minimum amount of commission that each validators must maintain." , "  This is checked only upon calling `validate`. Existing validators are not affected." , "" , "RuntimeOrigin must be Root to call this function." , "" , "NOTE: Existing nominators and validators will not be affected by this update." , "to kick people under the new limits, `chill_other` should be called." ,] } , Self :: chill_other { .. } => { & ["Declare a `controller` to stop participating as either a validator or nominator." , "" , "Effects will be felt at the beginning of the next era." , "" , "The dispatch origin for this call must be _Signed_, but can be called by anyone." , "" , "If the caller is the same as the controller being targeted, then no further checks are" , "enforced, and this function behaves just like `chill`." , "" , "If the caller is different than the controller being targeted, the following conditions" , "must be met:" , "" , "* `controller` must belong to a nominator who has become non-decodable," , "" , "Or:" , "" , "* A `ChillThreshold` must be set and checked which defines how close to the max" , "  nominators or validators we must reach before users can start chilling one-another." , "* A `MaxNominatorCount` and `MaxValidatorCount` must be set which is used to determine" , "  how close we are to the threshold." , "* A `MinNominatorBond` and `MinValidatorBond` must be set and checked, which determines" , "  if this is a person that should be chilled because they have not met the threshold" , "  bond required." , "" , "This can be helpful if bond requirements are updated, and we need to remove old users" , "who do not satisfy these requirements." ,] } , Self :: force_apply_min_commission { .. } => { & ["Force a validator to have at least the minimum commission. This will not affect a" , "validator who already has a commission greater than or equal to the minimum. Any account" , "can call this." ,] } , Self :: set_min_commission { .. } => { & ["Sets the minimum amount of commission that each validators must maintain." , "" , "This call has lower privilege requirements than `set_staking_config` and can be called" , "by the `T::AdminOrigin`. Root can always call this." ,] } , Self :: payout_stakers_by_page { .. } => { & ["Pay out a page of the stakers behind a validator for the given era and page." , "" , "- `validator_stash` is the stash account of the validator." , "- `era` may be any era between `[current_era - history_depth; current_era]`." , "- `page` is the page index of nominators to pay out with value between 0 and" , "  `num_nominators / T::MaxExposurePageSize`." , "" , "The origin of this call must be _Signed_. Any account can call this function, even if" , "it is not one of the stakers." , "" , "If a validator has more than [`Config::MaxExposurePageSize`] nominators backing" , "them, then the list of nominators is paged, with each page being capped at" , "[`Config::MaxExposurePageSize`.] If a validator has more than one page of nominators," , "the call needs to be made for each page separately in order for all the nominators" , "backing a validator to receive the reward. The nominators are not sorted across pages" , "and so it should not be assumed the highest staker would be on the topmost page and vice" , "versa. If rewards are not claimed in [`Config::HistoryDepth`] eras, they are lost." ,] } , Self :: update_payee { .. } => { & ["Migrates an account's `RewardDestination::Controller` to" , "`RewardDestination::Account(controller)`." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "This will waive the transaction fee if the `payee` is successfully migrated." ,] } , Self :: deprecate_controller_batch { .. } => { & ["Updates a batch of controller accounts to their corresponding stash account if they are" , "not the same. Ignores any controller accounts that do not exist, and does not operate if" , "the stash and controller are already the same." , "" , "Effects will be felt instantly (as soon as this function is completed successfully)." , "" , "The dispatch origin must be `T::AdminOrigin`." ,] } , Self :: restore_ledger { .. } => { & ["Restores the state of a ledger which is in an inconsistent state." , "" , "The requirements to restore a ledger are the following:" , "* The stash is bonded; or" , "* The stash is not bonded but it has a staking lock left behind; or" , "* If the stash has an associated ledger and its state is inconsistent; or" , "* If the ledger is not corrupted *but* its staking lock is out of sync." , "" , "The `maybe_*` input parameters will overwrite the corresponding data and metadata of the" , "ledger associated with the stash. If the input parameters are not set, the ledger will" , "be reset values from on-chain state." ,] } , Self :: migrate_currency { .. } => { & ["Removes the legacy Staking locks if they exist." , "" , "This removes the legacy lock on the stake with [`Config::OldCurrency`] and creates a" , "hold on it if needed. If all stake cannot be held, the best effort is made to hold as" , "much as possible. The remaining stake is forced withdrawn from the ledger." , "" , "The fee is waived if the migration is successful." ,] } , Self :: manual_slash { .. } => { & ["This function allows governance to manually slash a validator and is a" , "**fallback mechanism**." , "" , "The dispatch origin must be `T::AdminOrigin`." , "" , "## Parameters" , "- `validator_stash` - The stash account of the validator to slash." , "- `era` - The era in which the validator was in the active set." , "- `slash_fraction` - The percentage of the stake to slash, expressed as a Perbill." , "" , "## Behavior" , "" , "The slash will be applied using the standard slashing mechanics, respecting the" , "configured `SlashDeferDuration`." , "" , "This means:" , "- If the validator was already slashed by a higher percentage for the same era, this" , "  slash will have no additional effect." , "- If the validator was previously slashed by a lower percentage, only the difference" , "  will be applied." , "- The slash will be deferred by `SlashDeferDuration` eras before being enacted." ,] } , _ => & [""] , }
                     }
                 }
                 impl From<StakingCall> for &'static str {
@@ -15724,11 +16126,6 @@ pub mod types {
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum SudoCall {
                 #[doc = "Authenticates the sudo key and dispatches a function call with `Root` origin."]
-                #[doc = ""]
-                #[doc = "The dispatch origin for this call must be _Signed_."]
-                #[doc = ""]
-                #[doc = "## Complexity"]
-                #[doc = "- O(1)."]
                 #[codec(index = 0u8)]
                 sudo {
                     call: ::alloc::boxed::Box<runtime::RuntimeCall>,
@@ -15738,9 +16135,6 @@ pub mod types {
                 #[doc = "Sudo user to specify the weight of the call."]
                 #[doc = ""]
                 #[doc = "The dispatch origin for this call must be _Signed_."]
-                #[doc = ""]
-                #[doc = "## Complexity"]
-                #[doc = "- O(1)."]
                 #[codec(index = 1u8)]
                 sudo_unchecked_weight {
                     call: ::alloc::boxed::Box<runtime::RuntimeCall>,
@@ -15748,11 +16142,6 @@ pub mod types {
                 },
                 #[doc = "Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo"]
                 #[doc = "key."]
-                #[doc = ""]
-                #[doc = "The dispatch origin for this call must be _Signed_."]
-                #[doc = ""]
-                #[doc = "## Complexity"]
-                #[doc = "- O(1)."]
                 #[codec(index = 2u8)]
                 set_key {
                     new: ::polymesh_api_client::MultiAddress<::polymesh_api_client::AccountId, u32>,
@@ -15761,14 +16150,16 @@ pub mod types {
                 #[doc = "a given account."]
                 #[doc = ""]
                 #[doc = "The dispatch origin for this call must be _Signed_."]
-                #[doc = ""]
-                #[doc = "## Complexity"]
-                #[doc = "- O(1)."]
                 #[codec(index = 3u8)]
                 sudo_as {
                     who: ::polymesh_api_client::MultiAddress<::polymesh_api_client::AccountId, u32>,
                     call: ::alloc::boxed::Box<runtime::RuntimeCall>,
                 },
+                #[doc = "Permanently removes the sudo key."]
+                #[doc = ""]
+                #[doc = "**This cannot be un-done.**"]
+                #[codec(index = 4u8)]
+                remove_key,
             }
             impl SudoCall {
                 pub fn as_static_str(&self) -> &'static str {
@@ -15778,6 +16169,7 @@ pub mod types {
                         Self::sudo_unchecked_weight { .. } => "Sudo.sudo_unchecked_weight",
                         Self::set_key { .. } => "Sudo.set_key",
                         Self::sudo_as { .. } => "Sudo.sudo_as",
+                        Self::remove_key => "Sudo.remove_key",
                         _ => "Unknown",
                     }
                 }
@@ -15788,7 +16180,7 @@ pub mod types {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    # [allow (unreachable_patterns)] match self { Self :: sudo { .. } => { & ["Authenticates the sudo key and dispatches a function call with `Root` origin." , "" , "The dispatch origin for this call must be _Signed_." , "" , "## Complexity" , "- O(1)." ,] } , Self :: sudo_unchecked_weight { .. } => { & ["Authenticates the sudo key and dispatches a function call with `Root` origin." , "This function does not check the weight of the call, and instead allows the" , "Sudo user to specify the weight of the call." , "" , "The dispatch origin for this call must be _Signed_." , "" , "## Complexity" , "- O(1)." ,] } , Self :: set_key { .. } => { & ["Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo" , "key." , "" , "The dispatch origin for this call must be _Signed_." , "" , "## Complexity" , "- O(1)." ,] } , Self :: sudo_as { .. } => { & ["Authenticates the sudo key and dispatches a function call with `Signed` origin from" , "a given account." , "" , "The dispatch origin for this call must be _Signed_." , "" , "## Complexity" , "- O(1)." ,] } , _ => & [""] , }
+                    # [allow (unreachable_patterns)] match self { Self :: sudo { .. } => { & ["Authenticates the sudo key and dispatches a function call with `Root` origin." ,] } , Self :: sudo_unchecked_weight { .. } => { & ["Authenticates the sudo key and dispatches a function call with `Root` origin." , "This function does not check the weight of the call, and instead allows the" , "Sudo user to specify the weight of the call." , "" , "The dispatch origin for this call must be _Signed_." ,] } , Self :: set_key { .. } => { & ["Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo" , "key." ,] } , Self :: sudo_as { .. } => { & ["Authenticates the sudo key and dispatches a function call with `Signed` origin from" , "a given account." , "" , "The dispatch origin for this call must be _Signed_." ,] } , Self :: remove_key => { & ["Permanently removes the sudo key." , "" , "**This cannot be un-done.**" ,] } , _ => & [""] , }
                 }
             }
             impl From<SudoCall> for &'static str {
@@ -15801,7 +16193,7 @@ pub mod types {
                     v.as_static_str()
                 }
             }
-            #[doc = "Error for the Sudo pallet"]
+            #[doc = "Error for the Sudo pallet."]
             #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(
                 all(feature = "std", feature = "type_info"),
@@ -15809,7 +16201,7 @@ pub mod types {
             )]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum SudoError {
-                #[doc = "Sender must be the Sudo account"]
+                #[doc = "Sender must be the Sudo account."]
                 #[codec(index = 0u8)]
                 RequireSudo,
             }
@@ -15830,7 +16222,7 @@ pub mod types {
                 fn as_docs(&self) -> &'static [&'static str] {
                     #[allow(unreachable_patterns)]
                     match self {
-                        Self::RequireSudo => &["Sender must be the Sudo account"],
+                        Self::RequireSudo => &["Sender must be the Sudo account."],
                         _ => &[""],
                     }
                 }
@@ -15853,19 +16245,27 @@ pub mod types {
             )]
             #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
             pub enum SudoEvent {
-                #[doc = "A sudo just took place. \\[result\\]"]
+                #[doc = "A sudo call just took place."]
                 #[codec(index = 0u8)]
                 Sudid {
+                    #[doc = "The result of the call made by the sudo user."]
                     sudo_result: Result<(), sp_runtime::DispatchError>,
                 },
-                #[doc = "The \\[sudoer\\] just switched identity; the old key is supplied if one existed."]
+                #[doc = "The sudo key has been updated."]
                 #[codec(index = 1u8)]
                 KeyChanged {
-                    old_sudoer: Option<::polymesh_api_client::AccountId>,
+                    #[doc = "The old sudo key (if one was previously set)."]
+                    old: Option<::polymesh_api_client::AccountId>,
+                    #[doc = "The new sudo key (if one was set)."]
+                    new: ::polymesh_api_client::AccountId,
                 },
-                #[doc = "A sudo just took place. \\[result\\]"]
+                #[doc = "The key was permanently removed."]
                 #[codec(index = 2u8)]
+                KeyRemoved,
+                #[doc = "A [sudo_as](Pallet::sudo_as) call just took place."]
+                #[codec(index = 3u8)]
                 SudoAsDone {
+                    #[doc = "The result of the call made by the sudo user."]
                     sudo_result: Result<(), sp_runtime::DispatchError>,
                 },
             }
@@ -15875,6 +16275,7 @@ pub mod types {
                     match self {
                         Self::Sudid { .. } => "Sudo.Sudid",
                         Self::KeyChanged { .. } => "Sudo.KeyChanged",
+                        Self::KeyRemoved => "Sudo.KeyRemoved",
                         Self::SudoAsDone { .. } => "Sudo.SudoAsDone",
                         _ => "Unknown",
                     }
@@ -15886,7 +16287,16 @@ pub mod types {
                     self.as_static_str()
                 }
                 fn as_docs(&self) -> &'static [&'static str] {
-                    # [allow (unreachable_patterns)] match self { Self :: Sudid { .. } => { & ["A sudo just took place. \\[result\\]" ,] } , Self :: KeyChanged { .. } => { & ["The \\[sudoer\\] just switched identity; the old key is supplied if one existed." ,] } , Self :: SudoAsDone { .. } => { & ["A sudo just took place. \\[result\\]" ,] } , _ => & [""] , }
+                    #[allow(unreachable_patterns)]
+                    match self {
+                        Self::Sudid { .. } => &["A sudo call just took place."],
+                        Self::KeyChanged { .. } => &["The sudo key has been updated."],
+                        Self::KeyRemoved => &["The key was permanently removed."],
+                        Self::SudoAsDone { .. } => {
+                            &["A [sudo_as](Pallet::sudo_as) call just took place."]
+                        }
+                        _ => &[""],
+                    }
                 }
             }
             impl From<SudoEvent> for &'static str {
@@ -15972,49 +16382,6 @@ pub mod types {
         use super::*;
         pub mod pallet {
             use super::*;
-            #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
-            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
-            #[cfg_attr(
-                all(feature = "std", feature = "type_info"),
-                derive(::scale_info::TypeInfo)
-            )]
-            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-            pub enum TransactionPaymentCall {
-                #[codec(index = 0u8)]
-                set_disable_fees { value: bool },
-            }
-            impl TransactionPaymentCall {
-                pub fn as_static_str(&self) -> &'static str {
-                    #[allow(unreachable_patterns)]
-                    match self {
-                        Self::set_disable_fees { .. } => "TransactionPayment.set_disable_fees",
-                        _ => "Unknown",
-                    }
-                }
-            }
-            #[cfg(not(feature = "ink"))]
-            impl ::polymesh_api_client::EnumInfo for TransactionPaymentCall {
-                fn as_name(&self) -> &'static str {
-                    self.as_static_str()
-                }
-                fn as_docs(&self) -> &'static [&'static str] {
-                    #[allow(unreachable_patterns)]
-                    match self {
-                        Self::set_disable_fees { .. } => &[""],
-                        _ => &[""],
-                    }
-                }
-            }
-            impl From<TransactionPaymentCall> for &'static str {
-                fn from(v: TransactionPaymentCall) -> Self {
-                    v.as_static_str()
-                }
-            }
-            impl From<&TransactionPaymentCall> for &'static str {
-                fn from(v: &TransactionPaymentCall) -> Self {
-                    v.as_static_str()
-                }
-            }
             #[doc = "The `Event` enum of this pallet"]
             #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
             #[cfg_attr(
@@ -16061,13 +16428,6 @@ pub mod types {
                 }
             }
         }
-        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
-        #[cfg_attr(
-            all(feature = "std", feature = "type_info"),
-            derive(::scale_info::TypeInfo)
-        )]
-        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-        pub struct ChargeTransactionPayment(#[codec(compact)] pub u128);
         #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
         #[cfg_attr(
             all(feature = "std", feature = "type_info"),
@@ -19488,6 +19848,64 @@ pub mod types {
             )>,
         }
     }
+    pub mod polymesh_transaction_payment {
+        use super::*;
+        pub mod pallet {
+            use super::*;
+            #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub enum PolymeshTransactionPaymentCall {
+                #[codec(index = 0u8)]
+                set_disable_fees { value: bool },
+            }
+            impl PolymeshTransactionPaymentCall {
+                pub fn as_static_str(&self) -> &'static str {
+                    #[allow(unreachable_patterns)]
+                    match self {
+                        Self::set_disable_fees { .. } => {
+                            "PolymeshTransactionPayment.set_disable_fees"
+                        }
+                        _ => "Unknown",
+                    }
+                }
+            }
+            #[cfg(not(feature = "ink"))]
+            impl ::polymesh_api_client::EnumInfo for PolymeshTransactionPaymentCall {
+                fn as_name(&self) -> &'static str {
+                    self.as_static_str()
+                }
+                fn as_docs(&self) -> &'static [&'static str] {
+                    #[allow(unreachable_patterns)]
+                    match self {
+                        Self::set_disable_fees { .. } => &[""],
+                        _ => &[""],
+                    }
+                }
+            }
+            impl From<PolymeshTransactionPaymentCall> for &'static str {
+                fn from(v: PolymeshTransactionPaymentCall) -> Self {
+                    v.as_static_str()
+                }
+            }
+            impl From<&PolymeshTransactionPaymentCall> for &'static str {
+                fn from(v: &PolymeshTransactionPaymentCall) -> Self {
+                    v.as_static_str()
+                }
+            }
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ChargeTransactionPayment(#[codec(compact)] pub u128);
+    }
     pub mod primitive_types {
         use super::*;
         #[derive(
@@ -19556,8 +19974,6 @@ pub mod types {
             Indices(pallet_indices::pallet::IndicesCall),
             #[codec(index = 5u8)]
             Balances(pallet_balances::pallet::BalancesCall),
-            #[codec(index = 6u8)]
-            TransactionPayment(pallet_transaction_payment::pallet::TransactionPaymentCall),
             #[codec(index = 7u8)]
             Identity(pallet_identity::pallet::IdentityCall),
             #[codec(index = 8u8)]
@@ -19638,6 +20054,12 @@ pub mod types {
             ElectionProviderMultiPhase(
                 pallet_election_provider_multi_phase::pallet::ElectionProviderMultiPhaseCall,
             ),
+            #[codec(index = 51u8)]
+            PolymeshTransactionPayment(
+                polymesh_transaction_payment::pallet::PolymeshTransactionPaymentCall,
+            ),
+            #[codec(index = 52u8)]
+            Beefy(pallet_beefy::pallet::BeefyCall),
         }
         impl RuntimeCall {
             pub fn as_static_str(&self) -> &'static str {
@@ -19648,7 +20070,6 @@ pub mod types {
                     Self::Timestamp(val) => val.as_static_str(),
                     Self::Indices(val) => val.as_static_str(),
                     Self::Balances(val) => val.as_static_str(),
-                    Self::TransactionPayment(val) => val.as_static_str(),
                     Self::Identity(val) => val.as_static_str(),
                     Self::CddServiceProviders(val) => val.as_static_str(),
                     Self::PolymeshCommittee(val) => val.as_static_str(),
@@ -19687,6 +20108,8 @@ pub mod types {
                     Self::Preimage(val) => val.as_static_str(),
                     Self::Nft(val) => val.as_static_str(),
                     Self::ElectionProviderMultiPhase(val) => val.as_static_str(),
+                    Self::PolymeshTransactionPayment(val) => val.as_static_str(),
+                    Self::Beefy(val) => val.as_static_str(),
                     _ => "Unknown",
                 }
             }
@@ -19704,7 +20127,6 @@ pub mod types {
                     Self::Timestamp(val) => val.as_docs(),
                     Self::Indices(val) => val.as_docs(),
                     Self::Balances(val) => val.as_docs(),
-                    Self::TransactionPayment(val) => val.as_docs(),
                     Self::Identity(val) => val.as_docs(),
                     Self::CddServiceProviders(val) => val.as_docs(),
                     Self::PolymeshCommittee(val) => val.as_docs(),
@@ -19743,6 +20165,8 @@ pub mod types {
                     Self::Preimage(val) => val.as_docs(),
                     Self::Nft(val) => val.as_docs(),
                     Self::ElectionProviderMultiPhase(val) => val.as_docs(),
+                    Self::PolymeshTransactionPayment(val) => val.as_docs(),
+                    Self::Beefy(val) => val.as_docs(),
                     _ => &[""],
                 }
             }
@@ -19782,6 +20206,7 @@ pub mod types {
             pub type OffencesEvent = pallet_offences::pallet::OffencesEvent;
             pub type SessionEvent = pallet_session::pallet::SessionEvent;
             pub type GrandpaEvent = pallet_grandpa::pallet::GrandpaEvent;
+            pub type HistoricalEvent = pallet_session::historical::pallet::HistoricalEvent;
             pub type ImOnlineEvent = pallet_im_online::pallet::ImOnlineEvent;
             pub type SudoEvent = pallet_sudo::pallet::SudoEvent;
             pub type AssetEvent = pallet_asset::pallet::AssetEvent;
@@ -19802,7 +20227,6 @@ pub mod types {
             pub type StoEvent = pallet_sto::pallet::StoEvent;
             pub type TreasuryEvent = pallet_treasury::pallet::TreasuryEvent;
             pub type UtilityEvent = pallet_utility::pallet::UtilityEvent;
-            pub type BaseEvent = pallet_base::pallet::BaseEvent;
             pub type ExternalAgentsEvent = pallet_external_agents::pallet::ExternalAgentsEvent;
             pub type RelayerEvent = pallet_relayer::pallet::RelayerEvent;
             pub type ContractsEvent = pallet_contracts::pallet::ContractsEvent;
@@ -19855,6 +20279,8 @@ pub mod types {
             Session(events::SessionEvent),
             #[codec(index = 21u8)]
             Grandpa(events::GrandpaEvent),
+            #[codec(index = 22u8)]
+            Historical(events::HistoricalEvent),
             #[codec(index = 23u8)]
             ImOnline(events::ImOnlineEvent),
             #[codec(index = 25u8)]
@@ -19889,8 +20315,6 @@ pub mod types {
             Treasury(events::TreasuryEvent),
             #[codec(index = 41u8)]
             Utility(events::UtilityEvent),
-            #[codec(index = 42u8)]
-            Base(events::BaseEvent),
             #[codec(index = 43u8)]
             ExternalAgents(events::ExternalAgentsEvent),
             #[codec(index = 44u8)]
@@ -19928,6 +20352,7 @@ pub mod types {
                     Self::Offences(val) => val.as_static_str(),
                     Self::Session(val) => val.as_static_str(),
                     Self::Grandpa(val) => val.as_static_str(),
+                    Self::Historical(val) => val.as_static_str(),
                     Self::ImOnline(val) => val.as_static_str(),
                     Self::Sudo(val) => val.as_static_str(),
                     Self::Asset(val) => val.as_static_str(),
@@ -19945,7 +20370,6 @@ pub mod types {
                     Self::Sto(val) => val.as_static_str(),
                     Self::Treasury(val) => val.as_static_str(),
                     Self::Utility(val) => val.as_static_str(),
-                    Self::Base(val) => val.as_static_str(),
                     Self::ExternalAgents(val) => val.as_static_str(),
                     Self::Relayer(val) => val.as_static_str(),
                     Self::Contracts(val) => val.as_static_str(),
@@ -19983,6 +20407,7 @@ pub mod types {
                     Self::Offences(val) => val.as_docs(),
                     Self::Session(val) => val.as_docs(),
                     Self::Grandpa(val) => val.as_docs(),
+                    Self::Historical(val) => val.as_docs(),
                     Self::ImOnline(val) => val.as_docs(),
                     Self::Sudo(val) => val.as_docs(),
                     Self::Asset(val) => val.as_docs(),
@@ -20000,7 +20425,6 @@ pub mod types {
                     Self::Sto(val) => val.as_docs(),
                     Self::Treasury(val) => val.as_docs(),
                     Self::Utility(val) => val.as_docs(),
-                    Self::Base(val) => val.as_docs(),
                     Self::ExternalAgents(val) => val.as_docs(),
                     Self::Relayer(val) => val.as_docs(),
                     Self::Contracts(val) => val.as_docs(),
@@ -20031,6 +20455,8 @@ pub mod types {
         pub enum RuntimeHoldReason {
             #[codec(index = 17u8)]
             Staking(pallet_staking::pallet::pallet::HoldReason),
+            #[codec(index = 19u8)]
+            Session(pallet_session::pallet::HoldReason),
             #[codec(index = 46u8)]
             Contracts(pallet_contracts::pallet::HoldReason),
             #[codec(index = 48u8)]
@@ -20047,6 +20473,7 @@ pub mod types {
             pub babe: sp_consensus_babe::app::Public,
             pub im_online: pallet_im_online::sr25519::app_sr25519::Public,
             pub authority_discovery: sp_authority_discovery::app::Public,
+            pub beefy: sp_consensus_beefy::ecdsa_crypto::Public,
         }
     }
     pub mod sp_arithmetic {
@@ -20257,6 +20684,119 @@ pub mod types {
             pub allowed_slots: sp_consensus_babe::AllowedSlots,
         }
     }
+    pub mod sp_consensus_beefy {
+        use super::*;
+        pub mod commitment {
+            use super::*;
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Commitment<TBlockNumber> {
+                pub payload: sp_consensus_beefy::payload::Payload,
+                pub block_number: TBlockNumber,
+                pub validator_set_id: u64,
+            }
+        }
+        pub mod ecdsa_crypto {
+            use super::*;
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Public(
+                #[cfg_attr(feature = "serde", serde(with = "::serde_big_array::BigArray"))]
+                pub  [u8; 33usize],
+            );
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Signature(
+                #[cfg_attr(feature = "serde", serde(with = "::serde_big_array::BigArray"))]
+                pub  [u8; 65usize],
+            );
+        }
+        pub mod mmr {
+            use super::*;
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct BeefyAuthoritySet<AuthoritySetCommitment> {
+                pub id: u64,
+                pub len: u32,
+                pub keyset_commitment: AuthoritySetCommitment,
+            }
+        }
+        pub mod payload {
+            use super::*;
+            #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+            #[cfg_attr(
+                all(feature = "std", feature = "type_info"),
+                derive(::scale_info::TypeInfo)
+            )]
+            #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+            pub struct Payload(pub ::alloc::vec::Vec<([u8; 2usize], ::alloc::vec::Vec<u8>)>);
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct DoubleVotingProof<Number, Id, Signature> {
+            pub first: sp_consensus_beefy::VoteMessage<Number, Id, Signature>,
+            pub second: sp_consensus_beefy::VoteMessage<Number, Id, Signature>,
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct ForkVotingProof<Header, Id, AncestryProof> {
+            pub vote: sp_consensus_beefy::VoteMessage<
+                u32,
+                Id,
+                sp_consensus_beefy::ecdsa_crypto::Signature,
+            >,
+            pub ancestry_proof: AncestryProof,
+            pub header: Header,
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct FutureBlockVotingProof<Number, Id> {
+            pub vote: sp_consensus_beefy::VoteMessage<
+                Number,
+                Id,
+                sp_consensus_beefy::ecdsa_crypto::Signature,
+            >,
+        }
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct VoteMessage<Number, Id, Signature> {
+            pub commitment: sp_consensus_beefy::commitment::Commitment<Number>,
+            pub id: Id,
+            pub signature: Signature,
+        }
+    }
     pub mod sp_consensus_grandpa {
         use super::*;
         pub mod app {
@@ -20373,6 +20913,21 @@ pub mod types {
                     pub proof: [u8; 64usize],
                 }
             }
+        }
+    }
+    pub mod sp_mmr_primitives {
+        use super::*;
+        #[derive(Clone, Debug, PartialEq, Eq, :: codec :: Encode, :: codec :: Decode)]
+        #[cfg_attr(
+            all(feature = "std", feature = "type_info"),
+            derive(::scale_info::TypeInfo)
+        )]
+        #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+        pub struct AncestryProof<Hash> {
+            pub prev_peaks: ::alloc::vec::Vec<Hash>,
+            pub prev_leaf_count: u64,
+            pub leaf_count: u64,
+            pub items: ::alloc::vec::Vec<(u64, Hash)>,
         }
     }
     pub mod sp_npos_elections {
@@ -21215,6 +21770,8 @@ pub mod types {
             ElectionProviderMultiPhase(
                 pallet_election_provider_multi_phase::pallet::ElectionProviderMultiPhaseError,
             ),
+            #[codec(index = 52u8)]
+            Beefy(pallet_beefy::pallet::BeefyError),
         }
         impl RuntimeError {
             pub fn as_static_str(&self) -> &'static str {
@@ -21262,6 +21819,7 @@ pub mod types {
                     RuntimeError::Preimage(err) => err.as_static_str(),
                     RuntimeError::Nft(err) => err.as_static_str(),
                     RuntimeError::ElectionProviderMultiPhase(err) => err.as_static_str(),
+                    RuntimeError::Beefy(err) => err.as_static_str(),
                 }
             }
         }
@@ -21325,6 +21883,7 @@ pub mod types {
                     RuntimeError::Preimage(err) => err.as_docs(),
                     RuntimeError::Nft(err) => err.as_docs(),
                     RuntimeError::ElectionProviderMultiPhase(err) => err.as_docs(),
+                    RuntimeError::Beefy(err) => err.as_docs(),
                 }
             }
         }
@@ -21391,6 +21950,11 @@ pub mod types {
             ),
             #[codec(index = 2u8)]
             Ecdsa(
+                #[cfg_attr(feature = "serde", serde(with = "::serde_big_array::BigArray"))]
+                [u8; 65usize],
+            ),
+            #[codec(index = 3u8)]
+            Eth(
                 #[cfg_attr(feature = "serde", serde(with = "::serde_big_array::BigArray"))]
                 [u8; 65usize],
             ),
@@ -25142,22 +25706,7 @@ pub mod api {
         pub struct TransactionPaymentCallApi<'api> {
             api: &'api super::super::Api,
         }
-        impl<'api> TransactionPaymentCallApi<'api> {
-            #[cfg(not(feature = "ink"))]
-            pub fn set_disable_fees(
-                &self,
-                value: bool,
-            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
-                self . api . wrap_call (runtime :: RuntimeCall :: TransactionPayment (types :: pallet_transaction_payment :: pallet :: TransactionPaymentCall :: set_disable_fees { value , }))
-            }
-            #[cfg(feature = "ink")]
-            pub fn set_disable_fees(&self, value: bool) -> super::super::WrappedCall {
-                use ::codec::Encode;
-                let mut buf = ::alloc::vec![6u8, 0u8];
-                value.encode_to(&mut buf);
-                self.api.wrap_call(buf)
-            }
-        }
+        impl<'api> TransactionPaymentCallApi<'api> {}
         impl<'api> From<&'api super::super::Api> for TransactionPaymentCallApi<'api> {
             fn from(api: &'api super::super::Api) -> Self {
                 Self { api }
@@ -25245,6 +25794,33 @@ pub mod api {
                     <types::pallet_transaction_payment::Releases>::decode(&mut &DEFAULT[..])
                         .unwrap()
                 }))
+            }
+            #[doc = " The `OnChargeTransaction` stores the withdrawn tx fee here."]
+            #[doc = ""]
+            #[doc = " Use `withdraw_txfee` and `remaining_txfee` to access from outside the crate."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn tx_payment_credit(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<Option<()>> {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    63u8, 20u8, 103u8, 160u8, 150u8, 188u8, 215u8, 26u8, 91u8, 106u8, 12u8, 129u8,
+                    85u8, 226u8, 8u8, 16u8, 12u8, 194u8, 135u8, 73u8, 46u8, 245u8, 71u8, 90u8,
+                    65u8, 151u8, 183u8, 237u8, 77u8, 54u8, 179u8, 246u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value)
+            }
+            #[doc = " The `OnChargeTransaction` stores the withdrawn tx fee here."]
+            #[doc = ""]
+            #[doc = " Use `withdraw_txfee` and `remaining_txfee` to access from outside the crate."]
+            #[cfg(feature = "ink")]
+            pub fn tx_payment_credit(&self) -> ::polymesh_api_ink::error::Result<Option<()>> {
+                let value = self.api.read_storage(::alloc::vec![
+                    63u8, 20u8, 103u8, 160u8, 150u8, 188u8, 215u8, 26u8, 91u8, 106u8, 12u8, 129u8,
+                    85u8, 226u8, 8u8, 16u8, 12u8, 194u8, 135u8, 73u8, 46u8, 245u8, 71u8, 90u8,
+                    65u8, 151u8, 183u8, 237u8, 77u8, 54u8, 179u8, 246u8,
+                ])?;
+                Ok(value)
             }
         }
         #[derive(Clone)]
@@ -32783,6 +33359,8 @@ pub mod api {
             #[doc = "period ends. If this leaves an amount actively bonded less than"]
             #[doc = "[`asset::existential_deposit`], then it is increased to the full amount."]
             #[doc = ""]
+            #[doc = "The stash may be chilled if the ledger total amount falls to 0 after unbonding."]
+            #[doc = ""]
             #[doc = "The dispatch origin for this call must be _Signed_ by the controller, not the stash."]
             #[doc = ""]
             #[doc = "Once the unlock period is done, you can call `withdraw_unbonded` to actually move"]
@@ -32810,6 +33388,8 @@ pub mod api {
             #[doc = "Schedule a portion of the stash to be unlocked ready for transfer out after the bond"]
             #[doc = "period ends. If this leaves an amount actively bonded less than"]
             #[doc = "[`asset::existential_deposit`], then it is increased to the full amount."]
+            #[doc = ""]
+            #[doc = "The stash may be chilled if the ledger total amount falls to 0 after unbonding."]
             #[doc = ""]
             #[doc = "The dispatch origin for this call must be _Signed_ by the controller, not the stash."]
             #[doc = ""]
@@ -33358,6 +33938,7 @@ pub mod api {
             #[doc = "Can be called by the `T::AdminOrigin`."]
             #[doc = ""]
             #[doc = "Parameters: era and indices of the slashes for that era to kill."]
+            #[doc = "They **must** be sorted in ascending order, *and* unique."]
             #[cfg(not(feature = "ink"))]
             pub fn cancel_deferred_slash(
                 &self,
@@ -33376,6 +33957,7 @@ pub mod api {
             #[doc = "Can be called by the `T::AdminOrigin`."]
             #[doc = ""]
             #[doc = "Parameters: era and indices of the slashes for that era to kill."]
+            #[doc = "They **must** be sorted in ascending order, *and* unique."]
             #[cfg(feature = "ink")]
             pub fn cancel_deferred_slash(
                 &self,
@@ -38100,11 +38682,6 @@ pub mod api {
         }
         impl<'api> SudoCallApi<'api> {
             #[doc = "Authenticates the sudo key and dispatches a function call with `Root` origin."]
-            #[doc = ""]
-            #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(not(feature = "ink"))]
             pub fn sudo(
                 &self,
@@ -38117,11 +38694,6 @@ pub mod api {
                 ))
             }
             #[doc = "Authenticates the sudo key and dispatches a function call with `Root` origin."]
-            #[doc = ""]
-            #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(feature = "ink")]
             pub fn sudo(&self, call: runtime::RuntimeCall) -> super::super::WrappedCall {
                 use ::codec::Encode;
@@ -38134,9 +38706,6 @@ pub mod api {
             #[doc = "Sudo user to specify the weight of the call."]
             #[doc = ""]
             #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(not(feature = "ink"))]
             pub fn sudo_unchecked_weight(
                 &self,
@@ -38155,9 +38724,6 @@ pub mod api {
             #[doc = "Sudo user to specify the weight of the call."]
             #[doc = ""]
             #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(feature = "ink")]
             pub fn sudo_unchecked_weight(
                 &self,
@@ -38172,11 +38738,6 @@ pub mod api {
             }
             #[doc = "Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo"]
             #[doc = "key."]
-            #[doc = ""]
-            #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(not(feature = "ink"))]
             pub fn set_key(
                 &self,
@@ -38188,11 +38749,6 @@ pub mod api {
             }
             #[doc = "Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo"]
             #[doc = "key."]
-            #[doc = ""]
-            #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(feature = "ink")]
             pub fn set_key(
                 &self,
@@ -38207,9 +38763,6 @@ pub mod api {
             #[doc = "a given account."]
             #[doc = ""]
             #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(not(feature = "ink"))]
             pub fn sudo_as(
                 &self,
@@ -38227,9 +38780,6 @@ pub mod api {
             #[doc = "a given account."]
             #[doc = ""]
             #[doc = "The dispatch origin for this call must be _Signed_."]
-            #[doc = ""]
-            #[doc = "## Complexity"]
-            #[doc = "- O(1)."]
             #[cfg(feature = "ink")]
             pub fn sudo_as(
                 &self,
@@ -38241,6 +38791,24 @@ pub mod api {
                 who.encode_to(&mut buf);
                 call.encode_to(&mut buf);
                 self.api.wrap_call(buf)
+            }
+            #[doc = "Permanently removes the sudo key."]
+            #[doc = ""]
+            #[doc = "**This cannot be un-done.**"]
+            #[cfg(not(feature = "ink"))]
+            pub fn remove_key(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Sudo(
+                    types::pallet_sudo::pallet::SudoCall::remove_key,
+                ))
+            }
+            #[doc = "Permanently removes the sudo key."]
+            #[doc = ""]
+            #[doc = "**This cannot be un-done.**"]
+            #[cfg(feature = "ink")]
+            pub fn remove_key(&self) -> super::super::WrappedCall {
+                self.api.wrap_call(::alloc::vec![25u8, 4u8])
             }
         }
         impl<'api> From<&'api super::super::Api> for SudoCallApi<'api> {
@@ -60117,26 +60685,16 @@ pub mod api {
             #[cfg(not(feature = "ink"))]
             pub fn governance_fallback(
                 &self,
-                maybe_max_voters: Option<u32>,
-                maybe_max_targets: Option<u32>,
             ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
-                self . api . wrap_call (runtime :: RuntimeCall :: ElectionProviderMultiPhase (types :: pallet_election_provider_multi_phase :: pallet :: ElectionProviderMultiPhaseCall :: governance_fallback { maybe_max_voters , maybe_max_targets , }))
+                self . api . wrap_call (runtime :: RuntimeCall :: ElectionProviderMultiPhase (types :: pallet_election_provider_multi_phase :: pallet :: ElectionProviderMultiPhaseCall :: governance_fallback))
             }
             #[doc = "Trigger the governance fallback."]
             #[doc = ""]
             #[doc = "This can only be called when [`Phase::Emergency`] is enabled, as an alternative to"]
             #[doc = "calling [`Call::set_emergency_election_result`]."]
             #[cfg(feature = "ink")]
-            pub fn governance_fallback(
-                &self,
-                maybe_max_voters: Option<u32>,
-                maybe_max_targets: Option<u32>,
-            ) -> super::super::WrappedCall {
-                use ::codec::Encode;
-                let mut buf = ::alloc::vec![50u8, 4u8];
-                maybe_max_voters.encode_to(&mut buf);
-                maybe_max_targets.encode_to(&mut buf);
-                self.api.wrap_call(buf)
+            pub fn governance_fallback(&self) -> super::super::WrappedCall {
+                self.api.wrap_call(::alloc::vec![50u8, 4u8])
             }
         }
         impl<'api> From<&'api super::super::Api> for ElectionProviderMultiPhaseCallApi<'api> {
@@ -60607,6 +61165,902 @@ pub mod api {
             }
         }
     }
+    pub mod polymesh_transaction_payment {
+        use super::*;
+        #[derive(Clone)]
+        pub struct PolymeshTransactionPaymentCallApi<'api> {
+            api: &'api super::super::Api,
+        }
+        impl<'api> PolymeshTransactionPaymentCallApi<'api> {
+            #[cfg(not(feature = "ink"))]
+            pub fn set_disable_fees(
+                &self,
+                value: bool,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self . api . wrap_call (runtime :: RuntimeCall :: PolymeshTransactionPayment (types :: polymesh_transaction_payment :: pallet :: PolymeshTransactionPaymentCall :: set_disable_fees { value , }))
+            }
+            #[cfg(feature = "ink")]
+            pub fn set_disable_fees(&self, value: bool) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![51u8, 0u8];
+                value.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+        }
+        impl<'api> From<&'api super::super::Api> for PolymeshTransactionPaymentCallApi<'api> {
+            fn from(api: &'api super::super::Api) -> Self {
+                Self { api }
+            }
+        }
+        #[derive(Clone)]
+        pub struct PolymeshTransactionPaymentQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            #[cfg(not(feature = "ink"))]
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        impl<'api> PolymeshTransactionPaymentQueryApi<'api> {}
+        #[derive(Clone)]
+        #[cfg(not(feature = "ink"))]
+        pub struct PolymeshTransactionPaymentPagedQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        #[cfg(not(feature = "ink"))]
+        impl<'api> PolymeshTransactionPaymentPagedQueryApi<'api> {}
+    }
+    pub mod beefy {
+        use super::*;
+        #[derive(Clone)]
+        pub struct BeefyCallApi<'api> {
+            api: &'api super::super::Api,
+        }
+        impl<'api> BeefyCallApi<'api> {
+            #[doc = "Report voter equivocation/misbehavior. This method will verify the"]
+            #[doc = "equivocation proof and validate the given key ownership proof"]
+            #[doc = "against the extracted offender. If both are valid, the offence"]
+            #[doc = "will be reported."]
+            #[cfg(not(feature = "ink"))]
+            pub fn report_double_voting(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::DoubleVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_consensus_beefy::ecdsa_crypto::Signature,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::report_double_voting {
+                        equivocation_proof: ::alloc::boxed::Box::new(equivocation_proof),
+                        key_owner_proof,
+                    },
+                ))
+            }
+            #[doc = "Report voter equivocation/misbehavior. This method will verify the"]
+            #[doc = "equivocation proof and validate the given key ownership proof"]
+            #[doc = "against the extracted offender. If both are valid, the offence"]
+            #[doc = "will be reported."]
+            #[cfg(feature = "ink")]
+            pub fn report_double_voting(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::DoubleVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_consensus_beefy::ecdsa_crypto::Signature,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 0u8];
+                equivocation_proof.encode_to(&mut buf);
+                key_owner_proof.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+            #[doc = "Report voter equivocation/misbehavior. This method will verify the"]
+            #[doc = "equivocation proof and validate the given key ownership proof"]
+            #[doc = "against the extracted offender. If both are valid, the offence"]
+            #[doc = "will be reported."]
+            #[doc = ""]
+            #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+            #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+            #[doc = "if the block author is defined it will be defined as the equivocation"]
+            #[doc = "reporter."]
+            #[cfg(not(feature = "ink"))]
+            pub fn report_double_voting_unsigned(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::DoubleVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_consensus_beefy::ecdsa_crypto::Signature,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::report_double_voting_unsigned {
+                        equivocation_proof: ::alloc::boxed::Box::new(equivocation_proof),
+                        key_owner_proof,
+                    },
+                ))
+            }
+            #[doc = "Report voter equivocation/misbehavior. This method will verify the"]
+            #[doc = "equivocation proof and validate the given key ownership proof"]
+            #[doc = "against the extracted offender. If both are valid, the offence"]
+            #[doc = "will be reported."]
+            #[doc = ""]
+            #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+            #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+            #[doc = "if the block author is defined it will be defined as the equivocation"]
+            #[doc = "reporter."]
+            #[cfg(feature = "ink")]
+            pub fn report_double_voting_unsigned(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::DoubleVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_consensus_beefy::ecdsa_crypto::Signature,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 1u8];
+                equivocation_proof.encode_to(&mut buf);
+                key_owner_proof.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+            #[doc = "Reset BEEFY consensus by setting a new BEEFY genesis at `delay_in_blocks` blocks in the"]
+            #[doc = "future."]
+            #[doc = ""]
+            #[doc = "Note: `delay_in_blocks` has to be at least 1."]
+            #[cfg(not(feature = "ink"))]
+            pub fn set_new_genesis(
+                &self,
+                delay_in_blocks: u32,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::set_new_genesis { delay_in_blocks },
+                ))
+            }
+            #[doc = "Reset BEEFY consensus by setting a new BEEFY genesis at `delay_in_blocks` blocks in the"]
+            #[doc = "future."]
+            #[doc = ""]
+            #[doc = "Note: `delay_in_blocks` has to be at least 1."]
+            #[cfg(feature = "ink")]
+            pub fn set_new_genesis(&self, delay_in_blocks: u32) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 2u8];
+                delay_in_blocks.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+            #[doc = "Report fork voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[cfg(not(feature = "ink"))]
+            pub fn report_fork_voting(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::ForkVotingProof<
+                    types::sp_runtime::generic::header::Header<u32>,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_mmr_primitives::AncestryProof<types::primitive_types::H256>,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::report_fork_voting {
+                        equivocation_proof: ::alloc::boxed::Box::new(equivocation_proof),
+                        key_owner_proof,
+                    },
+                ))
+            }
+            #[doc = "Report fork voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[cfg(feature = "ink")]
+            pub fn report_fork_voting(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::ForkVotingProof<
+                    types::sp_runtime::generic::header::Header<u32>,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_mmr_primitives::AncestryProof<types::primitive_types::H256>,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 3u8];
+                equivocation_proof.encode_to(&mut buf);
+                key_owner_proof.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+            #[doc = "Report fork voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[doc = ""]
+            #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+            #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+            #[doc = "if the block author is defined it will be defined as the equivocation"]
+            #[doc = "reporter."]
+            #[cfg(not(feature = "ink"))]
+            pub fn report_fork_voting_unsigned(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::ForkVotingProof<
+                    types::sp_runtime::generic::header::Header<u32>,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_mmr_primitives::AncestryProof<types::primitive_types::H256>,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::report_fork_voting_unsigned {
+                        equivocation_proof: ::alloc::boxed::Box::new(equivocation_proof),
+                        key_owner_proof,
+                    },
+                ))
+            }
+            #[doc = "Report fork voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[doc = ""]
+            #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+            #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+            #[doc = "if the block author is defined it will be defined as the equivocation"]
+            #[doc = "reporter."]
+            #[cfg(feature = "ink")]
+            pub fn report_fork_voting_unsigned(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::ForkVotingProof<
+                    types::sp_runtime::generic::header::Header<u32>,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                    types::sp_mmr_primitives::AncestryProof<types::primitive_types::H256>,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 4u8];
+                equivocation_proof.encode_to(&mut buf);
+                key_owner_proof.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+            #[doc = "Report future block voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[cfg(not(feature = "ink"))]
+            pub fn report_future_block_voting(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::FutureBlockVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::report_future_block_voting {
+                        equivocation_proof: ::alloc::boxed::Box::new(equivocation_proof),
+                        key_owner_proof,
+                    },
+                ))
+            }
+            #[doc = "Report future block voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[cfg(feature = "ink")]
+            pub fn report_future_block_voting(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::FutureBlockVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 5u8];
+                equivocation_proof.encode_to(&mut buf);
+                key_owner_proof.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+            #[doc = "Report future block voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[doc = ""]
+            #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+            #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+            #[doc = "if the block author is defined it will be defined as the equivocation"]
+            #[doc = "reporter."]
+            #[cfg(not(feature = "ink"))]
+            pub fn report_future_block_voting_unsigned(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::FutureBlockVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> ::polymesh_api_client::error::Result<super::super::WrappedCall> {
+                self.api.wrap_call(runtime::RuntimeCall::Beefy(
+                    types::pallet_beefy::pallet::BeefyCall::report_future_block_voting_unsigned {
+                        equivocation_proof: ::alloc::boxed::Box::new(equivocation_proof),
+                        key_owner_proof,
+                    },
+                ))
+            }
+            #[doc = "Report future block voting equivocation. This method will verify the equivocation proof"]
+            #[doc = "and validate the given key ownership proof against the extracted offender."]
+            #[doc = "If both are valid, the offence will be reported."]
+            #[doc = ""]
+            #[doc = "This extrinsic must be called unsigned and it is expected that only"]
+            #[doc = "block authors will call it (validated in `ValidateUnsigned`), as such"]
+            #[doc = "if the block author is defined it will be defined as the equivocation"]
+            #[doc = "reporter."]
+            #[cfg(feature = "ink")]
+            pub fn report_future_block_voting_unsigned(
+                &self,
+                equivocation_proof: types::sp_consensus_beefy::FutureBlockVotingProof<
+                    u32,
+                    types::sp_consensus_beefy::ecdsa_crypto::Public,
+                >,
+                key_owner_proof: types::sp_session::MembershipProof,
+            ) -> super::super::WrappedCall {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec![52u8, 6u8];
+                equivocation_proof.encode_to(&mut buf);
+                key_owner_proof.encode_to(&mut buf);
+                self.api.wrap_call(buf)
+            }
+        }
+        impl<'api> From<&'api super::super::Api> for BeefyCallApi<'api> {
+            fn from(api: &'api super::super::Api) -> Self {
+                Self { api }
+            }
+        }
+        #[derive(Clone)]
+        pub struct BeefyQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            #[cfg(not(feature = "ink"))]
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        impl<'api> BeefyQueryApi<'api> {
+            #[doc = " The current authorities set"]
+            #[cfg(not(feature = "ink"))]
+            pub async fn authorities(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<
+                ::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>,
+            > {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 94u8, 6u8, 33u8, 196u8, 134u8, 154u8, 166u8, 12u8,
+                    2u8, 190u8, 154u8, 220u8, 201u8, 138u8, 13u8, 29u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8];
+                    <::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>>::decode(
+                        &mut &DEFAULT[..],
+                    )
+                    .unwrap()
+                }))
+            }
+            #[doc = " The current authorities set"]
+            #[cfg(feature = "ink")]
+            pub fn authorities(
+                &self,
+            ) -> ::polymesh_api_ink::error::Result<
+                ::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>,
+            > {
+                let value = self.api.read_storage(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 94u8, 6u8, 33u8, 196u8, 134u8, 154u8, 166u8, 12u8,
+                    2u8, 190u8, 154u8, 220u8, 201u8, 138u8, 13u8, 29u8,
+                ])?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8];
+                    <::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>>::decode(
+                        &mut &DEFAULT[..],
+                    )
+                    .unwrap()
+                }))
+            }
+            #[doc = " The current validator set id"]
+            #[cfg(not(feature = "ink"))]
+            pub async fn validator_set_id(&self) -> ::polymesh_api_client::error::Result<u64> {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 143u8, 5u8, 188u8, 204u8, 47u8, 112u8, 236u8,
+                    102u8, 163u8, 41u8, 153u8, 197u8, 118u8, 17u8, 86u8, 190u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+                    <u64>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " The current validator set id"]
+            #[cfg(feature = "ink")]
+            pub fn validator_set_id(&self) -> ::polymesh_api_ink::error::Result<u64> {
+                let value = self.api.read_storage(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 143u8, 5u8, 188u8, 204u8, 47u8, 112u8, 236u8,
+                    102u8, 163u8, 41u8, 153u8, 197u8, 118u8, 17u8, 86u8, 190u8,
+                ])?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+                    <u64>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " Authorities set scheduled to be used with the next session"]
+            #[cfg(not(feature = "ink"))]
+            pub async fn next_authorities(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<
+                ::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>,
+            > {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 170u8, 207u8, 0u8, 185u8, 180u8, 31u8, 218u8,
+                    122u8, 146u8, 104u8, 130u8, 28u8, 42u8, 43u8, 62u8, 76u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8];
+                    <::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>>::decode(
+                        &mut &DEFAULT[..],
+                    )
+                    .unwrap()
+                }))
+            }
+            #[doc = " Authorities set scheduled to be used with the next session"]
+            #[cfg(feature = "ink")]
+            pub fn next_authorities(
+                &self,
+            ) -> ::polymesh_api_ink::error::Result<
+                ::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>,
+            > {
+                let value = self.api.read_storage(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 170u8, 207u8, 0u8, 185u8, 180u8, 31u8, 218u8,
+                    122u8, 146u8, 104u8, 130u8, 28u8, 42u8, 43u8, 62u8, 76u8,
+                ])?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8];
+                    <::alloc::vec::Vec<types::sp_consensus_beefy::ecdsa_crypto::Public>>::decode(
+                        &mut &DEFAULT[..],
+                    )
+                    .unwrap()
+                }))
+            }
+            #[doc = " A mapping from BEEFY set ID to the index of the *most recent* session for which its"]
+            #[doc = " members were responsible."]
+            #[doc = ""]
+            #[doc = " This is only used for validating equivocation proofs. An equivocation proof must"]
+            #[doc = " contains a key-ownership proof for a given session, therefore we need a way to tie"]
+            #[doc = " together sessions and BEEFY set ids, i.e. we need to validate that a validator"]
+            #[doc = " was the owner of a given key on a given session, and what the active set ID was"]
+            #[doc = " during that session."]
+            #[doc = ""]
+            #[doc = " TWOX-NOTE: `ValidatorSetId` is not under user control."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn set_id_session(
+                &self,
+                key_0: u64,
+            ) -> ::polymesh_api_client::error::Result<Option<u32>> {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec::Vec::with_capacity(512);
+                buf.extend([
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 212u8, 124u8, 184u8, 245u8, 50u8, 138u8, 247u8,
+                    67u8, 221u8, 251u8, 54u8, 30u8, 113u8, 128u8, 231u8, 252u8,
+                ]);
+                let key = key_0.encode();
+                buf.extend(::polymesh_api_client::hashing::twox_64(&key));
+                buf.extend(key.into_iter());
+                let key = ::polymesh_api_client::StorageKey(buf);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value)
+            }
+            #[doc = " A mapping from BEEFY set ID to the index of the *most recent* session for which its"]
+            #[doc = " members were responsible."]
+            #[doc = ""]
+            #[doc = " This is only used for validating equivocation proofs. An equivocation proof must"]
+            #[doc = " contains a key-ownership proof for a given session, therefore we need a way to tie"]
+            #[doc = " together sessions and BEEFY set ids, i.e. we need to validate that a validator"]
+            #[doc = " was the owner of a given key on a given session, and what the active set ID was"]
+            #[doc = " during that session."]
+            #[doc = ""]
+            #[doc = " TWOX-NOTE: `ValidatorSetId` is not under user control."]
+            #[cfg(feature = "ink")]
+            pub fn set_id_session(
+                &self,
+                key_0: u64,
+            ) -> ::polymesh_api_ink::error::Result<Option<u32>> {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec::Vec::with_capacity(512);
+                buf.extend([
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 212u8, 124u8, 184u8, 245u8, 50u8, 138u8, 247u8,
+                    67u8, 221u8, 251u8, 54u8, 30u8, 113u8, 128u8, 231u8, 252u8,
+                ]);
+                let key = key_0.encode();
+                buf.extend(::polymesh_api_client::hashing::twox_64(&key));
+                buf.extend(key.into_iter());
+                let value = self.api.read_storage(buf)?;
+                Ok(value)
+            }
+            #[doc = " Block number where BEEFY consensus is enabled/started."]
+            #[doc = " By changing this (through privileged `set_new_genesis()`), BEEFY consensus is effectively"]
+            #[doc = " restarted from the newly set block number."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn genesis_block(&self) -> ::polymesh_api_client::error::Result<Option<u32>> {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 199u8, 19u8, 183u8, 248u8, 177u8, 78u8, 40u8, 21u8,
+                    210u8, 151u8, 88u8, 93u8, 53u8, 129u8, 231u8, 116u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8];
+                    <Option<u32>>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " Block number where BEEFY consensus is enabled/started."]
+            #[doc = " By changing this (through privileged `set_new_genesis()`), BEEFY consensus is effectively"]
+            #[doc = " restarted from the newly set block number."]
+            #[cfg(feature = "ink")]
+            pub fn genesis_block(&self) -> ::polymesh_api_ink::error::Result<Option<u32>> {
+                let value = self.api.read_storage(::alloc::vec![
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 199u8, 19u8, 183u8, 248u8, 177u8, 78u8, 40u8, 21u8,
+                    210u8, 151u8, 88u8, 93u8, 53u8, 129u8, 231u8, 116u8,
+                ])?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8];
+                    <Option<u32>>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+        }
+        #[derive(Clone)]
+        #[cfg(not(feature = "ink"))]
+        pub struct BeefyPagedQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        #[cfg(not(feature = "ink"))]
+        impl<'api> BeefyPagedQueryApi<'api> {
+            #[doc = " A mapping from BEEFY set ID to the index of the *most recent* session for which its"]
+            #[doc = " members were responsible."]
+            #[doc = ""]
+            #[doc = " This is only used for validating equivocation proofs. An equivocation proof must"]
+            #[doc = " contains a key-ownership proof for a given session, therefore we need a way to tie"]
+            #[doc = " together sessions and BEEFY set ids, i.e. we need to validate that a validator"]
+            #[doc = " was the owner of a given key on a given session, and what the active set ID was"]
+            #[doc = " during that session."]
+            #[doc = ""]
+            #[doc = " TWOX-NOTE: `ValidatorSetId` is not under user control."]
+            pub fn set_id_session(&self) -> ::polymesh_api_client::StoragePaged<u64, u32> {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec::Vec::with_capacity(512);
+                buf.extend([
+                    8u8, 196u8, 25u8, 116u8, 169u8, 125u8, 191u8, 21u8, 207u8, 190u8, 194u8, 131u8,
+                    101u8, 190u8, 162u8, 218u8, 212u8, 124u8, 184u8, 245u8, 50u8, 138u8, 247u8,
+                    67u8, 221u8, 251u8, 54u8, 30u8, 113u8, 128u8, 231u8, 252u8,
+                ]);
+                let prefix = ::polymesh_api_client::StorageKey(buf);
+                ::polymesh_api_client::StoragePaged::new(&self.api.client, prefix, Some(8), self.at)
+            }
+        }
+    }
+    pub mod mmr {
+        use super::*;
+        #[derive(Clone)]
+        pub struct MmrCallApi<'api> {
+            api: &'api super::super::Api,
+        }
+        impl<'api> MmrCallApi<'api> {}
+        impl<'api> From<&'api super::super::Api> for MmrCallApi<'api> {
+            fn from(api: &'api super::super::Api) -> Self {
+                Self { api }
+            }
+        }
+        #[derive(Clone)]
+        pub struct MmrQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            #[cfg(not(feature = "ink"))]
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        impl<'api> MmrQueryApi<'api> {
+            #[doc = " Latest MMR Root hash."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn root_hash(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<types::primitive_types::H256> {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 212u8, 47u8, 103u8, 104u8, 7u8, 81u8, 140u8, 103u8,
+                    187u8, 66u8, 117u8, 70u8, 186u8, 64u8, 111u8, 161u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                        0u8, 0u8,
+                    ];
+                    <types::primitive_types::H256>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " Latest MMR Root hash."]
+            #[cfg(feature = "ink")]
+            pub fn root_hash(
+                &self,
+            ) -> ::polymesh_api_ink::error::Result<types::primitive_types::H256> {
+                let value = self.api.read_storage(::alloc::vec![
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 212u8, 47u8, 103u8, 104u8, 7u8, 81u8, 140u8, 103u8,
+                    187u8, 66u8, 117u8, 70u8, 186u8, 64u8, 111u8, 161u8,
+                ])?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                        0u8, 0u8,
+                    ];
+                    <types::primitive_types::H256>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " Current size of the MMR (number of leaves)."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn number_of_leaves(&self) -> ::polymesh_api_client::error::Result<u64> {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 129u8, 86u8, 32u8, 153u8, 6u8, 36u8, 79u8, 35u8,
+                    65u8, 19u8, 124u8, 19u8, 103u8, 116u8, 201u8, 29u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+                    <u64>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " Current size of the MMR (number of leaves)."]
+            #[cfg(feature = "ink")]
+            pub fn number_of_leaves(&self) -> ::polymesh_api_ink::error::Result<u64> {
+                let value = self.api.read_storage(::alloc::vec![
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 129u8, 86u8, 32u8, 153u8, 6u8, 36u8, 79u8, 35u8,
+                    65u8, 19u8, 124u8, 19u8, 103u8, 116u8, 201u8, 29u8,
+                ])?;
+                Ok(value.unwrap_or_else(|| {
+                    use ::codec::Decode;
+                    const DEFAULT: &'static [u8] = &[0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+                    <u64>::decode(&mut &DEFAULT[..]).unwrap()
+                }))
+            }
+            #[doc = " Hashes of the nodes in the MMR."]
+            #[doc = ""]
+            #[doc = " Note this collection only contains MMR peaks, the inner nodes (and leaves)"]
+            #[doc = " are pruned and only stored in the Offchain DB."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn nodes(
+                &self,
+                key_0: u64,
+            ) -> ::polymesh_api_client::error::Result<Option<types::primitive_types::H256>>
+            {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec::Vec::with_capacity(512);
+                buf.extend([
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 81u8, 157u8, 252u8, 127u8, 218u8, 210u8, 27u8, 132u8,
+                    246u8, 74u8, 83u8, 16u8, 250u8, 23u8, 142u8, 242u8,
+                ]);
+                buf.extend(key_0.encode());
+                let key = ::polymesh_api_client::StorageKey(buf);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(value)
+            }
+            #[doc = " Hashes of the nodes in the MMR."]
+            #[doc = ""]
+            #[doc = " Note this collection only contains MMR peaks, the inner nodes (and leaves)"]
+            #[doc = " are pruned and only stored in the Offchain DB."]
+            #[cfg(feature = "ink")]
+            pub fn nodes(
+                &self,
+                key_0: u64,
+            ) -> ::polymesh_api_ink::error::Result<Option<types::primitive_types::H256>>
+            {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec::Vec::with_capacity(512);
+                buf.extend([
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 81u8, 157u8, 252u8, 127u8, 218u8, 210u8, 27u8, 132u8,
+                    246u8, 74u8, 83u8, 16u8, 250u8, 23u8, 142u8, 242u8,
+                ]);
+                buf.extend(key_0.encode());
+                let value = self.api.read_storage(buf)?;
+                Ok(value)
+            }
+        }
+        #[derive(Clone)]
+        #[cfg(not(feature = "ink"))]
+        pub struct MmrPagedQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        #[cfg(not(feature = "ink"))]
+        impl<'api> MmrPagedQueryApi<'api> {
+            #[doc = " Hashes of the nodes in the MMR."]
+            #[doc = ""]
+            #[doc = " Note this collection only contains MMR peaks, the inner nodes (and leaves)"]
+            #[doc = " are pruned and only stored in the Offchain DB."]
+            pub fn nodes(
+                &self,
+            ) -> ::polymesh_api_client::StoragePaged<u64, types::primitive_types::H256>
+            {
+                use ::codec::Encode;
+                let mut buf = ::alloc::vec::Vec::with_capacity(512);
+                buf.extend([
+                    168u8, 198u8, 82u8, 9u8, 212u8, 126u8, 232u8, 15u8, 86u8, 176u8, 1u8, 30u8,
+                    143u8, 217u8, 31u8, 80u8, 81u8, 157u8, 252u8, 127u8, 218u8, 210u8, 27u8, 132u8,
+                    246u8, 74u8, 83u8, 16u8, 250u8, 23u8, 142u8, 242u8,
+                ]);
+                let prefix = ::polymesh_api_client::StorageKey(buf);
+                ::polymesh_api_client::StoragePaged::new(&self.api.client, prefix, Some(0), self.at)
+            }
+        }
+    }
+    pub mod mmr_leaf {
+        use super::*;
+        #[derive(Clone)]
+        pub struct MmrLeafCallApi<'api> {
+            api: &'api super::super::Api,
+        }
+        impl<'api> MmrLeafCallApi<'api> {}
+        impl<'api> From<&'api super::super::Api> for MmrLeafCallApi<'api> {
+            fn from(api: &'api super::super::Api) -> Self {
+                Self { api }
+            }
+        }
+        #[derive(Clone)]
+        pub struct MmrLeafQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            #[cfg(not(feature = "ink"))]
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        impl<'api> MmrLeafQueryApi<'api> {
+            #[doc = " Details of current BEEFY authority set."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn beefy_authorities(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<
+                types::sp_consensus_beefy::mmr::BeefyAuthoritySet<types::primitive_types::H256>,
+            > {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    218u8, 125u8, 65u8, 133u8, 248u8, 9u8, 62u8, 128u8, 202u8, 206u8, 182u8, 77u8,
+                    164u8, 82u8, 25u8, 227u8, 197u8, 42u8, 169u8, 67u8, 191u8, 9u8, 8u8, 134u8,
+                    10u8, 62u8, 234u8, 15u8, 173u8, 112u8, 124u8, 220u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(
+                    value.unwrap_or_else(|| {
+                        use ::codec::Decode;
+                        const DEFAULT: &'static [u8] = &[
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8,
+                        ];
+                        <types::sp_consensus_beefy::mmr::BeefyAuthoritySet<
+                            types::primitive_types::H256,
+                        >>::decode(&mut &DEFAULT[..])
+                        .unwrap()
+                    }),
+                )
+            }
+            #[doc = " Details of current BEEFY authority set."]
+            #[cfg(feature = "ink")]
+            pub fn beefy_authorities(
+                &self,
+            ) -> ::polymesh_api_ink::error::Result<
+                types::sp_consensus_beefy::mmr::BeefyAuthoritySet<types::primitive_types::H256>,
+            > {
+                let value = self.api.read_storage(::alloc::vec![
+                    218u8, 125u8, 65u8, 133u8, 248u8, 9u8, 62u8, 128u8, 202u8, 206u8, 182u8, 77u8,
+                    164u8, 82u8, 25u8, 227u8, 197u8, 42u8, 169u8, 67u8, 191u8, 9u8, 8u8, 134u8,
+                    10u8, 62u8, 234u8, 15u8, 173u8, 112u8, 124u8, 220u8,
+                ])?;
+                Ok(
+                    value.unwrap_or_else(|| {
+                        use ::codec::Decode;
+                        const DEFAULT: &'static [u8] = &[
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8,
+                        ];
+                        <types::sp_consensus_beefy::mmr::BeefyAuthoritySet<
+                            types::primitive_types::H256,
+                        >>::decode(&mut &DEFAULT[..])
+                        .unwrap()
+                    }),
+                )
+            }
+            #[doc = " Details of next BEEFY authority set."]
+            #[doc = ""]
+            #[doc = " This storage entry is used as cache for calls to `update_beefy_next_authority_set`."]
+            #[cfg(not(feature = "ink"))]
+            pub async fn beefy_next_authorities(
+                &self,
+            ) -> ::polymesh_api_client::error::Result<
+                types::sp_consensus_beefy::mmr::BeefyAuthoritySet<types::primitive_types::H256>,
+            > {
+                let key = ::polymesh_api_client::StorageKey(::alloc::vec![
+                    218u8, 125u8, 65u8, 133u8, 248u8, 9u8, 62u8, 128u8, 202u8, 206u8, 182u8, 77u8,
+                    164u8, 82u8, 25u8, 227u8, 12u8, 152u8, 83u8, 91u8, 130u8, 199u8, 47u8, 175u8,
+                    60u8, 100u8, 151u8, 64u8, 148u8, 175u8, 70u8, 67u8,
+                ]);
+                let value = self.api.client.get_storage_by_key(key, self.at).await?;
+                Ok(
+                    value.unwrap_or_else(|| {
+                        use ::codec::Decode;
+                        const DEFAULT: &'static [u8] = &[
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8,
+                        ];
+                        <types::sp_consensus_beefy::mmr::BeefyAuthoritySet<
+                            types::primitive_types::H256,
+                        >>::decode(&mut &DEFAULT[..])
+                        .unwrap()
+                    }),
+                )
+            }
+            #[doc = " Details of next BEEFY authority set."]
+            #[doc = ""]
+            #[doc = " This storage entry is used as cache for calls to `update_beefy_next_authority_set`."]
+            #[cfg(feature = "ink")]
+            pub fn beefy_next_authorities(
+                &self,
+            ) -> ::polymesh_api_ink::error::Result<
+                types::sp_consensus_beefy::mmr::BeefyAuthoritySet<types::primitive_types::H256>,
+            > {
+                let value = self.api.read_storage(::alloc::vec![
+                    218u8, 125u8, 65u8, 133u8, 248u8, 9u8, 62u8, 128u8, 202u8, 206u8, 182u8, 77u8,
+                    164u8, 82u8, 25u8, 227u8, 12u8, 152u8, 83u8, 91u8, 130u8, 199u8, 47u8, 175u8,
+                    60u8, 100u8, 151u8, 64u8, 148u8, 175u8, 70u8, 67u8,
+                ])?;
+                Ok(
+                    value.unwrap_or_else(|| {
+                        use ::codec::Decode;
+                        const DEFAULT: &'static [u8] = &[
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8,
+                        ];
+                        <types::sp_consensus_beefy::mmr::BeefyAuthoritySet<
+                            types::primitive_types::H256,
+                        >>::decode(&mut &DEFAULT[..])
+                        .unwrap()
+                    }),
+                )
+            }
+        }
+        #[derive(Clone)]
+        #[cfg(not(feature = "ink"))]
+        pub struct MmrLeafPagedQueryApi<'api> {
+            pub(crate) api: &'api super::super::Api,
+            pub(crate) at: Option<::polymesh_api_client::BlockHash>,
+        }
+        #[cfg(not(feature = "ink"))]
+        impl<'api> MmrLeafPagedQueryApi<'api> {}
+    }
 }
 #[derive(Clone)]
 pub struct Api {
@@ -60640,36 +62094,36 @@ impl Api {
             client: ::polymesh_api_client::Client::new(url).await?,
         })
     }
-    pub fn call(&self) -> CallApi {
+    pub fn call(&self) -> CallApi<'_> {
         CallApi { api: self }
     }
     #[cfg(not(feature = "ink"))]
-    pub fn query(&self) -> QueryApi {
+    pub fn query(&self) -> QueryApi<'_> {
         QueryApi {
             api: self,
             at: None,
         }
     }
     #[cfg(feature = "ink")]
-    pub fn query(&self) -> QueryApi {
+    pub fn query(&self) -> QueryApi<'_> {
         QueryApi { api: self }
     }
     #[cfg(not(feature = "ink"))]
-    pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi {
+    pub fn query_at(&self, block: ::polymesh_api_client::BlockHash) -> QueryApi<'_> {
         QueryApi {
             api: self,
             at: Some(block),
         }
     }
     #[cfg(not(feature = "ink"))]
-    pub fn paged_query(&self) -> PagedQueryApi {
+    pub fn paged_query(&self) -> PagedQueryApi<'_> {
         PagedQueryApi {
             api: self,
             at: None,
         }
     }
     #[cfg(not(feature = "ink"))]
-    pub fn paged_query_at(&self, block: ::polymesh_api_client::BlockHash) -> PagedQueryApi {
+    pub fn paged_query_at(&self, block: ::polymesh_api_client::BlockHash) -> PagedQueryApi<'_> {
         PagedQueryApi {
             api: self,
             at: Some(block),
@@ -60908,6 +62362,20 @@ impl<'api> CallApi<'api> {
         &self,
     ) -> api::election_provider_multi_phase::ElectionProviderMultiPhaseCallApi<'api> {
         api::election_provider_multi_phase::ElectionProviderMultiPhaseCallApi::from(self.api)
+    }
+    pub fn polymesh_transaction_payment(
+        &self,
+    ) -> api::polymesh_transaction_payment::PolymeshTransactionPaymentCallApi<'api> {
+        api::polymesh_transaction_payment::PolymeshTransactionPaymentCallApi::from(self.api)
+    }
+    pub fn beefy(&self) -> api::beefy::BeefyCallApi<'api> {
+        api::beefy::BeefyCallApi::from(self.api)
+    }
+    pub fn mmr(&self) -> api::mmr::MmrCallApi<'api> {
+        api::mmr::MmrCallApi::from(self.api)
+    }
+    pub fn mmr_leaf(&self) -> api::mmr_leaf::MmrLeafCallApi<'api> {
+        api::mmr_leaf::MmrLeafCallApi::from(self.api)
     }
 }
 #[cfg(not(feature = "ink"))]
@@ -61305,6 +62773,36 @@ impl<'api> QueryApi<'api> {
             at: self.at,
         }
     }
+    pub fn polymesh_transaction_payment(
+        &self,
+    ) -> api::polymesh_transaction_payment::PolymeshTransactionPaymentQueryApi<'api> {
+        api::polymesh_transaction_payment::PolymeshTransactionPaymentQueryApi {
+            api: self.api,
+            #[cfg(not(feature = "ink"))]
+            at: self.at,
+        }
+    }
+    pub fn beefy(&self) -> api::beefy::BeefyQueryApi<'api> {
+        api::beefy::BeefyQueryApi {
+            api: self.api,
+            #[cfg(not(feature = "ink"))]
+            at: self.at,
+        }
+    }
+    pub fn mmr(&self) -> api::mmr::MmrQueryApi<'api> {
+        api::mmr::MmrQueryApi {
+            api: self.api,
+            #[cfg(not(feature = "ink"))]
+            at: self.at,
+        }
+    }
+    pub fn mmr_leaf(&self) -> api::mmr_leaf::MmrLeafQueryApi<'api> {
+        api::mmr_leaf::MmrLeafQueryApi {
+            api: self.api,
+            #[cfg(not(feature = "ink"))]
+            at: self.at,
+        }
+    }
 }
 #[derive(Clone)]
 #[cfg(not(feature = "ink"))]
@@ -61686,6 +63184,36 @@ impl<'api> PagedQueryApi<'api> {
         &self,
     ) -> api::election_provider_multi_phase::ElectionProviderMultiPhasePagedQueryApi<'api> {
         api::election_provider_multi_phase::ElectionProviderMultiPhasePagedQueryApi {
+            api: self.api,
+            at: self.at,
+        }
+    }
+    #[cfg(not(feature = "ink"))]
+    pub fn polymesh_transaction_payment(
+        &self,
+    ) -> api::polymesh_transaction_payment::PolymeshTransactionPaymentPagedQueryApi<'api> {
+        api::polymesh_transaction_payment::PolymeshTransactionPaymentPagedQueryApi {
+            api: self.api,
+            at: self.at,
+        }
+    }
+    #[cfg(not(feature = "ink"))]
+    pub fn beefy(&self) -> api::beefy::BeefyPagedQueryApi<'api> {
+        api::beefy::BeefyPagedQueryApi {
+            api: self.api,
+            at: self.at,
+        }
+    }
+    #[cfg(not(feature = "ink"))]
+    pub fn mmr(&self) -> api::mmr::MmrPagedQueryApi<'api> {
+        api::mmr::MmrPagedQueryApi {
+            api: self.api,
+            at: self.at,
+        }
+    }
+    #[cfg(not(feature = "ink"))]
+    pub fn mmr_leaf(&self) -> api::mmr_leaf::MmrLeafPagedQueryApi<'api> {
+        api::mmr_leaf::MmrLeafPagedQueryApi {
             api: self.api,
             at: self.at,
         }
