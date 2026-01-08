@@ -100,6 +100,7 @@ impl InnerClient {
       tx_version: self.runtime_version.transaction_version,
       genesis_hash: self.genesis_hash,
       current_hash: self.genesis_hash,
+      metadata_hash: None,
     };
     let era = match lifetime {
       Some(0) => Era::immortal(),

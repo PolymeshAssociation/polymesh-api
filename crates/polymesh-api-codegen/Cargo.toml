@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-codegen"
-version = "3.7.2"
+version = "3.7.3"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"

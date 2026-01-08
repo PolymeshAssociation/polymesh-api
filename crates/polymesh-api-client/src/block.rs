@@ -168,13 +168,47 @@ pub struct StorageKey(
   #[cfg_attr(feature = "serde", serde(with = "impl_serde::serialize"))] pub Vec<u8>,
 );
 
-#[derive(Clone, Debug, Default, Encode, Decode)]
+#[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AdditionalSigned {
   pub spec_version: u32,
   pub tx_version: u32,
   pub genesis_hash: BlockHash,
   pub current_hash: BlockHash,
+  pub metadata_hash: Option<H256>,
+}
+
+impl Encode for AdditionalSigned {
+  fn encode_to<T: Output + ?Sized>(&self, output: &mut T) {
+    self.spec_version.encode_to(output);
+    self.tx_version.encode_to(output);
+    self.genesis_hash.encode_to(output);
+    self.current_hash.encode_to(output);
+    if self.tx_version >= 8 {
+      self.metadata_hash.encode_to(output);
+    }
+  }
+}
+
+impl Decode for AdditionalSigned {
+  fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+    let spec_version = Decode::decode(input)?;
+    let tx_version = Decode::decode(input)?;
+    let genesis_hash = Decode::decode(input)?;
+    let current_hash = Decode::decode(input)?;
+    let metadata_hash = if tx_version >= 8 {
+      Decode::decode(input)?
+    } else {
+      None
+    };
+    Ok(Self {
+      spec_version,
+      tx_version,
+      genesis_hash,
+      current_hash,
+      metadata_hash,
+    })
+  }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
