@@ -36,15 +36,13 @@ async fn main() -> Result<()> {
   if let Some(events) = events {
     for rec in &events.0 {
       match &rec.event {
-        RuntimeEvent::Balances(events::BalancesEvent::Transfer(
-          _from_did,
+        RuntimeEvent::Balances(events::BalancesEvent::TransferWithMemo {
           from,
-          _to_did,
           to,
           amount,
-          _memo,
-        )) => {
-          println!("{} transfered {:?} to {}", from, amount, to);
+          memo,
+        }) => {
+          println!("{} transfered {:?} to {} with memo {:?}", from, amount, to, memo);
         }
         // Ignore other events.
         _ => (),
