@@ -36,7 +36,7 @@ polymesh-api-client = { version = "3.11.0", path = "crates/polymesh-api-client",
 polymesh-api-ink = { version = "1.6.0", path = "crates/polymesh-api-ink", default-features = false }
 polymesh-api-codegen = { version = "3.7.3", path = "crates/polymesh-api-codegen", default-features = false }
 polymesh-api-codegen-macro = { version = "3.7.3", path = "crates/polymesh-api-codegen-macro", default-features = false }
-polymesh-api = { version = "3.12.1", path = "./", default-features = false }
+polymesh-api = { version = "3.13.0", path = "./", default-features = false }
 polymesh-api-client-extras = { version = "3.6.2", path = "crates/polymesh-api-client-extras", default-features = false }
 polymesh-api-tester = { version = "0.10.1", path = "crates/polymesh-api-tester", default-features = false }
 
