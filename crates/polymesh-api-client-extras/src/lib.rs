@@ -2,6 +2,7 @@ use codec::{Decode, Encode};
 
 use polymesh_api::client::basic_types::{AccountId, AssetId, IdentityId};
 use polymesh_api::client::error::Result;
+use polymesh_api::client::BlockHash;
 use polymesh_api::types::{
   polymesh_primitives::{
     asset::CheckpointId,
@@ -11,7 +12,7 @@ use polymesh_api::types::{
   },
   runtime::{events::*, RuntimeEvent},
 };
-use polymesh_api::TransactionResults;
+use polymesh_api::{Api, ChainApi, TransactionResults};
 
 mod user;
 pub use user::*;
@@ -35,6 +36,7 @@ pub struct TargetIdAuthorization {
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug)]
 pub struct Receipt {
   /// Unique receipt number set by the signer for their receipts.
+  #[cfg(feature = "polymesh_v7")]
   pub uid: u64,
   /// The [`InstructionId`] of the instruction for which the receipt is for.
   pub instruction_id: InstructionId,
@@ -166,4 +168,53 @@ pub async fn get_asset_id(res: &mut TransactionResults) -> Result<Option<AssetId
     }
     None
   }))
+}
+
+/// Label for signing identity secondary key addition authorization.
+pub const IDENTITY_ADD_SECONDARY_KEY_LABEL: &[u8] = b"Polymesh Identity Add Secondary Key";
+
+/// Label for signing relay transactions.
+pub const RELAY_TX_LABEL: &[u8] = b"Polymesh Relay Transaction";
+
+/// Label for signing STO fundraiser receipts.
+pub const STO_FUNDRAISER_RECEIPT_LABEL: &[u8] = b"Polymesh STO Fundraiser Receipt";
+
+/// Label for signing settlement receipts.
+pub const SETTLEMENT_RECEIPT_LABEL: &[u8] = b"Polymesh Settlement Receipt";
+
+/// Chain scoped message for signing and verifying signatures. This is used to prevent signature replay attacks across different chains.
+#[derive(Encode)]
+pub struct ChainScopedMessage<M: Encode> {
+  pub genesis_hash: BlockHash,
+  pub nonce_or_id: u64,
+  pub label: &'static [u8],
+  pub expires_at: Moment,
+  pub message: M,
+}
+
+impl<M: Encode> ChainScopedMessage<M> {
+  /// Create a new [`ChainScopedMessage`] unchecked.
+  pub async fn new(
+    api: &Api,
+    nonce_or_id: u64,
+    label: &'static [u8],
+    expires_at: Option<Moment>,
+    message: M,
+  ) -> Result<ChainScopedMessage<M>> {
+    let genesis_hash = api.client().get_genesis_hash();
+    let expires_at = if let Some(expires_at) = expires_at {
+      expires_at
+    } else {
+      // Default to 1 hour from now.
+      let now = api.query().timestamp().now().await?;
+      now + 3600_000
+    };
+    Ok(ChainScopedMessage {
+      genesis_hash,
+      nonce_or_id,
+      label,
+      expires_at,
+      message,
+    })
+  }
 }
