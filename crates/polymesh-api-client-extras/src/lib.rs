@@ -56,6 +56,7 @@ pub struct Receipt {
 pub enum CreatedIds {
   AssetCreated(AssetId),
   IdentityCreated(IdentityId),
+  /// Deprecated.
   ChildIdentityCreated(IdentityId),
   MultiSigCreated(AccountId),
   VenueCreated(VenueId),
@@ -92,6 +93,7 @@ pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<Created
             RuntimeEvent::Identity(IdentityEvent::DidCreated(id, ..)) => {
               ids.push(CreatedIds::IdentityCreated(*id));
             }
+            #[cfg(not(feature = "polymesh_v8"))]
             RuntimeEvent::Identity(IdentityEvent::ChildDidCreated(_, id, ..)) => {
               ids.push(CreatedIds::ChildIdentityCreated(*id));
             }
@@ -115,6 +117,7 @@ pub async fn get_identity_id(res: &mut TransactionResults) -> Result<Option<Iden
         RuntimeEvent::Identity(IdentityEvent::DidCreated(id, ..)) => {
           return Some(*id);
         }
+        #[cfg(not(feature = "polymesh_v8"))]
         RuntimeEvent::Identity(IdentityEvent::ChildDidCreated(_, id, ..)) => {
           return Some(*id);
         }
