@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api-tester"
-version = "0.10.1"
+version = "0.10.2"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -17,6 +17,9 @@ polymesh_v7 = ["polymesh-api/polymesh_v7", "polymesh-api-client-extras/polymesh_
 polymesh_v8 = ["polymesh-api/polymesh_v8", "polymesh-api-client-extras/polymesh_v8"]
 
 download_metadata = [ "polymesh-api/download_metadata" ]
+
+# Work around issue with fast ci-runtime block times.
+signer_delay = []
 
 [dependencies]
 log = "0.4"
