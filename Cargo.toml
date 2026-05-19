@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-api"
-version = "3.13.1"
+version = "3.14.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -32,30 +32,30 @@ members = [
 ## Keep common dependencies here.
 [workspace.dependencies]
 # Our crates
-polymesh-api-client = { version = "3.11.1", path = "crates/polymesh-api-client", default-features = false }
-polymesh-api-ink = { version = "1.6.0", path = "crates/polymesh-api-ink", default-features = false }
-polymesh-api-codegen = { version = "3.7.3", path = "crates/polymesh-api-codegen", default-features = false }
-polymesh-api-codegen-macro = { version = "3.7.3", path = "crates/polymesh-api-codegen-macro", default-features = false }
-polymesh-api = { version = "3.13.1", path = "./", default-features = false }
-polymesh-api-client-extras = { version = "3.6.4", path = "crates/polymesh-api-client-extras", default-features = false }
-polymesh-api-tester = { version = "0.10.2", path = "crates/polymesh-api-tester", default-features = false }
+polymesh-api-client = { version = "3.12.0", path = "crates/polymesh-api-client", default-features = false }
+polymesh-api-ink = { version = "1.7.0", path = "crates/polymesh-api-ink", default-features = false }
+polymesh-api-codegen = { version = "3.8.0", path = "crates/polymesh-api-codegen", default-features = false }
+polymesh-api-codegen-macro = { version = "3.8.0", path = "crates/polymesh-api-codegen-macro", default-features = false }
+polymesh-api = { version = "3.14.0", path = "./", default-features = false }
+polymesh-api-client-extras = { version = "3.7.0", path = "crates/polymesh-api-client-extras", default-features = false }
+polymesh-api-tester = { version = "0.11.0", path = "crates/polymesh-api-tester", default-features = false }
 
 # Substrate shared deps.
 frame-metadata = { version = "=15.1.0", default-features = false }
-primitive-types = { version = "0.12.0", default-features = false }
-scale-info = { version = "2.5", default-features = false }
-sp-arithmetic = { version = "26.1", default-features = false }
-sp-application-crypto = { version = "40.1", default-features = false }
-sp-core = { version = "36.1", default-features = false }
+primitive-types = { version = "0.13.0", default-features = false }
+scale-info = { version = "2.11", default-features = false }
+sp-arithmetic = { version = "28.0", default-features = false }
+sp-application-crypto = { version = "45.0", default-features = false }
+sp-core = { version = "40.0", default-features = false }
 sp-crypto-hashing = { version = "0.1", default-features = false }
-sp-io = { version = "40.0", default-features = false }
-sp-keyring = { version = "41.0", default-features = false }
-sp-runtime = { version = "41.1", default-features = false }
+sp-io = { version = "45.0", default-features = false }
+sp-keyring = { version = "46.0", default-features = false }
+sp-runtime = { version = "46.0", default-features = false }
 sp-std = { version = "14.0", default-features = false }
-sp-weights = { version = "31.1", default-features = false }
+sp-weights = { version = "34.0", default-features = false }
 
 # Subxt signer
-subxt-signer = { version = "0.41", default-features = false }
+subxt-signer = { version = "0.44", default-features = false }
 
 # Ink!
 ink = { version = "4.3", default-features = false }
@@ -97,7 +97,7 @@ env_logger = "0.11"
 tokio = { version = "1.19", features = ["rt"] }
 
 [features]
-default = [ "std", "polymesh_v7", "rpc", "serde", "v14" ]
+default = [ "std", "polymesh_v8", "rpc", "serde", "v14" ]
 
 polymesh_v7 = []
 polymesh_v8 = [ "polymesh-api-client?/polymesh_v8" ]
