@@ -22,6 +22,7 @@ members = [
   "examples/simple_transfer",
   "examples/subxt-transfer",
   "examples/get_authorizations",
+  "examples/staking_migrate",
   "examples/add_secondary_keys_with_auth",
   "examples/subscribe_blocks",
   "examples/test_api",
