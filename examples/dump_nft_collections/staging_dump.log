@@ -1,0 +1,227 @@
+Connected to wss://staging-rpc.polymesh.dev/
+Collection NFTCollectionId(19) (AssetId: 50e0eaf1-4ffb-8dff-41d7-7d1301ca763f) - NFTs: 0
+  Mandatory keys (9):
+    - Global(2) Name: tokenUri
+    - Global(4) Name: imageUri
+    - Local(1) Name: Background
+    - Local(2) Name: Clothes
+    - Local(3) Name: Earring
+    - Local(4) Name: Eyes
+    - Local(5) Name: Fur
+    - Local(6) Name: Hat
+    - Local(7) Name: Mouth
+Collection NFTCollectionId(27) (AssetId: b521c349-7166-d387-4180-4103fd67a2fa) - NFTs: 0
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(42) (AssetId: 25911db9-b9dc-843d-9f63-d1ff033fd710) - NFTs: 83
+  Mandatory keys (3):
+    - Local(1) Name: Name
+    - Local(2) Name: Model
+    - Local(3) Name: Color
+Collection NFTCollectionId(26) (AssetId: b4a74474-a831-5445-964e-c322efcde8ca) - NFTs: 30
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(29) (AssetId: 3c01bff3-e005-82e0-a413-5e8cbdec5a38) - NFTs: 0
+  Mandatory keys (1):
+    - Local(1) Name: Info
+Collection NFTCollectionId(11) (AssetId: 46979b03-8e82-5f8b-76c8-ebccaf5de9ad) - NFTs: 4
+  Mandatory keys: none
+Collection NFTCollectionId(33) (AssetId: e0299fbc-ad9d-818d-8318-5c6ef2050d65) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(35) (AssetId: 25c3429f-1268-8a23-b87c-c1b2c2a00b00) - NFTs: 0
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(24) (AssetId: cbf29430-a575-f347-3cf2-4bdc807674ee) - NFTs: 30
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(40) (AssetId: 4b80a614-289e-8dbb-b233-4887551b6827) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(15) (AssetId: 91ff0c67-5556-26f9-ac81-bf7420a82300) - NFTs: 204
+  Mandatory keys: none
+Collection NFTCollectionId(6) (AssetId: efafd98d-00e5-6910-dcea-1d31034d462c) - NFTs: 1
+  Mandatory keys (2):
+    - Global(2) Name: tokenUri
+    - Global(4) Name: imageUri
+Collection NFTCollectionId(39) (AssetId: cd33224f-0b4f-888c-962c-c7a7933a719d) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(32) (AssetId: 6c39a855-578c-81bf-a0e0-f867ce528642) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(36) (AssetId: e5f2bcf9-1278-80f1-8e0f-5e8dffb22bdd) - NFTs: 0
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(5) (AssetId: fc695e78-881b-6a05-9839-ae517ca215ec) - NFTs: 0
+  Mandatory keys (4):
+    - Global(2) Name: tokenUri
+    - Global(3) Name: baseTokenUri
+    - Global(4) Name: imageUri
+    - Global(5) Name: baseImageUri
+Collection NFTCollectionId(41) (AssetId: 1d09bca7-e7d7-89d2-a770-22ec9861dd2b) - NFTs: 1
+  Mandatory keys (1):
+    - Local(1) Name: NNNNN
+Collection NFTCollectionId(3) (AssetId: 792941f9-6a7a-cb55-9ef5-e1190c45f12f) - NFTs: 2
+  Mandatory keys: none
+Collection NFTCollectionId(25) (AssetId: 21e28dfa-f67d-529c-9079-8e1941b0556d) - NFTs: 30
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(1) (AssetId: 9baebb01-114e-ac4d-fd24-71b6b2be7f14) - NFTs: 2
+  Mandatory keys (1):
+    - Local(1) Name: SomeCharacteristic
+Collection NFTCollectionId(16) (AssetId: 1910f633-a044-0350-2442-41c347c61cb1) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(23) (AssetId: 5965efdd-7bbf-53d8-4831-96f612753f8c) - NFTs: 0
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(28) (AssetId: 80df7c05-2682-e2ea-ad94-9f225609f2dc) - NFTs: 5800
+  Mandatory keys (4):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(8) (AssetId: e5115ab5-0ef8-04b7-b738-d8debccc605c) - NFTs: 2
+  Mandatory keys: none
+Collection NFTCollectionId(4) (AssetId: f508971d-1830-d673-7091-d2d2ba9bc277) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(7) (AssetId: 59041594-6920-f66c-d9a9-ef391361ae26) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(9) (AssetId: 8b1de905-6ad8-9bd5-bed2-67c040b27f15) - NFTs: 2
+  Mandatory keys: none
+Collection NFTCollectionId(21) (AssetId: dc8359ef-0266-4085-ac8f-7cf001b69020) - NFTs: 10
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(38) (AssetId: fc23db10-202f-8f4a-aa25-875c8473ab91) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(30) (AssetId: b83b7418-f6ff-8a0f-a6cf-5d716d8f8edb) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(22) (AssetId: 8905a509-76d2-3b83-6dff-8bc1f8a796e8) - NFTs: 0
+  Mandatory keys (3):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Rarity
+    - Local(2) Name: Bonus
+Collection NFTCollectionId(17) (AssetId: 9ef20434-9492-13a5-4787-864b7323c7ac) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(31) (AssetId: 2116be3f-e0d6-8df1-a47a-12de1053e4c8) - NFTs: 3
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(34) (AssetId: ef9d2f44-a8c1-87cb-821e-5fe22b737dff) - NFTs: 0
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(10) (AssetId: 07869f78-d55d-f374-d2a9-2314a50d8ebd) - NFTs: 3
+  Mandatory keys: none
+Collection NFTCollectionId(37) (AssetId: d29f29a7-22b9-808b-bc64-a47928f48a39) - NFTs: 60
+  Mandatory keys (7):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(18) (AssetId: a43e70ab-371b-3436-f399-49c79a733365) - NFTs: 20
+  Mandatory keys (9):
+    - Global(2) Name: tokenUri
+    - Global(4) Name: imageUri
+    - Local(1) Name: Background
+    - Local(2) Name: Clothes
+    - Local(3) Name: Earring
+    - Local(4) Name: Eyes
+    - Local(5) Name: Fur
+    - Local(6) Name: Hat
+    - Local(7) Name: Mouth
+Collection NFTCollectionId(14) (AssetId: ad87056c-d1e5-74fc-f3f9-241704d24bb6) - NFTs: 0
+  Mandatory keys (1):
+    - Local(1) Name: Weight
+Collection NFTCollectionId(20) (AssetId: 33d01c42-8c31-71c9-7e79-7889e835ea4c) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(12) (AssetId: 46d4eb8c-f30d-e3a6-790a-f949ae9892fc) - NFTs: 7
+  Mandatory keys (2):
+    - Global(2) Name: tokenUri
+    - Global(4) Name: imageUri
+Collection NFTCollectionId(2) (AssetId: 08eef25a-d647-2d75-d1cf-0e681d1d1972) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(13) (AssetId: e34cb016-ccd4-b74e-4f19-65d22c9a4774) - NFTs: 2
+  Mandatory keys (6):
+    - Global(4) Name: imageUri
+    - Local(1) Name: Background
+    - Local(2) Name: Skin
+    - Local(3) Name: Body
+    - Local(4) Name: Face
+    - Local(5) Name: Head
+Total NFT collections: 42

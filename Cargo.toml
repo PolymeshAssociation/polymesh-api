@@ -29,6 +29,7 @@ members = [
   "examples/test_api",
   "examples/dump_blocks",
   "examples/create_users",
+  "examples/dump_nft_collections",
 ]
 
 ## Keep common dependencies here.

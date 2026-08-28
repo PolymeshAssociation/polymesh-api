@@ -1,0 +1,1239 @@
+Connected to wss://testnet-rpc.polymesh.live/
+Collection NFTCollectionId(189) (AssetId: c81e8052-499a-86ef-846e-963da1f70ac2) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(76) (AssetId: 4fd08ba5-b464-8388-b1ab-5e59fa032c27) - NFTs: 3
+  Mandatory keys (7):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(211) (AssetId: 8d0cc70c-3957-8fc0-8908-9c4cb4a27e5c) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(219) (AssetId: f98abc3f-2a2d-813e-bbbc-98c2148154c0) - NFTs: 3
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(96) (AssetId: 9d847dff-0033-8622-876a-0588f692b758) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(196) (AssetId: bd189c0f-233f-85a2-9638-b8edd4f5be1f) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(125) (AssetId: 097fdb9b-7d56-8c02-8b0a-b979888a533c) - NFTs: 1
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(83) (AssetId: fcc785d6-6df9-8518-9aac-d47f48ce0500) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Folio
+    - Local(3) Name: Doc URL
+    - Local(4) Name: Doc Hash
+    - Local(5) Name: Hash Algo
+Collection NFTCollectionId(49) (AssetId: b6bd2e5f-51d9-829d-b88a-ed4b94f2c7be) - NFTs: 4
+  Mandatory keys: none
+Collection NFTCollectionId(108) (AssetId: 622d69f1-864a-801b-bf16-cc93b4281694) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(185) (AssetId: d31a138a-b2b0-82d3-b511-f3a4432c3f99) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(129) (AssetId: 0e539131-5dbb-8dd1-8039-f6cb4af0f3f3) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(163) (AssetId: d6c59ece-6b4a-833a-9f9f-d8826edfdde4) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(177) (AssetId: a934b95f-b663-8ef1-ba11-3f9eb5506f6b) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(19) (AssetId: 01fccf04-802b-81a0-8a22-7c167031909f) - NFTs: 2
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(166) (AssetId: b64a2412-2b83-8302-8afa-6256f9215d58) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(164) (AssetId: f54c94ab-f5ef-88d7-8bf3-d67e60c2cc47) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(205) (AssetId: 9337cf3d-9794-8b00-85a5-2e006e3cfea6) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(77) (AssetId: 8ba44b34-d3df-8c20-afbe-59814ee70027) - NFTs: 3
+  Mandatory keys (7):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(106) (AssetId: f3186560-4edd-8abc-86c0-d74e99c49019) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(156) (AssetId: 15651ba0-a424-8436-90c1-ee67388a4df9) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(137) (AssetId: 281e7ca4-e81d-81cb-96b1-cedef9c1d0a6) - NFTs: 1
+  Mandatory keys (6):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+    - Local(6) Name: Verified Owner
+Collection NFTCollectionId(133) (AssetId: 1cfa9b9d-9d5a-8b8a-a4e3-a3f9a673f18c) - NFTs: 16
+  Mandatory keys (5):
+    - Global(3) Name: baseImageUri
+    - Global(4) Name: tokenUri
+    - Global(5) Name: imageUri
+    - Local(1) Name: Name
+    - Local(2) Name: Description
+Collection NFTCollectionId(198) (AssetId: fc387ea6-b1fa-8aca-8c10-527be372392b) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(192) (AssetId: ab97fca3-6af1-8444-ae3e-72207a0a531d) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(186) (AssetId: 8334ba93-b01a-89f3-a9e3-62dd0c392bc7) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(181) (AssetId: 1a364154-4a1e-82a0-9be0-b033905e2309) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(176) (AssetId: 080b4eaf-1f65-8b2f-9a0d-1100b5d1e400) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(157) (AssetId: 7ce11ef1-e805-875e-8d8d-095e03d27049) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(220) (AssetId: 52039f70-82c2-843a-84da-4b0951371056) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(102) (AssetId: b40cc309-6958-807e-bc12-e32b8aa4f319) - NFTs: 0
+  Mandatory keys (2):
+    - Local(1) Name: Met1
+    - Local(2) Name: Met2
+Collection NFTCollectionId(27) (AssetId: b8e2ae33-9e58-8370-b493-2f482991fe34) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(74) (AssetId: 84aa48d6-0a5a-8f46-b15d-e37e20615bc0) - NFTs: 3
+  Mandatory keys (7):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(131) (AssetId: a69b96b7-4f24-8f58-b1cd-47dd0ca59ad4) - NFTs: 3
+  Mandatory keys (3):
+    - Local(1) Name: Movement
+    - Local(2) Name: Case
+    - Local(3) Name: Diameter
+Collection NFTCollectionId(88) (AssetId: 4b5d753f-43c2-85be-be2b-c28d984b44b2) - NFTs: 1
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(126) (AssetId: 6f1ddcb7-b4df-8df9-ba9b-c59769a03d42) - NFTs: 0
+  Mandatory keys (1):
+    - Local(1) Name: test key 1
+Collection NFTCollectionId(118) (AssetId: e4022c2c-afa7-872f-a40f-ceb7a112f1c2) - NFTs: 5
+  Mandatory keys (4):
+    - Local(1) Name: Id
+    - Local(2) Name: Movement
+    - Local(3) Name: Case color
+    - Local(4) Name: Diameter
+Collection NFTCollectionId(116) (AssetId: 689202e1-2d5b-8637-994b-0c8cf9b09ab4) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(70) (AssetId: b4390a87-2a9d-8de1-abea-cb65eba2ba50) - NFTs: 3
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(227) (AssetId: 273ea7d2-5c01-8f6d-9493-d07982a74203) - NFTs: 2
+  Mandatory keys (1):
+    - Local(1) Name: type
+Collection NFTCollectionId(206) (AssetId: 27b0886e-872e-8fc7-9c54-7f5e4f74f52b) - NFTs: 3
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(174) (AssetId: e1b53333-9eff-8acf-a0a9-b7e3d584fff2) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(51) (AssetId: f75049f9-0137-8915-a392-5020a0e140ca) - NFTs: 46
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(100) (AssetId: a5eeacbe-e55a-889e-80b0-acf30f9e3572) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(91) (AssetId: 1e1e44c8-5222-8767-bc22-2aabb3eb286a) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(150) (AssetId: e9bd598f-d11a-8335-9cf3-ea9e08bca331) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(140) (AssetId: 39730767-5eb1-88a4-991f-e4846f3b120f) - NFTs: 3
+  Mandatory keys (6):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+    - Local(6) Name: Verified Owner
+Collection NFTCollectionId(148) (AssetId: 45646091-7e89-855f-9a00-e1fa81ecf58a) - NFTs: 5
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(94) (AssetId: 63b2f329-7b75-8c90-a2af-4ed8ffef7497) - NFTs: 3
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(191) (AssetId: ccfe63d6-86a4-8bfd-bd76-d5009f56169a) - NFTs: 3
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(42) (AssetId: 460f386b-7164-85db-9171-8e22216d8250) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(59) (AssetId: 4e0136e4-ca31-849d-a049-e023253709a6) - NFTs: 10
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(138) (AssetId: 3f273ba7-339a-84e6-b8b3-74389b6f211d) - NFTs: 5
+  Mandatory keys (6):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+    - Local(6) Name: Verified Owner
+Collection NFTCollectionId(180) (AssetId: d1eb87d8-c6d8-8345-8a75-97c45e40a812) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(210) (AssetId: 7c12c584-7e52-8a36-b08b-4a79fa99a0af) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(149) (AssetId: acbb84c1-701f-86a1-87ce-d2f27a84fa9f) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(26) (AssetId: ff972c60-953d-8948-a902-50590f6d9ee5) - NFTs: 2
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(99) (AssetId: 22564b00-7582-8b22-8635-d4e44eb0ff88) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(168) (AssetId: a41412a8-68ba-8a77-b86e-13d4594db5fb) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(207) (AssetId: 08cb6809-2150-8c8e-a020-8e7b3fe293e9) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(104) (AssetId: 99f1f11f-3073-8733-bbca-8f478d95259e) - NFTs: 3
+  Mandatory keys (1):
+    - Local(1) Name: Metadata1
+Collection NFTCollectionId(145) (AssetId: 9e6e82b2-1447-8f49-a5b2-53f831b6583c) - NFTs: 2
+  Mandatory keys (6):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+    - Local(6) Name: Verified Owner
+Collection NFTCollectionId(117) (AssetId: d6ce1904-ff7c-86b3-9ad8-ed94682318d1) - NFTs: 5
+  Mandatory keys: none
+Collection NFTCollectionId(178) (AssetId: 077fe43b-8c49-8859-ad64-bdcc6de3aa5e) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(222) (AssetId: 8b305aee-d18f-8e2a-9d05-26081d230009) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(110) (AssetId: 645278bf-ff1e-8975-883a-8ee4df45175c) - NFTs: 36
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(217) (AssetId: 061213b4-f86f-8425-ab23-99e630242d98) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(182) (AssetId: 5cd10e98-5a29-8bb9-b345-c370c4903030) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(193) (AssetId: b762efa4-41a8-8eed-ac6f-b32997ed54f0) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(107) (AssetId: bb24ed80-45d6-8d1a-84b1-4bd602cd912d) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(200) (AssetId: 40d32e28-d506-8d79-a648-4414a2618262) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(209) (AssetId: 3823a5a4-ba94-8f1b-b63e-ee1728dc4476) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(44) (AssetId: b521c349-7166-8387-8180-4103fd67a2fa) - NFTs: 0
+  Mandatory keys (4):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(98) (AssetId: 8d0571f4-7e46-8d60-a2f0-da02b1b3c80f) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(90) (AssetId: c3841750-a8f8-85aa-b480-faa0aac3df07) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(29) (AssetId: 94a33552-c571-80b4-9af8-77e1e82fdb11) - NFTs: 5
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(101) (AssetId: bb6359ab-ae53-8279-819b-c9043d5beb1a) - NFTs: 4
+  Mandatory keys (3):
+    - Local(1) Name: Metadata1
+    - Local(2) Name: Metadata2
+    - Local(3) Name: Metadata3
+Collection NFTCollectionId(75) (AssetId: 75690bca-c35d-8812-a39b-19f2d1ff47c0) - NFTs: 3
+  Mandatory keys (7):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(11) (AssetId: bc9f8a26-e630-8d9f-9751-016f17adb482) - NFTs: 0
+  Mandatory keys (1):
+    - Local(1) Name: Local Metadata Collection Key
+Collection NFTCollectionId(33) (AssetId: 73f4143f-92d5-891e-a311-3d70a84c7fcc) - NFTs: 3
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(121) (AssetId: 8b1c0cc6-9acb-8fce-b61a-ed36fbd5c4af) - NFTs: 1
+  Mandatory keys (1):
+    - Local(1) Name: Poly NFT
+Collection NFTCollectionId(93) (AssetId: 65c88433-8d69-8e9e-9544-2302766b3ea5) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(169) (AssetId: 9d96ef93-fed2-83f5-8c6d-eab15efd8bc5) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(109) (AssetId: 0481a4e7-3b80-8d4e-822e-b53ce1134f99) - NFTs: 1
+  Mandatory keys (2):
+    - Local(1) Name: Metadata1 Name
+    - Local(2) Name: Metadata2 Name
+Collection NFTCollectionId(170) (AssetId: c3306d83-a559-877a-bef4-9f082f30eb9c) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(228) (AssetId: 549ba99c-6232-87a9-90f5-006fe561e2d7) - NFTs: 1
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(199) (AssetId: 15beccba-a118-8648-a722-f1c2cf3536b1) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(142) (AssetId: 17864ed8-4779-8f7a-9ad3-e7e6ce7b4f00) - NFTs: 10
+  Mandatory keys: none
+Collection NFTCollectionId(35) (AssetId: 9a7b1c1a-3377-8054-b4a8-6382db2e391c) - NFTs: 0
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(72) (AssetId: 7683b4f4-ce42-8e68-a245-ffd189891b98) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(24) (AssetId: 3ffc9689-d39c-8a02-a3b3-d39dec7a4129) - NFTs: 0
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(179) (AssetId: ab129407-b016-8c47-991c-999490230002) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(128) (AssetId: 8bf4dd63-bb3e-82b9-8c85-de6207018ffc) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(40) (AssetId: 119caeb5-a9b2-805a-a739-6f7c354f72f6) - NFTs: 0
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(61) (AssetId: 0cfefec3-d471-8b3b-9aeb-177b9b9e0737) - NFTs: 0
+  Mandatory keys (7):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Note ID
+    - Local(2) Name: Name
+    - Local(3) Name: Principal Amount
+    - Local(4) Name: Interest Rate
+    - Local(5) Name: Maturity Date
+    - Local(6) Name: Issue Date
+Collection NFTCollectionId(78) (AssetId: 17f8f03f-5997-8ecf-adaa-ac4c49f093a0) - NFTs: 0
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(152) (AssetId: de488dfd-ce91-85a7-9475-a258effc912a) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(15) (AssetId: 03496df6-4af5-81d5-a216-feab13bec0a5) - NFTs: 0
+  Mandatory keys (1):
+    - Global(1) Name: Maturity
+Collection NFTCollectionId(69) (AssetId: 31d739c8-bb68-8e12-804b-fc3e4d70cd90) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(113) (AssetId: e1fcb4fe-993f-8322-957a-d885cacb8039) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(60) (AssetId: 3abb8f9b-e0aa-8f0c-a759-4f6a7d29092f) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(6) (AssetId: 3da6bcb7-6ed0-8c72-be17-913d9965886a) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(187) (AssetId: 5422ffda-e4bd-89ea-ac4d-5210311bd697) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(46) (AssetId: a79af69d-3069-869a-8988-3d1757fedceb) - NFTs: 0
+  Mandatory keys (4):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(184) (AssetId: 53d36727-0ec1-8382-ae23-79d2ff76c53e) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(54) (AssetId: 627f4a1a-3779-849c-882f-bfb6f8050d05) - NFTs: 1570
+  Mandatory keys (4):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(190) (AssetId: e91eed63-cd92-81e0-a738-a73c48b32e18) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(65) (AssetId: fd212d0e-c7e3-81b7-b448-d40d96d1fe04) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(130) (AssetId: 43f73f9c-9698-825f-834a-050e3d336af7) - NFTs: 0
+  Mandatory keys (2):
+    - Local(1) Name: Demo metadata 1
+    - Local(2) Name: Metadata 2
+Collection NFTCollectionId(39) (AssetId: 0f63da28-9826-87f8-b835-d7cf54bb1210) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(32) (AssetId: 69bef00a-7489-8bd0-8ac3-2ca620bae06d) - NFTs: 0
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(213) (AssetId: bbc68854-cc90-8dc9-8ebd-cfdf68736c6c) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(165) (AssetId: dd2438cd-7454-8f68-8d2a-d21448e848c4) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(224) (AssetId: 02752baf-7a60-8028-b076-2079909ea20e) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(158) (AssetId: d7f69b21-ac4d-8cba-b74f-91229fac2eef) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(36) (AssetId: 7c667684-a0c4-8e11-b81b-64b143678784) - NFTs: 0
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(5) (AssetId: 6711238e-7576-8dc5-8c7a-a399a7f77166) - NFTs: 20
+  Mandatory keys: none
+Collection NFTCollectionId(68) (AssetId: 3590373e-3b65-833a-9c46-d43aa34a7eb0) - NFTs: 2
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(95) (AssetId: 5d7ede0e-3954-8dbb-ad7d-aec8594a8f59) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(41) (AssetId: 77c44d98-6166-81a6-86bf-06ecf167d49c) - NFTs: 2
+  Mandatory keys (1):
+    - Global(2) Name: baseTokenUri
+Collection NFTCollectionId(66) (AssetId: b8ac5f9d-058e-8a9d-a2b6-7f7186f80184) - NFTs: 3
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(151) (AssetId: ad308362-9a8f-8238-ba6b-fa82f3267d12) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(203) (AssetId: f6ae0649-0b86-88f3-b6c0-42f4898a6462) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(105) (AssetId: 0d3c028a-db85-83cb-bb0d-14e8a26cc258) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(43) (AssetId: ea27b1a0-5766-86aa-b56c-48668e2fffbf) - NFTs: 6
+  Mandatory keys: none
+Collection NFTCollectionId(172) (AssetId: 1deafaf7-c02a-841c-a234-d748cd09372a) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(3) (AssetId: d85fa5db-394e-8ff0-9b7a-e2a5b5809c19) - NFTs: 1
+  Mandatory keys (7):
+    - Local(2) Name: Eyes
+    - Local(3) Name: Background
+    - Local(4) Name: Mouth
+    - Local(5) Name: Hat
+    - Local(6) Name: Clothes
+    - Local(7) Name: Fur
+    - Local(8) Name: Earring
+Collection NFTCollectionId(146) (AssetId: 4e321a2c-76e3-8587-9ff6-6149b3d84f86) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(52) (AssetId: d415f093-7f38-8716-b5eb-6c52f91e9aa7) - NFTs: 1
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(134) (AssetId: e9d8a3d0-4ae2-8079-869a-839b45bc8869) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(103) (AssetId: 1e29c4e1-d6cb-8125-bd0c-2fb6c776eb0a) - NFTs: 0
+  Mandatory keys (3):
+    - Local(1) Name: Metadata w/ all
+    - Local(2) Name: MetadataEmpty
+    - Local(3) Name: Metadata w/url
+Collection NFTCollectionId(85) (AssetId: e56085ce-2e29-8817-be7d-7679ce6849f3) - NFTs: 0
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(67) (AssetId: 32794e33-67f2-8395-9a7d-d28821a64d93) - NFTs: 2
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(73) (AssetId: 61ead3e4-c236-8300-846f-5516645781cc) - NFTs: 0
+  Mandatory keys (4):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(25) (AssetId: 9a39f8e3-8caf-8215-8741-80a594f5600b) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(171) (AssetId: 8c0a2f2c-2ae7-85e1-aeda-d210c63bb67b) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(79) (AssetId: 401b9e2d-35f4-888f-b6ff-92fc61ce2244) - NFTs: 0
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(160) (AssetId: 85e4672a-a7f8-8c62-8aba-55d138663e4b) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(112) (AssetId: 578cf519-909e-8775-86eb-2513a4d53366) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(87) (AssetId: 7aa60683-e851-8ecc-a9f3-d6a6845d001d) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(114) (AssetId: 3c3b3a82-0733-8bf9-8b45-339c86e2859d) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(1) (AssetId: 8b97cb52-17c7-800d-8a0d-d6d7630215d2) - NFTs: 0
+  Mandatory keys (1):
+    - Local(1) Name: VAL1
+Collection NFTCollectionId(16) (AssetId: c81fd6ce-36b0-817e-a455-cf0a1f342a8e) - NFTs: 1
+  Mandatory keys (1):
+    - Global(1) Name: Maturity
+Collection NFTCollectionId(124) (AssetId: 1dfbd54b-e5b1-8f86-a416-f2b9de0e1040) - NFTs: 1
+  Mandatory keys (2):
+    - Global(5) Name: imageUri
+    - Local(1) Name: docUri
+Collection NFTCollectionId(175) (AssetId: e70944f5-93ad-8d14-a0a9-075e4a33e63f) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(23) (AssetId: 4834a357-12be-8306-b880-626d362f96b5) - NFTs: 1
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(57) (AssetId: dcbeca1e-4e52-8636-ba86-f1bac1683bec) - NFTs: 2
+  Mandatory keys (2):
+    - Local(1) Name: Folio Number
+    - Local(2) Name: Doc URL
+Collection NFTCollectionId(28) (AssetId: 25bdad2d-b4ed-8912-b1b0-fbf580df7279) - NFTs: 2
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(8) (AssetId: 9aa4fb80-6a46-8605-9a3d-192b51ce428a) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(167) (AssetId: 6d0287db-7bde-8507-bc1a-4bbb003ee3d1) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(4) (AssetId: ae83eb19-7fbd-81e4-b845-bf2e9baef968) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(7) (AssetId: 63b7c135-dcf2-872b-ba8b-42ac68e46fb7) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(135) (AssetId: 2f5b3eab-eb3e-89ec-b2e1-00a9a7f62dec) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(56) (AssetId: 9416730b-1848-8017-84d4-037d77c15132) - NFTs: 0
+  Mandatory keys (7):
+    - Local(1) Name: Background
+    - Local(2) Name: Clothes
+    - Local(3) Name: Earring
+    - Local(4) Name: Eyes
+    - Local(5) Name: Fur
+    - Local(6) Name: Hat
+    - Local(7) Name: Mouth
+Collection NFTCollectionId(155) (AssetId: a5a15813-2bb8-817e-add9-8fee2b85cbd0) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(9) (AssetId: 991e47de-1f7b-8b80-96dc-348122cbb817) - NFTs: 0
+  Mandatory keys (1):
+    - Global(1) Name: Maturity
+Collection NFTCollectionId(82) (AssetId: e9d6c3b0-c828-8385-bb80-16ec8af20b4d) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Folio
+    - Local(3) Name: Doc URL
+    - Local(4) Name: Doc Hash
+    - Local(5) Name: Hash Algo
+Collection NFTCollectionId(21) (AssetId: aaf506dc-9e61-8084-981b-20a174f46bf5) - NFTs: 1
+  Mandatory keys (1):
+    - Local(1) Name: imageUri
+Collection NFTCollectionId(48) (AssetId: 59995c17-8eaa-8e18-af65-872bec9fe9c9) - NFTs: 2
+  Mandatory keys: none
+Collection NFTCollectionId(154) (AssetId: ab92f893-471b-8e3c-9734-d582684492e1) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(127) (AssetId: 3afabddf-2232-8b33-8ffb-3faf1c5004ca) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(194) (AssetId: 48b96737-6f22-89d2-a4f2-d2e03c660707) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(141) (AssetId: ede2788b-e197-85a9-8d6b-d36a69ff24a5) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(122) (AssetId: 474ae370-b35a-82e2-bc54-4736f2456abe) - NFTs: 5
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(202) (AssetId: 5ff05975-6f11-86c9-a2da-c3e9b4ecfc37) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(161) (AssetId: a973e5b3-af4d-85a5-91b2-04591fd61aeb) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(120) (AssetId: 901928de-ebe8-8c14-9afc-85b85be60c84) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(38) (AssetId: ab3ae606-f566-87b4-ac2e-c7a7acd5d76c) - NFTs: 8
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(63) (AssetId: d38b94b9-5ec1-845a-b423-b900eab4fb8b) - NFTs: 1
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(71) (AssetId: 01380c2e-ec24-8dba-9fe7-2145b613a6eb) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(89) (AssetId: b4aee04f-0525-854a-b87f-cf8884fe2a9c) - NFTs: 1
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(132) (AssetId: c68e0e64-7ab4-8f62-b567-fbac79d80797) - NFTs: 39
+  Mandatory keys (5):
+    - Local(1) Name: Title
+    - Local(2) Name: Artist
+    - Local(3) Name: Medium
+    - Local(4) Name: Year
+    - Local(5) Name: Image_URL
+Collection NFTCollectionId(221) (AssetId: 02df3e68-14e3-8c76-97d1-faea5a478cd0) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(111) (AssetId: a4473aae-6f36-8577-869b-b45a7096a77e) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(136) (AssetId: 94c17e52-442d-8d99-9047-fa5edac16a64) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(92) (AssetId: ccb92628-a328-8406-ba6d-fe69d6a4b69b) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(214) (AssetId: a7abf258-150d-875a-8552-60944a096305) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(30) (AssetId: d5d719fd-96b7-8615-93d4-7d258e3c6be4) - NFTs: 5
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(123) (AssetId: f1b7d010-ef1f-89aa-a195-003a99ea4470) - NFTs: 1
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(84) (AssetId: ab427b56-a6c0-8949-87cf-e2762b559618) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(80) (AssetId: db7f633f-474c-8c22-a9ed-aa5b964729eb) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Folio
+    - Local(3) Name: Doc URL
+    - Local(4) Name: Doc Hash
+    - Local(5) Name: Hash Algo
+Collection NFTCollectionId(212) (AssetId: c925becf-6554-8af8-8876-b15ee870ce9f) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(62) (AssetId: c2f8a35d-95ff-82cb-93bd-d964f321bca3) - NFTs: 9
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(22) (AssetId: 92bbe565-3ff3-8c31-9fca-b76e83a407d2) - NFTs: 1
+  Mandatory keys (1):
+    - Local(1) Name: imageUri
+Collection NFTCollectionId(139) (AssetId: 37f6427f-2ba9-8abf-8886-8ff6f0e063c9) - NFTs: 0
+  Mandatory keys (6):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+    - Local(6) Name: Verified Owner
+Collection NFTCollectionId(17) (AssetId: 57a58498-7732-82bc-8aaf-4b0f1533975c) - NFTs: 1
+  Mandatory keys (3):
+    - Global(2) Name: baseTokenUri
+    - Global(3) Name: baseImageUri
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(218) (AssetId: 0d580b96-51d7-8122-949a-8a897b245944) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(153) (AssetId: fb288223-649f-824d-a162-87dd2dd6668a) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(31) (AssetId: ec9fc81c-d185-852d-b3f4-5e91a52cf0ae) - NFTs: 1
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(216) (AssetId: bd7f4c33-36de-8c1d-a3a1-386b87501d6e) - NFTs: 45
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(159) (AssetId: e1f80ee2-f785-8b55-b32c-a4d7922c99a7) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(195) (AssetId: ff24e06f-1510-896a-9e0a-dfc9002331bc) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(215) (AssetId: a0cf7f8b-84d0-86ef-8e8f-eed27759a1af) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(45) (AssetId: 80df7c05-2682-82ea-ad94-9f225609f2dc) - NFTs: 2774
+  Mandatory keys (4):
+    - Global(5) Name: imageUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(58) (AssetId: c04940f2-1977-8bfc-9b27-760073dda417) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(204) (AssetId: fb384887-fbbf-8f17-9500-f950238ca260) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(55) (AssetId: 3b3bedb1-4a9b-8f29-bfc0-87f4c734d7c8) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(119) (AssetId: 8b05b3d2-8da5-8bb8-a4fc-4eeb54bfea4b) - NFTs: 3
+  Mandatory keys (2):
+    - Local(1) Name: Color
+    - Local(2) Name: ID
+Collection NFTCollectionId(97) (AssetId: a9a299da-c1fc-8648-9168-16f925d1ec18) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Document URL
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(64) (AssetId: 8f08067d-4f6a-818d-bf3e-8f7d34f5b631) - NFTs: 12
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(208) (AssetId: 6eb2683e-deb1-8995-9e4b-5f5f5c417d6f) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(188) (AssetId: f7940018-363c-8fdc-94fe-494ed91dff1a) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(183) (AssetId: c4f313a0-d10b-8204-99c5-a7f1ed2ee2e3) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(34) (AssetId: 8b67655f-1850-8c5e-b058-5d7a9d2a20f9) - NFTs: 2
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(173) (AssetId: c7f15778-2194-809f-b231-deaadb258921) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(10) (AssetId: 8271531f-4642-8caa-825f-e98318dc3adb) - NFTs: 25
+  Mandatory keys: none
+Collection NFTCollectionId(144) (AssetId: 6ff1b424-eb94-8158-8d40-226fc0d225bf) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(81) (AssetId: fe97e1c7-f525-8508-8d48-559ce83f2a95) - NFTs: 0
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Folio
+    - Local(3) Name: Doc URL
+    - Local(4) Name: Doc Hash
+    - Local(5) Name: Hash Algo
+Collection NFTCollectionId(223) (AssetId: d438849c-7534-8403-b3d8-39b57eaf2f69) - NFTs: 6
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(50) (AssetId: 9e67cd5d-8ff5-8079-a415-73e8fcdfb870) - NFTs: 0
+  Mandatory keys (4):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Variant
+    - Local(2) Name: Rarity
+    - Local(3) Name: Bonus
+Collection NFTCollectionId(37) (AssetId: 929ec961-ac02-8cc5-a4ae-d04033ace099) - NFTs: 8
+  Mandatory keys (2):
+    - Global(4) Name: tokenUri
+    - Local(1) Name: Price
+Collection NFTCollectionId(47) (AssetId: 951aa6f4-735c-8131-8263-c77991fb1a22) - NFTs: 2
+  Mandatory keys (1):
+    - Global(5) Name: imageUri
+Collection NFTCollectionId(147) (AssetId: 380722b7-00bd-855c-bab3-e34050f5c41a) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(18) (AssetId: 70a0d88e-60c3-8f67-9eef-1868e990439a) - NFTs: 0
+  Mandatory keys (2):
+    - Global(2) Name: baseTokenUri
+    - Global(3) Name: baseImageUri
+Collection NFTCollectionId(14) (AssetId: b3d069e7-ac0a-8592-9ceb-79f2d3fc27cb) - NFTs: 0
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Collection NFTCollectionId(225) (AssetId: fb15c865-1620-80aa-b004-3aaf17f52bc6) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(20) (AssetId: 52cb71d3-9346-829d-9bc3-a38417f532b2) - NFTs: 0
+  Mandatory keys (1):
+    - Global(1) Name: Maturity
+Collection NFTCollectionId(143) (AssetId: 00c5d0d6-d1c4-88c4-95e5-6af53a3cb6bc) - NFTs: 4
+  Mandatory keys (6):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+    - Local(6) Name: Verified Owner
+Collection NFTCollectionId(86) (AssetId: 8a6fe4e1-c8e0-8401-b027-73395c91da3f) - NFTs: 0
+  Mandatory keys: none
+Collection NFTCollectionId(201) (AssetId: 0477d612-525f-8a7a-b29e-00adf8bbe68d) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(197) (AssetId: 1e966356-d3cf-85d8-ac99-78a24f1aff34) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(115) (AssetId: 1b71be66-c66e-877c-9d65-39564d3ca9e6) - NFTs: 1
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(12) (AssetId: bced5165-3a0b-8cb0-802b-ca39a34e7f6c) - NFTs: 0
+  Mandatory keys (1):
+    - Local(1) Name: Key 1
+Collection NFTCollectionId(2) (AssetId: 0d157862-5220-86ba-af77-a7edebc61934) - NFTs: 1
+  Mandatory keys: none
+Collection NFTCollectionId(13) (AssetId: 72b3bc22-ead8-8380-951c-68b6b836cb24) - NFTs: 37
+  Mandatory keys: none
+Collection NFTCollectionId(162) (AssetId: d3e810c9-1d63-8ccc-ac57-7b73165f2ca9) - NFTs: 2
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(226) (AssetId: 02fd1770-f8b7-89da-a90e-0a8653ac6b3c) - NFTs: 4
+  Mandatory keys (5):
+    - Local(1) Name: Create Date
+    - Local(2) Name: Property Identifier
+    - Local(3) Name: Storage Key
+    - Local(4) Name: Document Hash
+    - Local(5) Name: Hash Algorithm
+Collection NFTCollectionId(53) (AssetId: 9e9b49c4-e2d6-81d4-98e4-0e4fe5faab30) - NFTs: 7
+  Mandatory keys (1):
+    - Global(4) Name: tokenUri
+Total NFT collections: 228

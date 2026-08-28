@@ -1527,6 +1527,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dump_nft_collections"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dotenv",
+ "env_logger 0.11.10",
+ "futures-util",
+ "log",
+ "polymesh-api",
+ "tokio",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
