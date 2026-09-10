@@ -31,6 +31,7 @@ members = [
   "examples/create_users",
   "examples/dump_nft_collections",
   "examples/dump_global_asset_metadata",
+  "examples/redeem_nfts",
 ]
 
 ## Keep common dependencies here.
