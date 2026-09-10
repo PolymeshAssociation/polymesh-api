@@ -30,6 +30,7 @@ members = [
   "examples/dump_blocks",
   "examples/create_users",
   "examples/dump_nft_collections",
+  "examples/dump_global_asset_metadata",
 ]
 
 ## Keep common dependencies here.
