@@ -306,7 +306,7 @@ async fn main() -> Result<()> {
 
     println!("Submitting batch of {} call(s)...", chunk.len());
     let mut res = call.submit_and_watch(&mut signer).await?;
-    res.wait_finalized().await?;
+    res.wait_in_block().await?;
 
     if let Err(e) = res.ok().await {
       eprintln!("Batch extrinsic failed: {}", e);
