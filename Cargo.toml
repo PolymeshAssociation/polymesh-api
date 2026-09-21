@@ -99,7 +99,7 @@ hex = "0.4"
 dotenv = "0.15"
 env_logger = "0.11"
 
-tokio = { version = "1.19", features = ["rt"] }
+tokio = { version = "1.19", features = ["rt", "macros"] }
 
 [features]
 default = [ "std", "polymesh_v8", "rpc", "serde", "v14" ]
