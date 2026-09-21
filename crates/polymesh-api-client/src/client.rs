@@ -8,7 +8,7 @@ pub use jsonrpsee::core::client::Subscription;
 use jsonrpsee::core::params::{ArrayParams, BatchRequestBuilder};
 use jsonrpsee::rpc_params;
 
-use codec::Decode;
+use codec::{Decode, Encode};
 
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -49,6 +49,44 @@ pub struct SystemProperties {
   pub ss58_format: u16,
   pub token_decimals: u32,
   pub token_symbol: String,
+}
+
+/// Dispatch class of an extrinsic/call, as returned by the `TransactionPayment*Api` Runtime APIs.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum DispatchClass {
+  Normal,
+  Operational,
+  Mandatory,
+}
+
+/// Weight and estimated partial fee of an extrinsic/call.
+#[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct RuntimeDispatchInfo<Balance> {
+  pub weight: sp_weights::Weight,
+  pub class: DispatchClass,
+  pub partial_fee: Balance,
+}
+
+/// Breakdown of the base, length and weight fees included in an extrinsic/call's fee.
+#[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct InclusionFee<Balance> {
+  pub base_fee: Balance,
+  pub len_fee: Balance,
+  pub adjusted_weight_fee: Balance,
+}
+
+/// Detailed fee breakdown of an extrinsic/call.
+#[derive(Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct FeeDetails<Balance> {
+  pub inclusion_fee: Option<InclusionFee<Balance>>,
+  pub tip: Balance,
 }
 
 struct InnerClient {
@@ -431,5 +469,89 @@ impl Client {
     block: Option<BlockHash>,
   ) -> Result<Option<RuntimeMetadataPrefixed>> {
     self.inner.get_block_metadata(block).await
+  }
+
+  /// Call a Runtime API method using the `state_call` RPC method.
+  ///
+  /// `params` must already be the SCALE encoded arguments expected by the Runtime API method,
+  /// e.g. `"TransactionPaymentApi_query_info"`.
+  #[cfg(feature = "serde")]
+  pub async fn state_call<R: Decode>(
+    &self,
+    method: &str,
+    params: &[u8],
+    at: Option<BlockHash>,
+  ) -> Result<R> {
+    use hex::FromHex;
+    let params_hex = format!("0x{}", hex::encode(params));
+    let hex: String = self
+      .request("state_call", rpc_params!(method, params_hex, at))
+      .await?;
+    let bytes = Vec::from_hex(&hex[2..])?;
+    Ok(R::decode(&mut bytes.as_slice())?)
+  }
+
+  /// Query the weight and estimated fee of an already encoded (signed or unsigned) extrinsic.
+  ///
+  /// Calls the `TransactionPaymentApi_query_info` Runtime API.
+  pub async fn query_transaction_fee_info<Balance: Decode>(
+    &self,
+    encoded_xt: &[u8],
+    at: Option<BlockHash>,
+  ) -> Result<RuntimeDispatchInfo<Balance>> {
+    let mut params = encoded_xt.to_vec();
+    (encoded_xt.len() as u32).encode_to(&mut params);
+    self
+      .state_call("TransactionPaymentApi_query_info", &params, at)
+      .await
+  }
+
+  /// Query the detailed fee breakdown of an already encoded (signed or unsigned) extrinsic.
+  ///
+  /// Calls the `TransactionPaymentApi_query_fee_details` Runtime API.
+  pub async fn query_transaction_fee_details<Balance: Decode>(
+    &self,
+    encoded_xt: &[u8],
+    at: Option<BlockHash>,
+  ) -> Result<FeeDetails<Balance>> {
+    let mut params = encoded_xt.to_vec();
+    (encoded_xt.len() as u32).encode_to(&mut params);
+    self
+      .state_call("TransactionPaymentApi_query_fee_details", &params, at)
+      .await
+  }
+
+  /// Query the weight and estimated fee of a call, without wrapping it in an extrinsic.
+  ///
+  /// Calls the `TransactionPaymentCallApi_query_call_info` Runtime API.
+  pub async fn query_call_fee_info<Call: Encode, Balance: Decode>(
+    &self,
+    call: &Call,
+    at: Option<BlockHash>,
+  ) -> Result<RuntimeDispatchInfo<Balance>> {
+    let mut params = call.encode();
+    (params.len() as u32).encode_to(&mut params);
+    self
+      .state_call("TransactionPaymentCallApi_query_call_info", &params, at)
+      .await
+  }
+
+  /// Query the detailed fee breakdown of a call, without wrapping it in an extrinsic.
+  ///
+  /// Calls the `TransactionPaymentCallApi_query_call_fee_details` Runtime API.
+  pub async fn query_call_fee_details<Call: Encode, Balance: Decode>(
+    &self,
+    call: &Call,
+    at: Option<BlockHash>,
+  ) -> Result<FeeDetails<Balance>> {
+    let mut params = call.encode();
+    (params.len() as u32).encode_to(&mut params);
+    self
+      .state_call(
+        "TransactionPaymentCallApi_query_call_fee_details",
+        &params,
+        at,
+      )
+      .await
   }
 }
