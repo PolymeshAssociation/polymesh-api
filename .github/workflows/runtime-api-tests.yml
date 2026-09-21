@@ -25,7 +25,7 @@ jobs:
           docker run -d --name polymesh-node \
             -p 9944:9944 \
             polymeshassociation/polymesh:latest-develop-debian \
-            --dev --tmp --ws-external --rpc-external --rpc-cors all --rpc-methods unsafe
+            --dev --tmp --rpc-external --rpc-cors all --rpc-methods unsafe
 
       - name: Wait for Polymesh node to be ready
         run: |
