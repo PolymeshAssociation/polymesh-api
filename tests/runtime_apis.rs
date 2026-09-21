@@ -7,7 +7,7 @@ use std::env;
 use anyhow::Result;
 use codec::Encode;
 
-use polymesh_api::client::{ChainApi, ExtrinsicV4};
+use polymesh_api::client::{dev, ChainApi, Signer};
 use polymesh_api::Api;
 
 fn node_url() -> String {
@@ -24,8 +24,15 @@ async fn query_transaction_fee_info_for_remark() -> Result<()> {
   let api = connect().await?;
   let client = api.client();
 
+  // `query_info`/`query_fee_details` only compute a `partial_fee` for signed extrinsics.
+  let mut alice = dev::alice();
   let call = api.call().system().remark(b"polymesh-api test".to_vec())?;
-  let encoded_xt = ExtrinsicV4::unsigned(call.encoded()).encode();
+  let xt = call
+    .prepare(alice.account(), None)
+    .await?
+    .sign(&mut alice)
+    .await?;
+  let encoded_xt = xt.encode();
 
   let info = client
     .query_transaction_fee_info::<u128>(&encoded_xt, None)
