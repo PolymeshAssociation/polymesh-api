@@ -1,0 +1,55 @@
+name: Runtime API Tests
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  POLYMESH_NODE_URL: ws://localhost:9944
+
+jobs:
+  runtime_api_tests:
+    name: Runtime API tests (System.remark)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        run: |
+          rustup update stable
+          rustup default stable
+
+      - name: Start Polymesh dev node
+        run: |
+          docker run -d --name polymesh-node \
+            -p 9944:9944 \
+            polymeshassociation/polymesh:latest-develop-debian \
+            polymesh --dev --tmp --ws-external --rpc-external --rpc-cors all --rpc-methods unsafe
+
+      - name: Wait for Polymesh node to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl -s -H "Content-Type: application/json" \
+              -d '{"id":1,"jsonrpc":"2.0","method":"system_health","params":[]}' \
+              http://localhost:9944 | grep -q result; then
+              echo "Node is ready"
+              exit 0
+            fi
+            echo "Waiting for node... ($i)"
+            sleep 2
+          done
+          echo "Node did not become ready in time"
+          docker logs polymesh-node
+          exit 1
+
+      - name: Run Runtime API tests
+        run: cargo test -p polymesh-api --test runtime_apis -- --nocapture
+
+      - name: Show node logs
+        if: always()
+        run: docker logs polymesh-node
+
+      - name: Stop Polymesh dev node
+        if: always()
+        run: docker rm -f polymesh-node
