@@ -22,7 +22,6 @@ use sp_std::prelude::*;
 mod storage;
 pub use storage::*;
 
-use crate::error::*;
 use crate::schema::*;
 use crate::type_def::*;
 use crate::*;

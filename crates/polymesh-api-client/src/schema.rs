@@ -22,7 +22,6 @@ use frame_metadata::RuntimeMetadata;
 
 use serde_json::{Map, Value};
 
-use crate::error::*;
 use crate::metadata::*;
 use crate::type_def::*;
 use crate::*;
