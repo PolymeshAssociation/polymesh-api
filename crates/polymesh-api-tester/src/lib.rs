@@ -25,7 +25,9 @@ pub use tester::*;
 
 pub async fn client_api() -> Result<Api> {
   let url = std::env::var("POLYMESH_URL").unwrap_or_else(|_| "ws://localhost:9944".into());
-  Ok(Api::new(&url).await?)
+  let api = Api::new(&url).await?;
+  api.set_default_mortal_era_period(512);
+  Ok(api)
 }
 
 #[derive(Clone)]

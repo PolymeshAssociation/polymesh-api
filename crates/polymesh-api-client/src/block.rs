@@ -19,6 +19,8 @@ pub type TxHash = H256;
 pub type BlockHash = H256;
 pub type BlockNumber = u32;
 
+pub const DEFAULT_MORTAL_ERA_PERIOD: u64 = 64;
+
 #[cfg(feature = "serde")]
 pub mod block_number {
   use super::BlockNumber;
@@ -231,7 +233,7 @@ pub enum Era {
 
 impl Era {
   pub fn mortal(current: BlockNumber, period: Option<u64>) -> Self {
-    let period = period.unwrap_or(64);
+    let period = period.unwrap_or(DEFAULT_MORTAL_ERA_PERIOD);
     sp_runtime::generic::Era::mortal(period, current.into()).into()
   }
 

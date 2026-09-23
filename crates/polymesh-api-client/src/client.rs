@@ -1,5 +1,6 @@
 #[cfg(not(feature = "std"))]
 use alloc::{collections::btree_map::BTreeMap, sync::Arc};
+use core::sync::atomic::{AtomicU64, Ordering};
 #[cfg(feature = "std")]
 use std::{collections::BTreeMap, sync::Arc};
 
@@ -95,6 +96,7 @@ struct InnerClient {
   #[cfg(feature = "type_info")]
   metadata: RuntimeMetadataPrefixed,
   genesis_hash: BlockHash,
+  default_mortal_era_period: AtomicU64,
 }
 
 impl InnerClient {
@@ -116,7 +118,18 @@ impl InnerClient {
       #[cfg(feature = "type_info")]
       metadata,
       genesis_hash,
+      default_mortal_era_period: AtomicU64::new(DEFAULT_MORTAL_ERA_PERIOD),
     })
+  }
+
+  fn default_mortal_era_period(&self) -> u64 {
+    self.default_mortal_era_period.load(Ordering::Relaxed)
+  }
+
+  fn set_default_mortal_era_period(&self, period: u64) {
+    self
+      .default_mortal_era_period
+      .store(period, Ordering::Relaxed);
   }
 
   fn get_transaction_version(&self) -> i64 {
@@ -143,6 +156,7 @@ impl InnerClient {
     let era = match lifetime {
       Some(0) => Era::immortal(),
       lifetime => {
+        let period = lifetime.unwrap_or_else(|| self.default_mortal_era_period());
         let current = self
           .get_block_header(None)
           .await?
@@ -150,7 +164,7 @@ impl InnerClient {
         let number = current.number;
         // Need to use the current block hash.
         addititional.current_hash = current.hash();
-        Era::mortal(number, lifetime)
+        Era::mortal(number, Some(period))
       }
     };
 
@@ -271,6 +285,14 @@ impl Client {
 
   pub fn get_genesis_hash(&self) -> BlockHash {
     self.inner.get_genesis_hash()
+  }
+
+  pub fn default_mortal_era_period(&self) -> u64 {
+    self.inner.default_mortal_era_period()
+  }
+
+  pub fn set_default_mortal_era_period(&self, period: u64) {
+    self.inner.set_default_mortal_era_period(period);
   }
 
   pub async fn get_additional_signed(

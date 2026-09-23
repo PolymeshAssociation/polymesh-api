@@ -1993,6 +1993,16 @@ mod v14 {
             })
           }
 
+          #[cfg(not(feature = "ink"))]
+          pub fn default_mortal_era_period(&self) -> u64 {
+            self.client.default_mortal_era_period()
+          }
+
+          #[cfg(not(feature = "ink"))]
+          pub fn set_default_mortal_era_period(&self, period: u64) {
+            self.client.set_default_mortal_era_period(period);
+          }
+
           pub fn call(&self) -> CallApi<'_> {
             CallApi { api: self }
           }
