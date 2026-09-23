@@ -224,12 +224,14 @@ impl PolymeshTester {
       }
     }
     let signer = self.sudo.as_mut().unwrap_or_else(|| &mut self.cdd);
-    // Execute batch.
+    // Execute batch.  `force_batch` is used (instead of `batch`) so that if one call fails
+    // (e.g. another test concurrently onboarding the same account), the rest of the calls
+    // still execute and we get a per-item `ItemCompleted`/`ItemFailed` event to align results.
     let mut res = self
       .api
       .call()
       .utility()
-      .batch(calls)?
+      .force_batch(calls)?
       .submit_and_watch(signer)
       .await?;
     let sudo_res = if sudos.len() > 0 {
@@ -265,26 +267,49 @@ impl PolymeshTester {
         }
       }
     }
-    // Get new identities from batch events.
-    let ids = get_created_ids(&mut res).await?;
+    // Get new identities from batch events.  Each entry is aligned with the corresponding
+    // call in `need_dids`, since `force_batch` emits one `ItemCompleted`/`ItemFailed` event
+    // per call, in order.
+    let ids = get_batch_created_ids(&mut res).await?;
     let mut joins = Vec::new();
     for idx in need_dids {
       let (name, _) = names[idx];
-      match &ids[idx] {
-        CreatedIds::IdentityCreated(did) => {
-          let user = &mut users[idx];
-          user.did = Some(*did);
-          for sk in &mut user.secondary_keys {
-            if let Some(auth) = auths.remove(&sk.account()) {
-              joins.push((auth, sk.clone()));
-            }
+      let did = match ids.get(idx) {
+        Some(BatchItemResult::Success(created)) => created.iter().find_map(|id| match id {
+          CreatedIds::IdentityCreated(did) => Some(*did),
+          id => {
+            log::warn!("Unexpected id: {id:?}");
+            None
           }
-          self.set_user_did(name, *did);
+        }),
+        Some(BatchItemResult::Failed(err)) => {
+          // Most likely another test running in parallel already onboarded this account.
+          log::warn!("cdd_register_did_with_cdd failed for {name}: {err:?}");
+          None
         }
-        id => {
-          log::warn!("Unexpected id: {id:?}");
+        None => None,
+      };
+      // If our registration call didn't produce a did (failed or missing), the account
+      // might already have been onboarded by another test.  Check the chain directly.
+      let did = match did {
+        Some(did) => Some(did),
+        None => self.get_did(users[idx].account()).await?,
+      };
+      let did = match did {
+        Some(did) => did,
+        None => {
+          log::error!("Failed to get/create did for {name}");
+          continue;
+        }
+      };
+      let user = &mut users[idx];
+      user.did = Some(did);
+      for sk in &mut user.secondary_keys {
+        if let Some(auth) = auths.remove(&sk.account()) {
+          joins.push((auth, sk.clone()));
         }
       }
+      self.set_user_did(name, did);
     }
     // Wait for both batches to finalize.
     if let Some(mut res) = sudo_res {
@@ -333,11 +358,13 @@ impl PolymeshTester {
       None => {
         // `account` is not linked to an identity.
         // Create a new identity with `account` as the primary key.
+        // `force_batch` is used so that if another test concurrently registers the same
+        // account, the `transfer_with_memo` call still executes.
         let mut res = self
           .api
           .call()
           .utility()
-          .batch(vec![
+          .force_batch(vec![
             self
               .api
               .call()
@@ -353,7 +380,18 @@ impl PolymeshTester {
           ])?
           .execute(&mut self.cdd)
           .await?;
-        get_identity_id(&mut res).await?.unwrap()
+        match get_identity_id(&mut res).await? {
+          Some(did) => did,
+          None => {
+            // `cdd_register_did_with_cdd` likely failed because another test running in
+            // parallel already registered this account.  Query the chain directly.
+            self.get_did(account).await?.ok_or_else(|| {
+              Error::PolymeshApiClient(polymesh_api::client::Error::ExtrinsicError(format!(
+                "Failed to get/create did for {account:?}"
+              )))
+            })?
+          }
+        }
       }
     };
     Ok(did)

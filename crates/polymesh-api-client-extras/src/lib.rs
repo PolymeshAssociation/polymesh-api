@@ -11,6 +11,7 @@ use polymesh_api::types::{
     ticker::Ticker,
   },
   runtime::{events::*, RuntimeEvent},
+  sp_runtime::DispatchError,
 };
 use polymesh_api::{Api, ChainApi, TransactionResults};
 
@@ -65,6 +66,51 @@ pub enum CreatedIds {
   ScheduleCreated(ScheduleId),
 }
 
+/// The outcome of a single call inside a `force_batch`.
+#[derive(Clone, Debug)]
+pub enum BatchItemResult {
+  Success(Vec<CreatedIds>),
+  Failed(DispatchError),
+}
+
+impl BatchItemResult {
+  pub fn created_ids(&self) -> &[CreatedIds] {
+    match self {
+      Self::Success(ids) => ids.as_slice(),
+      Self::Failed(_) => &[],
+    }
+  }
+}
+
+fn match_created_id(event: &RuntimeEvent) -> Option<CreatedIds> {
+  match event {
+    RuntimeEvent::Asset(AssetEvent::AssetCreated(_, id, ..)) => Some(CreatedIds::AssetCreated(*id)),
+    RuntimeEvent::Settlement(SettlementEvent::VenueCreated(_, id, ..)) => {
+      Some(CreatedIds::VenueCreated(*id))
+    }
+    RuntimeEvent::Settlement(SettlementEvent::InstructionCreated(_, _, id, ..)) => {
+      Some(CreatedIds::InstructionCreated(*id))
+    }
+    RuntimeEvent::Checkpoint(CheckpointEvent::CheckpointCreated(_, _, id, ..)) => {
+      Some(CreatedIds::CheckpointCreated(id.clone()))
+    }
+    RuntimeEvent::Checkpoint(CheckpointEvent::ScheduleCreated(_, _, id, ..)) => {
+      Some(CreatedIds::ScheduleCreated(id.clone()))
+    }
+    RuntimeEvent::Identity(IdentityEvent::DidCreated(id, ..)) => {
+      Some(CreatedIds::IdentityCreated(*id))
+    }
+    #[cfg(not(feature = "polymesh_v8"))]
+    RuntimeEvent::Identity(IdentityEvent::ChildDidCreated(_, id, ..)) => {
+      Some(CreatedIds::ChildIdentityCreated(*id))
+    }
+    RuntimeEvent::MultiSig(MultiSigEvent::MultiSigCreated { multisig, .. }) => {
+      Some(CreatedIds::MultiSigCreated(*multisig))
+    }
+    _ => None,
+  }
+}
+
 /// Get ids from *Created events.
 pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<CreatedIds>> {
   Ok(
@@ -72,38 +118,47 @@ pub async fn get_created_ids(res: &mut TransactionResults) -> Result<Vec<Created
       .events()
       .await?
       .map(|events| {
-        let mut ids = Vec::new();
+        events
+          .0
+          .iter()
+          .filter_map(|rec| match_created_id(&rec.event))
+          .collect()
+      })
+      .unwrap_or_default(),
+  )
+}
+
+/// Get per-call results from a `force_batch(calls)` extrinsic, aligned with `calls`.
+///
+/// Unlike `get_created_ids`, this correctly handles the case where individual calls in the
+/// batch fail (e.g. two tests concurrently trying to onboard the same account), since
+/// `force_batch` keeps executing the remaining calls and emits an `ItemCompleted`/`ItemFailed`
+/// event for each one, in order.
+pub async fn get_batch_created_ids(res: &mut TransactionResults) -> Result<Vec<BatchItemResult>> {
+  Ok(
+    res
+      .events()
+      .await?
+      .map(|events| {
+        let mut items = Vec::new();
+        let mut current = Vec::new();
         for rec in &events.0 {
           match &rec.event {
-            RuntimeEvent::Asset(AssetEvent::AssetCreated(_, id, ..)) => {
-              ids.push(CreatedIds::AssetCreated(*id));
+            RuntimeEvent::Utility(UtilityEvent::ItemCompleted) => {
+              items.push(BatchItemResult::Success(std::mem::take(&mut current)));
             }
-            RuntimeEvent::Settlement(SettlementEvent::VenueCreated(_, id, ..)) => {
-              ids.push(CreatedIds::VenueCreated(*id));
+            RuntimeEvent::Utility(UtilityEvent::ItemFailed { error }) => {
+              current.clear();
+              items.push(BatchItemResult::Failed(error.clone()));
             }
-            RuntimeEvent::Settlement(SettlementEvent::InstructionCreated(_, _, id, ..)) => {
-              ids.push(CreatedIds::InstructionCreated(*id));
+            event => {
+              if let Some(id) = match_created_id(event) {
+                current.push(id);
+              }
             }
-            RuntimeEvent::Checkpoint(CheckpointEvent::CheckpointCreated(_, _, id, ..)) => {
-              ids.push(CreatedIds::CheckpointCreated(id.clone()));
-            }
-            RuntimeEvent::Checkpoint(CheckpointEvent::ScheduleCreated(_, _, id, ..)) => {
-              ids.push(CreatedIds::ScheduleCreated(id.clone()));
-            }
-            RuntimeEvent::Identity(IdentityEvent::DidCreated(id, ..)) => {
-              ids.push(CreatedIds::IdentityCreated(*id));
-            }
-            #[cfg(not(feature = "polymesh_v8"))]
-            RuntimeEvent::Identity(IdentityEvent::ChildDidCreated(_, id, ..)) => {
-              ids.push(CreatedIds::ChildIdentityCreated(*id));
-            }
-            RuntimeEvent::MultiSig(MultiSigEvent::MultiSigCreated { multisig, .. }) => {
-              ids.push(CreatedIds::MultiSigCreated(*multisig));
-            }
-            _ => (),
           }
         }
-        ids
+        items
       })
       .unwrap_or_default(),
   )
