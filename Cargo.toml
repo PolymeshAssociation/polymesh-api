@@ -43,7 +43,7 @@ polymesh-api-codegen = { version = "3.8.0", path = "crates/polymesh-api-codegen"
 polymesh-api-codegen-macro = { version = "3.8.0", path = "crates/polymesh-api-codegen-macro", default-features = false }
 polymesh-api = { version = "3.14.0", path = "./", default-features = false }
 polymesh-api-client-extras = { version = "3.7.0", path = "crates/polymesh-api-client-extras", default-features = false }
-polymesh-api-tester = { version = "0.11.0", path = "crates/polymesh-api-tester", default-features = false }
+polymesh-api-tester = { version = "0.12.0", path = "crates/polymesh-api-tester", default-features = false }
 
 # Substrate shared deps.
 frame-metadata = { version = "=15.1.0", default-features = false }

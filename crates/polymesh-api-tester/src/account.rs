@@ -45,13 +45,6 @@ impl DbAccountSigner {
   }
 }
 
-#[cfg(feature = "signer_delay")]
-async fn signer_delay() {
-  // Slow down the signer for the ci-runtime, which has a very short block time (0.5 seconds).
-  use std::time::Duration;
-  tokio::time::sleep(Duration::from_millis(200)).await;
-}
-
 #[async_trait::async_trait]
 impl Signer for DbAccountSigner {
   fn account(&self) -> AccountId {
@@ -63,8 +56,6 @@ impl Signer for DbAccountSigner {
   }
 
   async fn sign(&self, msg: &[u8]) -> polymesh_api::client::Result<MultiSignature> {
-    #[cfg(feature = "signer_delay")]
-    signer_delay().await;
     Ok(self.signer.sign(msg).await?)
   }
 }
@@ -114,9 +105,6 @@ impl Signer for AccountSigner {
 
   async fn sign(&self, msg: &[u8]) -> polymesh_api::client::Result<MultiSignature> {
     let locked = self.signer.lock().await;
-
-    #[cfg(feature = "signer_delay")]
-    signer_delay().await;
 
     locked.sign(msg).await
   }
