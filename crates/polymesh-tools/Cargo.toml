@@ -20,10 +20,15 @@ anyhow = "1.0"
 log = "0.4"
 env_logger = "0.11"
 hex = "0.4"
-codec = { version = "3", package = "parity-scale-codec", default-features = false }
+blake2 = "0.10"
+codec = { version = "3", package = "parity-scale-codec", default-features = false, features = ["derive"] }
+wasmparser = "0.244"
 polymesh-api = { workspace = true, default-features = true }
 polymesh-api-tester = { workspace = true, default-features = false, features = ["polymesh_v8"] }
 sp-weights = { workspace = true, default-features = false }
+
+# Runtime WASM inspection (version + setCode hash) from the Polymesh subwasm fork.
+wasm-loader = { git = "https://github.com/PolymeshAssociation/subwasm.git", branch = "polymesh" }
 
 [[bin]]
 name = "polymesh-tools"

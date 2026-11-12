@@ -4,9 +4,13 @@ Helper CLI utilities for Polymesh chain operations.
 
 ## Commands
 
-- `upgrade-chain <WASM_FILE>`
-- `committee-upgrade <WASM_FILE> <VERSION> <COMMITTEE_KEY>...`
+- `upgrade-chain <WASM_FILE> [--yes]`
+- `committee-upgrade <WASM_FILE> <COMMITTEE_KEY>... [--yes]`
 - `committee-proposal <PROPOSAL> <COMMITTEE_KEY>... [--url <URL>] [--description <DESCRIPTION>]`
+
+The runtime version is read from the WASM file itself (no version argument needed). Both
+upgrade commands display the runtime details (spec name, spec version, `setCode` hash) and
+ask for confirmation before submitting; pass `--yes` / `-y` to skip the prompt.
 
 ## Prerequisites
 
@@ -55,14 +59,30 @@ cargo run -p polymesh-tools -- upgrade-chain /path/to/runtime.wasm
 Committee-based upgrade:
 
 ```bash
-cargo run -p polymesh-tools -- committee-upgrade /path/to/runtime.wasm 7.3.0 "//Alice"
+cargo run -p polymesh-tools -- committee-upgrade /path/to/runtime.wasm "//Alice"
 ```
 
 You can also pass multiple committee keys:
 
 ```bash
-cargo run -p polymesh-tools -- committee-upgrade /path/to/runtime.wasm 7.3.0 "//Alice" "//Bob" "<seed phrase or private key>"
+cargo run -p polymesh-tools -- committee-upgrade /path/to/runtime.wasm "//Alice" "//Bob" "<seed phrase or private key>"
 ```
+
+The runtime spec version is extracted from the WASM and used to build the proposal URL and
+description. Before anything is submitted you will be shown the runtime details and asked to
+confirm:
+
+```text
+Runtime details:
+  WASM file:    /path/to/runtime.wasm
+  Spec name:    polymesh_testnet
+  Spec version: 8002000 (v8.2.0)
+  Code size:    2444409 bytes (compressed)
+  setCode hash: 0xabf89e6167144fc2e6073c7b1f295fa422ea69da320e678f49db5db3df78c82d
+Proceed with the upgrade? [y/N]:
+```
+
+Use `--yes` to skip the prompt (e.g. in scripts).
 
 Committee-based proposal for an arbitrary runtime call:
 
@@ -90,23 +110,35 @@ Example:
 
 ```bash
 cd crates/polymesh-tools && ./reset_db.sh
-cargo run -- committee-upgrade /tmp/polymesh_runtime.compact.compressed.wasm 7.3.0 "//Alice"
+cargo run -- committee-upgrade /tmp/polymesh_runtime.compact.compressed.wasm "//Alice"
 ```
 
 ## Committee Upgrade Flow
 
 The `committee-upgrade` command performs these steps:
 
-1. Resolves each provided key to its on-chain DID.
-2. Checks membership and vote thresholds for `UpgradeCommittee` and `PolymeshCommittee`.
-3. Uses `UpgradeCommittee.vote_or_propose(Yes, Pips.propose(System.set_code(...), ...))`.
-4. Extracts the created `PipId` from chain events.
-5. Uses `PolymeshCommittee.vote_or_propose(Yes, Pips.approve_committee_proposal(pip_id))`.
-6. Uses the `PolymeshCommittee.release_coordinator` DID key to call `Pips.reschedule_execution(pip_id, None)`.
+1. Loads the WASM, extracts the runtime spec version and `setCode` hash, and asks for confirmation.
+2. Resolves each provided key to its on-chain DID.
+3. Checks membership and vote thresholds for `UpgradeCommittee` and `PolymeshCommittee`.
+4. Uses `UpgradeCommittee.vote_or_propose(Yes, Pips.propose(System.set_code(...), ...))`.
+5. Extracts the created `PipId` from chain events.
+6. Uses `PolymeshCommittee.vote_or_propose(Yes, Pips.approve_committee_proposal(pip_id))`.
+7. Uses the `PolymeshCommittee.release_coordinator` DID key to call `Pips.reschedule_execution(pip_id, None)`.
 
 The `committee-proposal` command runs the same flow, but instead of building
 `System.set_code` from a WASM file it decodes the hex encoded runtime call passed on the
 command line and proposes it directly via `Pips.propose(<call>, ...)`.
+
+## Runtime Version Detection
+
+The runtime version is read directly from the WASM file, so it no longer has to be passed as a
+CLI argument. The WASM is loaded with the Polymesh fork of [`subwasm`]'s `wasm-loader` (which
+also transparently decompresses compact/compressed runtimes). The `spec_version` is decoded from
+the `runtime_version` custom section embedded in the runtime, and converted to a release version
+(`8_002_000` -> `8.2.0`). The `setCode` hash is the blake2_256 hash of the `System.set_code` call
+built from the (possibly compressed) code blob, i.e. the same hash shown on-chain for the proposal.
+
+[`subwasm`]: https://github.com/PolymeshAssociation/subwasm
 
 ## Notes
 

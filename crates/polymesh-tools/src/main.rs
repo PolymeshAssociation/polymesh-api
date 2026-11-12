@@ -21,6 +21,10 @@ enum Commands {
     /// Path to the WASM file containing the new runtime
     #[arg(value_name = "WASM_FILE")]
     wasm_file: String,
+
+    /// Skip the interactive confirmation of the runtime details
+    #[arg(short = 'y', long)]
+    yes: bool,
   },
 
   /// Committee-driven chain upgrade using UpgradeCommittee and PolymeshCommittee
@@ -29,13 +33,13 @@ enum Commands {
     #[arg(value_name = "WASM_FILE")]
     wasm_file: String,
 
-    /// Runtime release version used to build the proposal URL and description
-    #[arg(value_name = "VERSION")]
-    version: String,
-
     /// Committee member keys (private key hex, seed phrase, or //dev shortcut)
     #[arg(value_name = "COMMITTEE_KEY", required = true, num_args = 1..)]
     committee_keys: Vec<String>,
+
+    /// Skip the interactive confirmation of the runtime details
+    #[arg(short = 'y', long)]
+    yes: bool,
   },
 
   /// Committee-driven proposal for a hex encoded runtime call
@@ -68,12 +72,12 @@ async fn main() -> Result<()> {
   let cli = Cli::parse();
 
   match cli.command {
-    Commands::UpgradeChain { wasm_file } => upgrade_chain(&wasm_file).await,
+    Commands::UpgradeChain { wasm_file, yes } => upgrade_chain(&wasm_file, yes).await,
     Commands::CommitteeUpgrade {
       wasm_file,
-      version,
       committee_keys,
-    } => committee_upgrade(&wasm_file, &version, &committee_keys).await,
+      yes,
+    } => committee_upgrade(&wasm_file, &committee_keys, yes).await,
     Commands::CommitteeProposal {
       proposal,
       committee_keys,

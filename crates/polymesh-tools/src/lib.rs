@@ -4,7 +4,9 @@
 //! including chain upgrades, curve tree operations, and other administrative tasks.
 
 use anyhow::{anyhow, Context, Result};
-use codec::Decode;
+use blake2::digest::{Update, VariableOutput};
+use blake2::Blake2bVar;
+use codec::{Decode, Encode};
 use polymesh_api::polymesh::types::{
   pallet_pips::types::{PipDescription, PipId},
   polymesh_primitives::Url,
@@ -13,7 +15,6 @@ use polymesh_api::polymesh::types::{
 use polymesh_api_tester::PolymeshTester;
 use polymesh_api_tester::{AccountId, AccountSigner, IdentityId, Signer};
 use sp_weights::Weight;
-use std::fs;
 
 #[derive(Clone)]
 struct CommitteeKey {
@@ -87,6 +88,138 @@ fn debug_preview(value: &impl std::fmt::Debug, max_chars: usize) -> String {
   format!("{}...", preview)
 }
 
+/// Details of a runtime WASM file, extracted for display and confirmation before an upgrade.
+struct RuntimeDetails {
+  /// The runtime code as read from the file (possibly compressed); this is what `set_code` submits.
+  code: Vec<u8>,
+  spec_name: String,
+  spec_version: u32,
+  /// Human readable version derived from `spec_version` (e.g. `8_002_000` -> `8.2.0`).
+  version: String,
+  /// Hash of the `System.set_code` call built from `code`.
+  set_code_hash: String,
+  compressed: bool,
+}
+
+/// The SCALE encoded `RuntimeVersion` stored in the WASM `runtime_version` custom section.
+/// Mirrors `sp_version::RuntimeVersion` so we can read it without executing the runtime.
+/// All fields are needed to decode the layout, even though only some are displayed.
+#[derive(Decode)]
+#[allow(dead_code)]
+struct WasmRuntimeVersion {
+  spec_name: String,
+  impl_name: String,
+  authoring_version: u32,
+  spec_version: u32,
+  impl_version: u32,
+  apis: Vec<([u8; 8], u32)>,
+  transaction_version: u32,
+  state_version: u8,
+}
+
+/// Converts a numeric spec version to a release version string (`8_002_000` -> `8.2.0`).
+fn spec_version_string(spec_version: u32) -> String {
+  format!(
+    "{}.{}.{}",
+    spec_version / 1_000_000,
+    (spec_version / 1_000) % 1_000,
+    spec_version % 1_000
+  )
+}
+
+/// Reads the `runtime_version` custom section from an (uncompressed) runtime WASM.
+fn extract_runtime_version(wasm: &[u8]) -> Result<WasmRuntimeVersion> {
+  use wasmparser::{Parser, Payload};
+  for payload in Parser::new(0).parse_all(wasm) {
+    if let Payload::CustomSection(section) = payload.context("Failed to parse runtime WASM")? {
+      if section.name() == "runtime_version" {
+        return WasmRuntimeVersion::decode(&mut section.data())
+          .context("Failed to decode the runtime_version custom section");
+      }
+    }
+  }
+  Err(anyhow!(
+    "Runtime WASM has no runtime_version custom section; cannot determine the spec version"
+  ))
+}
+
+/// Computes the blake2_256 hash of the `System.set_code(code)` call.
+///
+/// The preimage is the call prefix (`0x00` pallet, `0x02` call) followed by the SCALE encoded
+/// code blob, matching the hash shown on-chain for the proposal.
+fn set_code_hash(code: &[u8]) -> String {
+  let mut preimage = vec![0x00, 0x02];
+  code.encode_to(&mut preimage);
+  let mut hasher = Blake2bVar::new(32).expect("valid blake2 output size");
+  hasher.update(&preimage);
+  let mut hash = [0u8; 32];
+  hasher.finalize_variable(&mut hash).expect("valid blake2 output size");
+  format!("0x{}", hex::encode(hash))
+}
+
+/// Loads a runtime WASM file and extracts its version and `set_code` hash.
+fn load_runtime_details(wasm_path: &str) -> Result<RuntimeDetails> {
+  let path = std::path::Path::new(wasm_path);
+  if !path.exists() {
+    return Err(anyhow!("WASM file not found: {}", wasm_path));
+  }
+  let loader = wasm_loader::WasmLoader::load_from_source(&wasm_loader::Source::File(
+    path.to_path_buf(),
+  ))
+  .with_context(|| format!("Failed to load WASM file: {}", wasm_path))?;
+
+  let code = loader.original_bytes().clone();
+  if code.is_empty() {
+    return Err(anyhow!("WASM file is empty: {}", wasm_path));
+  }
+
+  let runtime_version = extract_runtime_version(loader.uncompressed_bytes())?;
+  let set_code_hash = set_code_hash(&code);
+  let version = spec_version_string(runtime_version.spec_version);
+  Ok(RuntimeDetails {
+    code,
+    spec_name: runtime_version.spec_name,
+    spec_version: runtime_version.spec_version,
+    version,
+    set_code_hash,
+    compressed: loader.compression().compressed(),
+  })
+}
+
+/// Prints the runtime details and asks the user to confirm before proceeding.
+fn confirm_runtime(details: &RuntimeDetails, wasm_path: &str, assume_yes: bool) -> Result<()> {
+  println!("Runtime details:");
+  println!("  WASM file:    {}", wasm_path);
+  println!("  Spec name:    {}", details.spec_name);
+  println!(
+    "  Spec version: {} (v{})",
+    details.spec_version, details.version
+  );
+  println!(
+    "  Code size:    {} bytes{}",
+    details.code.len(),
+    if details.compressed { " (compressed)" } else { "" }
+  );
+  println!("  setCode hash: {}", details.set_code_hash);
+
+  if assume_yes {
+    println!("Confirmation skipped (--yes).");
+    return Ok(());
+  }
+
+  use std::io::Write;
+  print!("Proceed with the upgrade? [y/N]: ");
+  std::io::stdout().flush().context("Failed to flush stdout")?;
+  let mut input = String::new();
+  std::io::stdin()
+    .read_line(&mut input)
+    .context("Failed to read confirmation from stdin")?;
+  match input.trim().to_ascii_lowercase().as_str() {
+    "y" | "yes" => Ok(()),
+    _ => Err(anyhow!("Upgrade aborted by user")),
+  }
+}
+
 /// Performs a chain upgrade with the provided WASM file
 ///
 /// This function reads the specified WASM file and submits a sudo-wrapped set_code call
@@ -95,22 +228,16 @@ fn debug_preview(value: &impl std::fmt::Debug, max_chars: usize) -> String {
 /// # Arguments
 ///
 /// * `wasm_path` - Path to the WASM file containing the new runtime code
+/// * `assume_yes` - Skip the interactive confirmation prompt
 ///
 /// # Returns
 ///
 /// Returns `Ok(())` on successful upgrade, or an error if the operation fails
-pub async fn upgrade_chain(wasm_path: &str) -> Result<()> {
+pub async fn upgrade_chain(wasm_path: &str, assume_yes: bool) -> Result<()> {
   println!("Starting chain upgrade");
-  println!("WASM file: {}", wasm_path);
 
-  let code =
-    fs::read(wasm_path).with_context(|| format!("Failed to read WASM file: {}", wasm_path))?;
-
-  if code.is_empty() {
-    return Err(anyhow!("WASM file is empty: {}", wasm_path));
-  }
-
-  println!("Loaded WASM file ({} bytes)", code.len());
+  let details = load_runtime_details(wasm_path)?;
+  confirm_runtime(&details, wasm_path, assume_yes)?;
 
   let tester = PolymeshTester::new()
     .await
@@ -126,7 +253,7 @@ pub async fn upgrade_chain(wasm_path: &str) -> Result<()> {
     .api
     .call()
     .system()
-    .set_code(code)
+    .set_code(details.code)
     .context("Failed to create system.set_code call")?;
 
   let weight = Weight::from_parts(1_000_000_000, 0);
@@ -154,22 +281,17 @@ pub async fn upgrade_chain(wasm_path: &str) -> Result<()> {
 
 /// Performs a committee-driven chain upgrade using UpgradeCommittee and PolymeshCommittee.
 ///
-/// Reads the new runtime WASM and proposes `System.set_code` through the committee flow.
+/// Reads the new runtime WASM, extracts its spec version, and proposes `System.set_code`
+/// through the committee flow. The runtime details are confirmed before proceeding.
 pub async fn committee_upgrade(
   wasm_path: &str,
-  version: &str,
   committee_keys: &[String],
+  assume_yes: bool,
 ) -> Result<()> {
   println!("Starting committee-based chain upgrade");
-  println!("WASM file: {}", wasm_path);
-  println!("Target version: {}", version);
 
-  let code =
-    fs::read(wasm_path).with_context(|| format!("Failed to read WASM file: {}", wasm_path))?;
-  if code.is_empty() {
-    return Err(anyhow!("WASM file is empty: {}", wasm_path));
-  }
-  println!("Loaded WASM file ({} bytes)", code.len());
+  let details = load_runtime_details(wasm_path)?;
+  confirm_runtime(&details, wasm_path, assume_yes)?;
 
   let tester = PolymeshTester::new()
     .await
@@ -179,15 +301,15 @@ pub async fn committee_upgrade(
     .api
     .call()
     .system()
-    .set_code(code)
+    .set_code(details.code)
     .context("Failed to build system.set_code call")?
     .into();
 
   let url = Url(bytes_label(&format!(
     "https://github.com/PolymeshAssociation/Polymesh/releases/tag/v{}",
-    version
+    details.version
   )));
-  let description = PipDescription(bytes_label(&format!("Polymesh v{}", version)));
+  let description = PipDescription(bytes_label(&format!("Polymesh v{}", details.version)));
 
   committee_proposal_flow(
     &tester,
