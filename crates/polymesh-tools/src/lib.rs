@@ -256,11 +256,13 @@ async fn committee_proposal_flow(
     let signer = AccountSigner::from_string(key)
       .with_context(|| format!("Failed to parse committee key: {}", key))?;
     let account = signer.account();
-    let did = tester
+    let Some(did) = tester
       .get_did(account)
       .await
-      .with_context(|| format!("Failed to query DID for key: {}", key))?
-      .ok_or_else(|| anyhow!("Key is not linked to an on-chain identity: {}", key))?;
+      .with_context(|| format!("Failed to query DID for key: {}", key))? else {
+      eprintln!("Key is not linked to an on-chain identity: {}", key);
+      continue;
+    };
 
     println!("  key: {} -> account: {:?}, did: {:?}", key, account, did);
     resolved_keys.push(CommitteeKey {
