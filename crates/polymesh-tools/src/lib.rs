@@ -4,10 +4,11 @@
 //! including chain upgrades, curve tree operations, and other administrative tasks.
 
 use anyhow::{anyhow, Context, Result};
+use codec::Decode;
 use polymesh_api::polymesh::types::{
   pallet_pips::types::{PipDescription, PipId},
   polymesh_primitives::Url,
-  runtime::{events::PipsEvent, RuntimeEvent},
+  runtime::{events::PipsEvent, RuntimeCall, RuntimeEvent},
 };
 use polymesh_api_tester::PolymeshTester;
 use polymesh_api_tester::{AccountId, AccountSigner, IdentityId, Signer};
@@ -54,6 +55,36 @@ fn pip_id_from_events(events: &[polymesh_api::client::EventRecord<RuntimeEvent>]
     }
   }
   None
+}
+
+/// Decodes a hex encoded runtime call (with or without a `0x` prefix).
+fn decode_runtime_call(proposal_hex: &str) -> Result<RuntimeCall> {
+  let hex_str = proposal_hex.strip_prefix("0x").unwrap_or(proposal_hex);
+  let bytes = hex::decode(hex_str).context("Proposal is not valid hex")?;
+  if bytes.is_empty() {
+    return Err(anyhow!("Proposal call data is empty"));
+  }
+
+  let mut input = bytes.as_slice();
+  let call =
+    RuntimeCall::decode(&mut input).context("Failed to decode proposal as a runtime call")?;
+  if !input.is_empty() {
+    return Err(anyhow!(
+      "Proposal call data has {} trailing bytes after the runtime call",
+      input.len()
+    ));
+  }
+  Ok(call)
+}
+
+/// Returns a short preview of a debug formatted value, safe for large calls (e.g. set_code).
+fn debug_preview(value: &impl std::fmt::Debug, max_chars: usize) -> String {
+  let debug = format!("{:?}", value);
+  if debug.chars().count() <= max_chars {
+    return debug;
+  }
+  let preview: String = debug.chars().take(max_chars).collect();
+  format!("{}...", preview)
 }
 
 /// Performs a chain upgrade with the provided WASM file
@@ -123,21 +154,12 @@ pub async fn upgrade_chain(wasm_path: &str) -> Result<()> {
 
 /// Performs a committee-driven chain upgrade using UpgradeCommittee and PolymeshCommittee.
 ///
-/// Flow:
-/// 1. Resolve provided signing keys to on-chain DIDs.
-/// 2. Verify committee membership and vote-threshold sufficiency for both committees.
-/// 3. Use UpgradeCommittee vote_or_propose to create a committee PIP that proposes set_code.
-/// 4. Use PolymeshCommittee vote_or_propose to approve the committee PIP.
-/// 5. Use the PolymeshCommittee release coordinator to reschedule execution to the next block.
+/// Reads the new runtime WASM and proposes `System.set_code` through the committee flow.
 pub async fn committee_upgrade(
   wasm_path: &str,
   version: &str,
   committee_keys: &[String],
 ) -> Result<()> {
-  if committee_keys.is_empty() {
-    return Err(anyhow!("At least one committee key must be provided"));
-  }
-
   println!("Starting committee-based chain upgrade");
   println!("WASM file: {}", wasm_path);
   println!("Target version: {}", version);
@@ -152,6 +174,81 @@ pub async fn committee_upgrade(
   let tester = PolymeshTester::new()
     .await
     .context("Failed to initialize Polymesh API tester")?;
+
+  let set_code = tester
+    .api
+    .call()
+    .system()
+    .set_code(code)
+    .context("Failed to build system.set_code call")?
+    .into();
+
+  let url = Url(bytes_label(&format!(
+    "https://github.com/PolymeshAssociation/Polymesh/releases/tag/v{}",
+    version
+  )));
+  let description = PipDescription(bytes_label(&format!("Polymesh v{}", version)));
+
+  committee_proposal_flow(
+    &tester,
+    set_code,
+    Some(url),
+    Some(description),
+    committee_keys,
+  )
+  .await
+}
+
+/// Performs a committee-driven proposal for an arbitrary runtime call.
+///
+/// The proposal is passed in as hex encoded SCALE call data (with or without a `0x` prefix)
+/// and is proposed through the same committee flow as [`committee_upgrade`].
+///
+/// # Arguments
+///
+/// * `proposal_hex` - Hex encoded runtime call to propose
+/// * `committee_keys` - Committee member keys (private key hex, seed phrase, or //dev shortcut)
+/// * `url` - Optional link to a website for proposal discussion
+/// * `description` - Optional short description of the proposal
+pub async fn committee_proposal(
+  proposal_hex: &str,
+  committee_keys: &[String],
+  url: Option<&str>,
+  description: Option<&str>,
+) -> Result<()> {
+  println!("Starting committee-based proposal");
+
+  let proposal = decode_runtime_call(proposal_hex)?;
+  println!("Decoded proposal call: {}", debug_preview(&proposal, 256));
+
+  let tester = PolymeshTester::new()
+    .await
+    .context("Failed to initialize Polymesh API tester")?;
+
+  let url = url.map(|url| Url(bytes_label(url)));
+  let description = description.map(|desc| PipDescription(bytes_label(desc)));
+
+  committee_proposal_flow(&tester, proposal, url, description, committee_keys).await
+}
+
+/// Shared committee proposal flow used by [`committee_upgrade`] and [`committee_proposal`].
+///
+/// Flow:
+/// 1. Resolve provided signing keys to on-chain DIDs.
+/// 2. Verify committee membership and vote-threshold sufficiency for both committees.
+/// 3. Use UpgradeCommittee vote_or_propose to create a committee PIP for the proposal.
+/// 4. Use PolymeshCommittee vote_or_propose to approve the committee PIP.
+/// 5. Use the PolymeshCommittee release coordinator to reschedule execution to the next block.
+async fn committee_proposal_flow(
+  tester: &PolymeshTester,
+  proposal: RuntimeCall,
+  url: Option<Url>,
+  description: Option<PipDescription>,
+  committee_keys: &[String],
+) -> Result<()> {
+  if committee_keys.is_empty() {
+    return Err(anyhow!("At least one committee key must be provided"));
+  }
 
   println!("Resolving key-to-DID mappings...");
   let mut resolved_keys = Vec::with_capacity(committee_keys.len());
@@ -274,13 +371,7 @@ pub async fn committee_upgrade(
 
   println!("Release coordinator DID: {:?}", release_coordinator_did);
 
-  let url = Url(bytes_label(&format!(
-    "https://github.com/PolymeshAssociation/Polymesh/releases/tag/v{}",
-    version
-  )));
-  let description = PipDescription(bytes_label(&format!("Polymesh v{}", version)));
-
-  println!("Step 1/3: proposing upgrade through UpgradeCommittee...");
+  println!("Step 1/3: proposing through UpgradeCommittee...");
   let mut pip_id: Option<PipId> = None;
   for (vote_idx, key_idx) in upgrade_key_indexes
     .iter()
@@ -296,21 +387,15 @@ pub async fn committee_upgrade(
       key.account
     );
 
-    let set_code = tester
-      .api
-      .call()
-      .system()
-      .set_code(code.clone())
-      .context("Failed to build system.set_code call")?;
     let propose_pip = tester
       .api
       .call()
       .pips()
       .propose(
-        set_code.into(),
+        proposal.clone(),
         0,
-        Some(url.clone()),
-        Some(description.clone()),
+        url.clone(),
+        description.clone(),
       )
       .context("Failed to build pips.propose call")?;
     let committee_vote = tester
@@ -450,7 +535,7 @@ pub async fn committee_upgrade(
     .context("Reschedule execution transaction was not finalized")?;
 
   println!(
-    "Committee upgrade flow completed successfully for PipId {:?}",
+    "Committee proposal flow completed successfully for PipId {:?}",
     pip_id
   );
   Ok(())

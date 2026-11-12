@@ -4,7 +4,7 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use polymesh_tools::{committee_upgrade, upgrade_chain};
+use polymesh_tools::{committee_proposal, committee_upgrade, upgrade_chain};
 
 #[derive(Parser)]
 #[command(name = "polymesh-tools")]
@@ -37,6 +37,25 @@ enum Commands {
     #[arg(value_name = "COMMITTEE_KEY", required = true, num_args = 1..)]
     committee_keys: Vec<String>,
   },
+
+  /// Committee-driven proposal for a hex encoded runtime call
+  CommitteeProposal {
+    /// Hex encoded runtime call to propose (with or without 0x prefix)
+    #[arg(value_name = "PROPOSAL")]
+    proposal: String,
+
+    /// Committee member keys (private key hex, seed phrase, or //dev shortcut)
+    #[arg(value_name = "COMMITTEE_KEY", required = true, num_args = 1..)]
+    committee_keys: Vec<String>,
+
+    /// Optional link to a website for proposal discussion
+    #[arg(long, value_name = "URL")]
+    url: Option<String>,
+
+    /// Optional short description of the proposal
+    #[arg(long, value_name = "DESCRIPTION")]
+    description: Option<String>,
+  },
 }
 
 #[tokio::main]
@@ -55,5 +74,19 @@ async fn main() -> Result<()> {
       version,
       committee_keys,
     } => committee_upgrade(&wasm_file, &version, &committee_keys).await,
+    Commands::CommitteeProposal {
+      proposal,
+      committee_keys,
+      url,
+      description,
+    } => {
+      committee_proposal(
+        &proposal,
+        &committee_keys,
+        url.as_deref(),
+        description.as_deref(),
+      )
+      .await
+    }
   }
 }

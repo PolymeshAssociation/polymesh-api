@@ -6,6 +6,7 @@ Helper CLI utilities for Polymesh chain operations.
 
 - `upgrade-chain <WASM_FILE>`
 - `committee-upgrade <WASM_FILE> <VERSION> <COMMITTEE_KEY>...`
+- `committee-proposal <PROPOSAL> <COMMITTEE_KEY>... [--url <URL>] [--description <DESCRIPTION>]`
 
 ## Prerequisites
 
@@ -63,6 +64,22 @@ You can also pass multiple committee keys:
 cargo run -p polymesh-tools -- committee-upgrade /path/to/runtime.wasm 7.3.0 "//Alice" "//Bob" "<seed phrase or private key>"
 ```
 
+Committee-based proposal for an arbitrary runtime call:
+
+```bash
+cargo run -p polymesh-tools -- committee-proposal 0x<hex-encoded-call> "//Alice"
+```
+
+The `<PROPOSAL>` argument is the hex encoded SCALE call data of the runtime call to propose
+(with or without a `0x` prefix). Optional `--url` and `--description` flags attach discussion
+metadata to the PIP:
+
+```bash
+cargo run -p polymesh-tools -- committee-proposal 0x<hex-encoded-call> "//Alice" "//Bob" \
+  --url "https://forum.polymesh.network/t/proposal-discussion" \
+  --description "Increase active PIP limit"
+```
+
 ## Local Dev-Chain Note
 
 For a local development chain, one committee key is typically enough:
@@ -86,6 +103,10 @@ The `committee-upgrade` command performs these steps:
 4. Extracts the created `PipId` from chain events.
 5. Uses `PolymeshCommittee.vote_or_propose(Yes, Pips.approve_committee_proposal(pip_id))`.
 6. Uses the `PolymeshCommittee.release_coordinator` DID key to call `Pips.reschedule_execution(pip_id, None)`.
+
+The `committee-proposal` command runs the same flow, but instead of building
+`System.set_code` from a WASM file it decodes the hex encoded runtime call passed on the
+command line and proposes it directly via `Pips.propose(<call>, ...)`.
 
 ## Notes
 

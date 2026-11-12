@@ -1,6 +1,6 @@
 [package]
 name = "polymesh-tools"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Robert G. Jakabosky <robert@polymesh.network>"]
 license = "Apache-2.0"
@@ -19,6 +19,8 @@ tokio = { version = "1.40", features = ["full"] }
 anyhow = "1.0"
 log = "0.4"
 env_logger = "0.11"
+hex = "0.4"
+codec = { version = "3", package = "parity-scale-codec", default-features = false }
 polymesh-api = { workspace = true, default-features = true }
 polymesh-api-tester = { workspace = true, default-features = false, features = ["polymesh_v8"] }
 sp-weights = { workspace = true, default-features = false }
