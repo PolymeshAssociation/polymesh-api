@@ -157,13 +157,16 @@ impl InnerClient {
       Some(0) => Era::immortal(),
       lifetime => {
         let period = lifetime.unwrap_or_else(|| self.default_mortal_era_period());
-        let current = self
-          .get_block_header(None)
+        // Use the finalized block so that the mortal era stays valid if the best block is
+        // re-orged out.
+        let finalized = self.get_finalized_block().await?;
+        let header = self
+          .get_block_header(Some(finalized))
           .await?
-          .ok_or_else(|| Error::RpcClient("Failed to get current block".into()))?;
-        let number = current.number;
-        // Need to use the current block hash.
-        addititional.current_hash = current.hash();
+          .ok_or_else(|| Error::RpcClient("Failed to get finalized block".into()))?;
+        let number = header.number;
+        // Need to use the finalized block hash.
+        addititional.current_hash = header.hash();
         Era::mortal(number, Some(period))
       }
     };
@@ -214,6 +217,11 @@ impl InnerClient {
   /// Get the header of a block.
   async fn get_block_header(&self, block: Option<BlockHash>) -> Result<Option<Header>> {
     Ok(self.request("chain_getHeader", rpc_params!(block)).await?)
+  }
+
+  /// Get the current finalized block hash.
+  async fn get_finalized_block(&self) -> Result<BlockHash> {
+    self.request("chain_getFinalizedHead", rpc_params!()).await
   }
 
   /// Get the block hash for a `block_number`.
@@ -424,11 +432,7 @@ impl Client {
 
   /// Get the current finalized block hash.
   pub async fn get_finalized_block(&self) -> Result<BlockHash> {
-    Ok(
-      self
-        .request("chain_getFinalizedHead", rpc_params!())
-        .await?,
-    )
+    self.inner.get_finalized_block().await
   }
 
   /// Get a block.
