@@ -814,7 +814,9 @@ mod v14 {
         let event_ty = &self.event;
         quote!(::alloc::vec::Vec<#api_interface::EventRecord<types::#event_ty>>)
       } else {
-        self.type_name(value_ty, false, true).unwrap()
+        // Preserve `Compact` wrappers for storage values, since they are decoded directly
+        // instead of being fields with a `#[codec(compact)]` attribute.
+        self.type_name(value_ty, true, true).unwrap()
       };
 
       let (return_ty, return_value) = match md.modifier {
@@ -966,7 +968,8 @@ mod v14 {
           },
         });
       }
-      let value_ty = self.type_name(value_ty, false, true).unwrap();
+      // Preserve `Compact` wrappers for storage values, since they are decoded directly.
+      let value_ty = self.type_name(value_ty, true, true).unwrap();
 
       let docs = &md.docs;
       quote! {

@@ -4178,7 +4178,7 @@ dependencies = [
 
 [[package]]
 name = "polymesh-api-codegen"
-version = "3.9.0"
+version = "3.9.1"
 dependencies = [
  "anyhow",
  "async-trait",
